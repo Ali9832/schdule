@@ -1,0 +1,12 @@
+.git
+.local
+.runtime
+runtime
+test-results
+backups
+*.zip
+*.log
+*.err
+.env
+.env.*
+!.env.example
