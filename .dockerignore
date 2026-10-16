@@ -11,6 +11,8 @@ README.md
 docs
 .idea
 backups
+.local
+test-results
 *.log
 *.err
 .vercel

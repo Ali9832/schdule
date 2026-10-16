@@ -9,6 +9,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import OpenAI from 'openai'
+import { createLocalStore } from './local-store.js'
+import { registerCalendar, normalizeCalendarState } from './calendar.js'
 
 dotenv.config()
 
@@ -21,22 +23,27 @@ app.setErrorHandler((error, request, reply) => {
   return reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({ error: error.statusCode && error.statusCode < 500 ? error.message : 'خطای داخلی سرور.' })
 })
 const PORT = Number(process.env.PORT || 3001)
-const RELEASE_VERSION = 'V11.12.2'
+const RELEASE_VERSION = 'V1.1'
 const RELEASE_STAGE = 16
-const RELEASE_NAME = 'Dashboard Consolidation Production Release'
+const RELEASE_NAME = 'mllibden 1.1'
 let hasDatabase = Boolean(process.env.DATABASE_URL)
 let openaiClient
 const scrypt = promisify(crypto.scrypt)
-if (process.env.NODE_ENV === 'production' && !process.env.AUTH_SECRET) {
+const deployedRuntime=process.env.NODE_ENV==='production'||Boolean(process.env.VERCEL)
+if (deployedRuntime && !process.env.AUTH_SECRET) {
   throw new Error('AUTH_SECRET must be set in production.')
 }
+if(deployedRuntime&&!process.env.DATABASE_URL)throw new Error('DATABASE_URL must be set for persistent production storage.')
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex')
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.join(currentDir, '..', 'dist')
 const clientIndex = path.join(distDir, 'index.html')
+const localStore = !process.env.VERCEL && process.env.NODE_ENV !== 'production' && process.env.NOVA_LOCAL_STORE !== 'off'
+  ? createLocalStore(process.env.NOVA_LOCAL_STORE || path.join(currentDir, '..', '.local', `memory-${PORT}.json`))
+  : null
 
 const defaultSettings = {
-  display_name: 'کاربر NOVA',
+  display_name: 'molibden',
   workspace_name: 'NOVA',
   theme: 'light',
   page_titles: {}
@@ -91,7 +98,7 @@ if (hasDatabase) {
   await app.register(postgres, { connectionString: process.env.DATABASE_URL })
 }
 
-if (fs.existsSync(distDir)) {
+if (!process.env.VERCEL && fs.existsSync(distDir)) {
   await app.register(fastifyStatic, { root: distDir, prefix: '/', wildcard: false })
 }
 
@@ -180,7 +187,7 @@ const memory = {
   execution: { task_meta: {}, focus_sessions: [], current_focus: null },
   v11: { areas: [], resources: [], links: [], project_meta: {}, people: [], relationship_commitments: [], relationship_seeded: false },
   settings: {
-    display_name: 'مهسا رضایی',
+    display_name: 'molibden',
     workspace_name: 'NOVA',
     theme: 'light',
     page_titles: {
@@ -203,6 +210,10 @@ const addDays = (days) => {
 }
 const dateOffset = (days) => addDays(days)
 const id = () => crypto.randomUUID()
+// Persist before sending responses, including lazy initialization during reads.
+app.addHook('onSend', async () => {
+  if (!hasDatabase) localStore?.save(memory)
+})
 const priorityLabels = { high: 'بالا', medium: 'متوسط', low: 'کم' }
 
 function seedMemory() {
@@ -213,16 +224,16 @@ function seedMemory() {
     learning: id()
   }
   memory.projects.push(
-    { id: projectIds.site, name: 'راه‌اندازی سایت شخصی', description: 'ساخت یک خانه دیجیتال آرام برای ایده‌ها و کارها.', due_date: addDays(18), color: '#7165f3', icon: '⌘', status: 'in_progress', created_at: new Date().toISOString() },
+    { id: projectIds.site, name: 'رسیدگی به کارهای شخصی', description: 'مرتب‌کردن کارهای عقب‌افتاده و برنامه‌های این ماه.', due_date: addDays(18), color: '#7165f3', icon: '⌘', status: 'in_progress', created_at: new Date().toISOString() },
     { id: projectIds.health, name: 'ریتم سالم صبحگاهی', description: 'ساختن صبح‌هایی که انرژی روز را تنظیم می‌کنند.', due_date: addDays(11), color: '#45b98c', icon: '☼', status: 'in_progress', created_at: new Date().toISOString() },
     { id: projectIds.learning, name: 'یادگیری زبان اسپانیایی', description: '۲۰ دقیقه تمرین پیوسته، بدون فشار اضافه.', due_date: addDays(32), color: '#e8996b', icon: '✦', status: 'in_progress', created_at: new Date().toISOString() }
   )
   memory.tasks.push(
     { id: id(), title: 'مرور هدف‌های فصل پاییز', description: 'سه نتیجه مهم فصل را روی کاغذ بیاور.', due_date: today(), priority: 'high', status: 'in_progress', estimate_minutes: 25, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: id(), title: 'ارسال نسخه اولیه به سارا', description: 'بازخورد اولیه را تا قبل از جلسه بگیر.', due_date: today(), priority: 'medium', status: 'todo', estimate_minutes: 35, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: id(), title: 'هماهنگی زمان یک قرار', description: 'یک زمان مناسب برای قرار پیدا کن و با طرف مقابل هماهنگ کن.', due_date: today(), priority: 'medium', status: 'todo', estimate_minutes: 35, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'پیاده‌روی عصرگاهی', description: 'سی دقیقه بدون هدفون، فقط برای خالی‌کردن ذهن.', due_date: today(), priority: 'low', status: 'todo', estimate_minutes: 30, project_id: projectIds.health, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'تمرین درس ۴ اسپانیایی', description: 'مرور واژه‌ها و ساخت پنج جمله جدید.', due_date: addDays(1), priority: 'medium', status: 'todo', estimate_minutes: 20, project_id: projectIds.learning, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: id(), title: 'طراحی صفحه معرفی', description: 'نسخه مینیمال صفحه معرفی را نهایی کن.', due_date: addDays(-1), priority: 'high', status: 'done', estimate_minutes: 50, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: id(), title: 'مرتب‌کردن مدارک شخصی', description: 'مدارک مهم را دسته‌بندی و در جای مشخص نگهداری کن.', due_date: addDays(-1), priority: 'high', status: 'done', estimate_minutes: 50, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'خرید میوه و سبزی', description: 'برای آماده‌سازی میان‌وعده‌های هفته.', due_date: addDays(2), priority: 'low', status: 'todo', estimate_minutes: 25, project_id: projectIds.health, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   )
   const seededTasks = memory.tasks
@@ -231,7 +242,7 @@ function seedMemory() {
   if (seededTasks[2]) memory.execution.task_meta[seededTasks[2].id] = { context: 'بیرون', energy: 'low', waiting_on: '', resume_note: '', blocked_on: '', updated_at: new Date().toISOString() }
 
   memory.activity.push(
-    { id: id(), kind: 'done', text: 'تسک «طراحی صفحه معرفی» انجام شد.', created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString() },
+    { id: id(), kind: 'done', text: 'تسک «مرتب‌کردن مدارک شخصی» انجام شد.', created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString() },
     { id: id(), kind: 'project', text: 'پروژه «ریتم سالم صبحگاهی» ساخته شد.', created_at: new Date(Date.now() - 1000 * 60 * 160).toISOString() },
     { id: id(), kind: 'assistant', text: 'همراه NOVA یک برنامه سبک پیشنهاد داد.', created_at: new Date(Date.now() - 1000 * 60 * 300).toISOString() }
   )
@@ -239,7 +250,7 @@ function seedMemory() {
     { id: id(), title: 'بلوک تمرکز عمیق', type: 'focus', start_at: `${today()}T10:30:00`, end_at: `${today()}T12:00:00`, color: '#7165f3', project_id: projectIds.site, notes: 'اعلان‌ها خاموش', created_at: new Date().toISOString() },
     { id: id(), title: 'مرور هفتگی', type: 'review', start_at: `${today()}T16:00:00`, end_at: `${today()}T16:30:00`, color: '#e8996b', project_id: null, notes: 'سه برد و یک اصلاح کوچک', created_at: new Date().toISOString() },
     { id: id(), title: 'پیاده‌روی عصرگاهی', type: 'health', start_at: `${today()}T18:30:00`, end_at: `${today()}T19:00:00`, color: '#45b98c', project_id: projectIds.health, notes: '', created_at: new Date().toISOString() },
-    { id: id(), title: 'جلسه هماهنگی هفتگی', type: 'meeting', start_at: `${today()}T14:00:00`, end_at: `${today()}T14:45:00`, color: '#8f4268', project_id: null, notes: 'NOVA_MEETING::{"unit":"داخلی","participants":"تیم اصلی","agenda":"مرور وضعیت پروژه‌ها و تعیین اولویت هفته","summary":"مرور کارهای هفته و تصمیم درباره اولویت‌های بعدی","decisions":"تمرکز هفته روی تحویل نسخه اولیه سایت باشد.","actions":[{"id":"seed-action-1","text":"ارسال نسخه اولیه به سارا","task_id":null},{"id":"seed-action-2","text":"جمع‌بندی تصمیم‌های جلسه در پروژه","task_id":null}],"notes":"اقدام‌های بعدی ثبت و پیگیری شوند."}', created_at: new Date().toISOString() }
+    { id: id(), title: 'جلسه هماهنگی هفتگی', type: 'meeting', start_at: `${today()}T14:00:00`, end_at: `${today()}T14:45:00`, color: '#8f4268', project_id: null, notes: 'NOVA_MEETING::{"unit":"داخلی","participants":"تیم اصلی","agenda":"مرور وضعیت پروژه‌ها و تعیین اولویت هفته","summary":"مرور کارهای هفته و تصمیم درباره اولویت‌های بعدی","decisions":"تمرکز هفته روی تحویل نسخه اولیه سایت باشد.","actions":[{"id":"seed-action-1","text":"هماهنگی زمان یک قرار","task_id":null},{"id":"seed-action-2","text":"جمع‌بندی تصمیم‌های جلسه در پروژه","task_id":null}],"notes":"اقدام‌های بعدی ثبت و پیگیری شوند."}', created_at: new Date().toISOString() }
   )
   memory.goals.push(
     { id: id(), area: 'سلامت', title: 'سه جلسه حرکت در هفته', target: 3, current: 2, unit: 'جلسه', due_date: addDays(45), status: 'in_progress', priority: 'high', next_action: 'رزرو زمان سه‌شنبه', note: 'هدف کوچک، پایدار و قابل اندازه‌گیری.' },
@@ -260,7 +271,7 @@ function seedMemory() {
   )
   memory.daily_logs.push(
     { id: id(), date: today(), top_task: 'مرور هدف‌های فصل', energy: 8, mood: 'متمرکز', note: 'صبح امروز تمرکز خوبی داشتم.' },
-    { id: id(), date: addDays(-1), top_task: 'طراحی صفحه معرفی', energy: 7, mood: 'خوب', note: 'یک قدم کوچک اما واقعی.' }
+    { id: id(), date: addDays(-1), top_task: 'مرتب‌کردن مدارک شخصی', energy: 7, mood: 'خوب', note: 'یک قدم کوچک اما واقعی.' }
   )
   memory.ideas.push(
     { id: id(), title: 'خبرنامه هفتگی تمرکز', area: 'محتوا', impact: 'بالا', status: 'idea', next_action: 'نمونه‌سازی قالب', note: '' },
@@ -330,18 +341,26 @@ function seedMemory() {
 
 async function initDatabase() {
   if (!hasDatabase) {
-    seedMemory()
+    const saved = localStore?.load()
+    if (saved) Object.assign(memory, saved)
+    else seedMemory()
+    localStore?.save(memory)
     return
   }
   try {
     await app.pg.query('SELECT 1')
   } catch (error) {
+    if(deployedRuntime)throw new Error('PostgreSQL connection failed; refusing temporary production storage.',{cause:error})
     app.log.warn({ err: error }, 'PostgreSQL unavailable; using memory fallback')
     hasDatabase = false
-    seedMemory()
+    const saved = localStore?.load()
+    if (saved) Object.assign(memory, saved)
+    else seedMemory()
+    localStore?.save(memory)
     return
   }
   await app.pg.query(fs.readFileSync(path.join(currentDir, 'schema.sql'), 'utf8'))
+  if(deployedRuntime)return
   const { rows } = await app.pg.query('SELECT COUNT(*)::int AS count FROM tasks')
   if (!rows[0].count) {
     // Keep the first-run experience useful even with a fresh PostgreSQL database.
@@ -589,7 +608,7 @@ function normalizeExecution(input = {}) {
     dashboard: { now: rawDash.now !== false, decision: rawDash.decision !== false, attention: rawDash.attention !== false, projects: rawDash.projects !== false, areas: rawDash.areas !== false, routines: rawDash.routines !== false, review: rawDash.review !== false },
     saved_views
   }
-  return { task_meta, focus_sessions, current_focus: cf ? { task_id: cf.task_id || null, started_at: cf.started_at || new Date().toISOString(), planned_minutes: Math.max(0, Number(cf.planned_minutes) || 25) } : null, planning: { current_cycle, reviews }, personalization }
+  return { task_meta, focus_sessions, current_focus: cf ? { task_id: cf.task_id || null, started_at: cf.started_at || new Date().toISOString(), planned_minutes: Math.max(0, Number(cf.planned_minutes) || 25) } : null, planning: { current_cycle, reviews }, personalization, calendar: normalizeCalendarState(input.calendar) }
 }
 
 function normalizeLifeData(input = {}) {
@@ -1596,6 +1615,17 @@ for(const p of data.projects){if(!p.due_date||p.lifecycle_status==='archived'||!
 for(const o of data.outcomes||[]){if(!o.due_date||o.status==='done'||!v115InRange(o.due_date,from,to))continue;entries.push({id:`outcome-deadline-${o.id}`,entity_id:o.id,source_type:'outcome',type:'outcome_deadline',title:`موعد هدف: ${o.title}`,start_at:`${o.due_date}T23:20:00`,end_at:`${o.due_date}T23:30:00`,all_day:true,area_id:o.area_id||null,area_name:areaMap.get(o.area_id)||''})}
 entries.sort((a,b)=>String(a.start_at).localeCompare(String(b.start_at)));const conflicts=v115FindConflicts(entries),todayCount=entries.filter(e=>v115EntryDate(e)===todayIso).length,meetings=entries.filter(e=>e.type==='meeting').length,deadlines=entries.filter(e=>['deadline','project_deadline','outcome_deadline'].includes(e.type)).length,focusBlocks=entries.filter(e=>e.type==='focus').length;const unscheduled=data.tasks.filter(t=>t.status!=='done'&&!t.due_date&&!String(t.waiting_on||'').trim()).slice(0,20).map(t=>({id:t.id,title:t.title,project_id:t.project_id||null,project_name:projectMap.get(t.project_id)||'',context:t.context||'',energy:t.energy||'',estimate_minutes:t.estimate_minutes||0}));return {stage:'V11.5',range:{from,to},entries,unscheduled,summary:{today_count:todayCount,range_count:entries.length,meetings,deadlines,focus_blocks:focusBlocks,conflicts},references:{projects:data.projects.map(p=>({id:p.id,name:p.name,lifecycle_status:p.lifecycle_status})),areas:data.areas.map(a=>({id:a.id,name:a.name}))},generated_at:new Date().toISOString()}}
 app.get('/api/v11.5/schedule',async(request)=>v115SchedulePayload(request.user.id,request.query||{}))
+registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
+  createOutcome:async(userId,body)=>{
+    if(!hasDatabase)return v117SaveMemoryOutcome(userId,null,body);
+    return (await app.pg.query('INSERT INTO outcomes (id,user_id,title,status,due_date,note) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',[id(),userId,body.title,body.status,body.due_date,body.note])).rows[0]
+  },
+  updateOutcome:async(userId,outcomeId,patch)=>{
+    if(!hasDatabase){const life=await getLifeData(userId);await persistLifeData(userId,{...life,goals:life.goals.map(item=>item.id===outcomeId?{...item,...patch}:item)});return}
+    const allowed=['title','due_date','status','note'];const keys=Object.keys(patch).filter(key=>allowed.includes(key));if(!keys.length)return;
+    await app.pg.query(`UPDATE outcomes SET ${keys.map((key,index)=>`${key}=$${index+1}`).join(',')},updated_at=NOW() WHERE id=$${keys.length+1} AND user_id=$${keys.length+2}`,[...keys.map(key=>patch[key]),outcomeId,userId])
+  }
+})
 app.post('/api/v11.5/schedule/events',async(request,reply)=>{try{return reply.code(201).send(await createEvent(request.user.id,request.body||{}))}catch(error){return reply.code(400).send({error:error.message})}})
 app.post('/api/v11.5/schedule/task/:id',async(request,reply)=>{try{const data=await getV11Canonical(request.user.id),task=data.tasks.find(t=>t.id===request.params.id);if(!task)return reply.code(404).send({error:'تسک پیدا نشد.'});const start=String(request.body?.start_at||''),end=String(request.body?.end_at||'');const note=JSON.stringify({v115:{task_id:task.id,note:'Task time block'}});const created=await createEvent(request.user.id,{title:task.title,type:'focus',start_at:start,end_at:end,project_id:task.project_id||null,notes:note,color:'#7165f3'});return reply.code(201).send(created)}catch(error){return reply.code(400).send({error:error.message})}})
 app.get('/api/v11.5/health',async()=>({ok:true,stage:'V11.5',storage:hasDatabase?'postgresql':'memory',capabilities:['unified-schedule','today-agenda','week-calendar','month-calendar','timeline-view','task-deadlines','project-milestones','focus-time-blocking','conflict-detection','meeting-and-event-unification'],now:new Date().toISOString()}))
@@ -1998,7 +2028,7 @@ app.delete('/api/goals/:id', { schema: { params: idParamsSchema } }, async (requ
   return { ok: true }
 })
 
-app.get('/api/habits', async (request) => (await getLifeData(request.user.id)).habits || [])
+app.get('/api/habits', async (request) => (await getV11Canonical(request.user.id)).routines || [])
 app.post('/api/habits', { schema: { body: { ...habitBodySchema, required: ['title'] } } }, async (request, reply) => {
   try {
     const items = await updateLifeCollection(request.user.id, 'habits', request.body || {})
@@ -2008,7 +2038,22 @@ app.post('/api/habits', { schema: { body: { ...habitBodySchema, required: ['titl
 app.patch('/api/habits/:id', { schema: { params: idParamsSchema, body: habitBodySchema } }, async (request, reply) => {
   const life = await getLifeData(request.user.id)
   const index = (life.habits || []).findIndex((item) => item.id === request.params.id)
-  if (index < 0) return reply.code(404).send({ error: 'عادت پیدا نشد.' })
+  if (index < 0) {
+    const routine = (await getV11Canonical(request.user.id)).routines.find(item => item.id === request.params.id)
+    if (!routine) return reply.code(404).send({ error: 'عادت پیدا نشد.' })
+    const next = { ...routine, ...normalizeHabit({ ...routine, ...request.body, id: routine.id, updated_at: new Date().toISOString() }) }
+    if (!hasDatabase) {
+      const position = memory.v11.spiritual_routines.findIndex(item => item.id === routine.id)
+      memory.v11.spiritual_routines[position] = next
+    } else {
+      await app.pg.query('UPDATE routines SET title=$1,description=$2,target_weekly=$3,color=$4,status=$5,updated_at=NOW() WHERE id=$6 AND user_id=$7', [next.title,next.description,next.target_weekly,next.color,next.status,next.id,request.user.id])
+      if (request.body.logs) {
+        await app.pg.query('DELETE FROM routine_logs WHERE routine_id=$1 AND user_id=$2', [next.id,request.user.id])
+        for (const [date,value] of Object.entries(next.logs)) await setCanonicalRoutineLog(request.user.id,next,date,value)
+      }
+    }
+    return next
+  }
   const next = normalizeHabit({ ...life.habits[index], ...(request.body || {}), id: request.params.id, created_at: life.habits[index].created_at })
   await persistLifeData(request.user.id, { ...life, habits: life.habits.map((item, itemIndex) => itemIndex === index ? next : item) })
   await addActivity(request.user.id, 'habit', `عادت «${next.title}» به‌روزرسانی شد.`)
@@ -2017,7 +2062,12 @@ app.patch('/api/habits/:id', { schema: { params: idParamsSchema, body: habitBody
 app.post('/api/habits/:id/toggle', { schema: { params: idParamsSchema, body: { type: 'object', additionalProperties: false, properties: { date: { type: 'string', pattern: '^\\d{4}-\\d{2}-\\d{2}$' } } } } }, async (request, reply) => {
   const life = await getLifeData(request.user.id)
   const index = (life.habits || []).findIndex((item) => item.id === request.params.id)
-  if (index < 0) return reply.code(404).send({ error: 'عادت پیدا نشد.' })
+  if (index < 0) {
+    const routine=(await getV11Canonical(request.user.id)).routines.find(item=>item.id===request.params.id)
+    if(!routine)return reply.code(404).send({error:'عادت پیدا نشد.'})
+    const date=request.body?.date||today()
+    return setCanonicalRoutineLog(request.user.id,routine,date,!Boolean(routine.logs?.[date]))
+  }
   const date = request.body?.date || today()
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return reply.code(400).send({ error: 'تاریخ ثبت عادت معتبر نیست.' })
   const habit = { ...life.habits[index], logs: { ...(life.habits[index].logs || {}) } }
@@ -2029,7 +2079,18 @@ app.post('/api/habits/:id/toggle', { schema: { params: idParamsSchema, body: { t
 app.delete('/api/habits/:id', { schema: { params: idParamsSchema } }, async (request, reply) => {
   const life = await getLifeData(request.user.id)
   const removed = (life.habits || []).find((item) => item.id === request.params.id)
-  if (!removed) return reply.code(404).send({ error: 'عادت پیدا نشد.' })
+  if (!removed) {
+    const routine = (await getV11Canonical(request.user.id)).routines.find(item => item.id === request.params.id)
+    if (!routine) return reply.code(404).send({ error: 'عادت پیدا نشد.' })
+    // Remove the legacy source too, otherwise lazy migration recreates the routine.
+    const modules = { ...life.modules, spiritual: (life.modules.spiritual || []).filter(item => item.id !== routine.id) }
+    await persistLifeData(request.user.id, { ...life, modules })
+    if (!hasDatabase) {
+      memory.v11.spiritual_routines = (memory.v11.spiritual_routines || []).filter(item => item.id !== routine.id)
+      delete memory.v11.spiritual_details?.[routine.id]
+    } else await app.pg.query('DELETE FROM routines WHERE id=$1 AND user_id=$2', [routine.id,request.user.id])
+    return { ok: true }
+  }
   await persistLifeData(request.user.id, { ...life, habits: life.habits.filter((item) => item.id !== request.params.id) })
   await addActivity(request.user.id, 'habit', `عادت «${removed.title}» حذف شد.`)
   return { ok: true }
@@ -2244,12 +2305,12 @@ function j2dJ(jy,jm,jd){const r=jalCalJ(jy);return g2dJ(r.gy,3,r.march)+(jm-1)*3
 function jalaliToGregorianDate(jy,jm,jd){const g=d2gJ(j2dJ(Number(jy),Number(jm),Number(jd)));return `${String(g.gy).padStart(4,'0')}-${String(g.gm).padStart(2,'0')}-${String(g.gd).padStart(2,'0')}`}
 function jalaliMonthDays(year, month){ if(month<=6)return 31; if(month<=11)return 30; return jalCalJ(Number(year)).leap===0?30:29 }
 
-app.get('/api/habits/matrix', async (request) => {
+app.get('/api/habits/matrix', async (request, reply) => {
   const year = Number(request.query?.year || 1405)
   const month = Number(request.query?.month || 7)
+  if(!Number.isInteger(year)||year<1||year>=3178||!Number.isInteger(month)||month<1||month>12)return reply.code(400).send({error:'سال یا ماه معتبر نیست.'})
   const days = jalaliMonthDays(year, month)
-  const life = await getLifeData(request.user.id)
-  const habits = life.habits || []
+  const habits = ((await getV11Canonical(request.user.id)).routines || []).filter(habit=>habit.status!=='paused')
   const rows = habits.map((habit) => {
     const flags = Array.from({length:days}, (_,i) => Boolean(habit.logs?.[jalaliToGregorianDate(year,month,i+1)]))
     const doneCount = flags.filter(Boolean).length
@@ -2263,15 +2324,30 @@ app.get('/api/habits/matrix', async (request) => {
 
 app.post('/api/habits/:id/day', async (request, reply) => {
   const year=Number(request.body?.year), month=Number(request.body?.month), day=Number(request.body?.day)
+  if(!Number.isInteger(year)||year<1||year>=3178||!Number.isInteger(month)||month<1||month>12||!Number.isInteger(day)||day<1||day>jalaliMonthDays(year,month))return reply.code(400).send({error:'تاریخ ثبت عادت معتبر نیست.'})
   const life=await getLifeData(request.user.id)
   const index=(life.habits||[]).findIndex((item)=>item.id===request.params.id)
-  if(index<0)return reply.code(404).send({error:'عادت پیدا نشد.'})
+  if(index<0){
+    const routine=(await getV11Canonical(request.user.id)).routines.find(item=>item.id===request.params.id)
+    if(!routine)return reply.code(404).send({error:'عادت پیدا نشد.'})
+    return setCanonicalRoutineLog(request.user.id,routine,jalaliToGregorianDate(year,month,day),Boolean(request.body?.done))
+  }
   const date=jalaliToGregorianDate(year,month,day)
   const habit={...life.habits[index],logs:{...(life.habits[index].logs||{}),[date]:Boolean(request.body?.done)}}
   const normalized=normalizeHabit({...habit,id:habit.id,created_at:habit.created_at})
   await persistLifeData(request.user.id,{...life,habits:life.habits.map((item,i)=>i===index?normalized:item)})
   return normalized
 })
+
+async function setCanonicalRoutineLog(userId,routine,date,value){
+  if(!hasDatabase){
+    const stored=(memory.v11.spiritual_routines||[]).find(item=>item.id===routine.id)
+    if(stored){stored.logs ||= {};stored.logs[date]=value;stored.updated_at=new Date().toISOString()}
+  }else{
+    await app.pg.query(`INSERT INTO routine_logs (id,user_id,routine_id,log_date,value) VALUES ($1,$2,$3,$4,$5) ON CONFLICT (user_id,routine_id,log_date) DO UPDATE SET value=EXCLUDED.value,updated_at=NOW()`,[id(),userId,routine.id,date,value])
+  }
+  return {...routine,logs:{...(routine.logs||{}),[date]:value}}
+}
 
 
 
@@ -2486,7 +2562,7 @@ function v1110EnsureMemory(){
 async function v1110People(userId){if(!hasDatabase){v1110EnsureMemory();return memory.v11.people.filter(p=>p.status!=='archived').map(v1110PersonNormalized)}const {rows}=await app.pg.query("SELECT * FROM people WHERE user_id=$1 AND status <> 'archived' ORDER BY name",[userId]);return rows.map(v1110PersonNormalized)}
 async function v1110Commitments(userId){if(!hasDatabase){v1110EnsureMemory();return memory.v11.relationship_commitments.map(v1110CommitmentNormalized)}const {rows}=await app.pg.query('SELECT * FROM relationship_commitments WHERE user_id=$1 ORDER BY due_date NULLS LAST, created_at DESC',[userId]);return rows.map(v1110CommitmentNormalized)}
 function v1110NextAnnual(raw){if(!raw)return null;const src=new Date(`${String(raw).slice(0,10)}T12:00:00Z`);if(Number.isNaN(src.getTime()))return null;const now=new Date(`${v1110Date()}T12:00:00Z`);let d=new Date(Date.UTC(now.getUTCFullYear(),src.getUTCMonth(),src.getUTCDate(),12));if(d<now)d=new Date(Date.UTC(now.getUTCFullYear()+1,src.getUTCMonth(),src.getUTCDate(),12));return {date:d.toISOString().slice(0,10),days_until:Math.round((d-now)/86400000)}}
-async function v1110Payload(userId){const [people,commitments,events]=await Promise.all([v1110People(userId),v1110Commitments(userId),listEvents(userId)]),today=v1110Date(),open=commitments.filter(c=>c.status==='open');const followups=people.filter(p=>p.next_contact_at&&p.next_contact_at<=today).map(p=>({person_id:p.id,name:p.name,next_contact_at:p.next_contact_at,days_overdue:Math.max(0,Math.round((new Date(`${today}T12:00:00Z`)-new Date(`${p.next_contact_at}T12:00:00Z`))/86400000))})).sort((a,b)=>b.days_overdue-a.days_overdue);const upcoming=people.map(p=>{const n=v1110NextAnnual(p.important_date);return n?{person_id:p.id,name:p.name,label:p.important_date_label||'مناسبت',date:n.date,days_until:n.days_until}:null}).filter(Boolean).filter(x=>x.days_until<=45).sort((a,b)=>a.days_until-b.days_until);const recentMeetings=events.filter(e=>e.type==='meeting').slice(-20);const enriched=people.map(p=>({...p,recent_meeting_count:recentMeetings.filter(e=>String(e.notes||'').includes(p.name)).length}));return {stage:'V11.10',today,people:enriched,commitments,followups,upcoming_dates:upcoming,summary:{people_active:people.length,followups_due:followups.length,promises_open:open.filter(c=>c.direction==='i_owe').length,waiting_on_people:open.filter(c=>c.direction==='waiting_on_them').length,commitments_overdue:open.filter(c=>c.due_date&&c.due_date<today).length,important_dates_45:upcoming.length},generated_at:new Date().toISOString()}}
+async function v1110Payload(userId){const [people,storedCommitments,events,tasks]=await Promise.all([v1110People(userId),v1110Commitments(userId),listEvents(userId),listTasks(userId)]);const commitments=storedCommitments.map(commitment=>{const task=tasks.find(task=>task.id===commitment.task_id);return task&&commitment.status!=='cancelled'?{...commitment,status:task.status==='done'?'done':'open'}:commitment});const today=v1110Date(),open=commitments.filter(c=>c.status==='open');const followups=people.filter(p=>p.next_contact_at&&p.next_contact_at<=today).map(p=>({person_id:p.id,name:p.name,next_contact_at:p.next_contact_at,days_overdue:Math.max(0,Math.round((new Date(`${today}T12:00:00Z`)-new Date(`${p.next_contact_at}T12:00:00Z`))/86400000))})).sort((a,b)=>b.days_overdue-a.days_overdue);const upcoming=people.map(p=>{const n=v1110NextAnnual(p.important_date);return n?{person_id:p.id,name:p.name,label:p.important_date_label||'مناسبت',date:n.date,days_until:n.days_until}:null}).filter(Boolean).filter(x=>x.days_until<=45).sort((a,b)=>a.days_until-b.days_until);const recentMeetings=events.filter(e=>e.type==='meeting').slice(-20);const enriched=people.map(p=>({...p,recent_meeting_count:recentMeetings.filter(e=>String(e.notes||'').includes(p.name)).length}));return {stage:'V11.10',today,people:enriched,commitments,followups,upcoming_dates:upcoming,summary:{people_active:people.length,followups_due:followups.length,promises_open:open.filter(c=>c.direction==='i_owe').length,waiting_on_people:open.filter(c=>c.direction==='waiting_on_them').length,commitments_overdue:open.filter(c=>c.due_date&&c.due_date<today).length,important_dates_45:upcoming.length},generated_at:new Date().toISOString()}}
 async function v1110SavePerson(userId,p){if(!hasDatabase){v1110EnsureMemory();const i=memory.v11.people.findIndex(x=>x.id===p.id);if(i>=0)memory.v11.people[i]=p;else memory.v11.people.push(p);return p}await app.pg.query(`INSERT INTO people (id,user_id,name,relation_type,organization,contact,tags,cadence_days,last_contact_at,next_contact_at,important_date,important_date_label,notes,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,relation_type=EXCLUDED.relation_type,organization=EXCLUDED.organization,contact=EXCLUDED.contact,tags=EXCLUDED.tags,cadence_days=EXCLUDED.cadence_days,last_contact_at=EXCLUDED.last_contact_at,next_contact_at=EXCLUDED.next_contact_at,important_date=EXCLUDED.important_date,important_date_label=EXCLUDED.important_date_label,notes=EXCLUDED.notes,status=EXCLUDED.status,updated_at=NOW()`,[p.id,userId,p.name,p.relation_type,p.organization,p.contact,JSON.stringify(p.tags||[]),p.cadence_days,p.last_contact_at,p.next_contact_at,p.important_date,p.important_date_label,p.notes,p.status,p.created_at,p.updated_at]);return p}
 async function v1110SaveCommitment(userId,c){if(!hasDatabase){v1110EnsureMemory();const i=memory.v11.relationship_commitments.findIndex(x=>x.id===c.id);if(i>=0)memory.v11.relationship_commitments[i]=c;else memory.v11.relationship_commitments.push(c);return c}await app.pg.query(`INSERT INTO relationship_commitments (id,user_id,person_id,title,direction,kind,status,due_date,task_id,meeting_event_id,note,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO UPDATE SET person_id=EXCLUDED.person_id,title=EXCLUDED.title,direction=EXCLUDED.direction,kind=EXCLUDED.kind,status=EXCLUDED.status,due_date=EXCLUDED.due_date,task_id=EXCLUDED.task_id,meeting_event_id=EXCLUDED.meeting_event_id,note=EXCLUDED.note,updated_at=NOW()`,[c.id,userId,c.person_id,c.title,c.direction,c.kind,c.status,c.due_date,c.task_id,c.meeting_event_id,c.note,c.created_at,c.updated_at]);return c}
 async function v1110SetTaskWaiting(userId,taskId,personName){if(!taskId||!personName)return;if(hasDatabase){await app.pg.query('UPDATE tasks SET waiting_on=$1,updated_at=NOW() WHERE id=$2 AND user_id=$3',[personName,taskId,userId]);return}const life=await getLifeData(userId);life.execution.task_meta ||= {};const cur=life.execution.task_meta[taskId]||{};life.execution.task_meta[taskId]={...cur,waiting_on:personName,updated_at:new Date().toISOString()};await persistLifeData(userId,life)}
