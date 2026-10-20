@@ -21,6 +21,9 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('server/postgres-config.js')
+const postgresConfigCheck=spawnSync(process.execPath,['scripts/check-postgres-config.mjs'],{cwd:root,encoding:'utf8'})
+postgresConfigCheck.status===0 ? pass('Prisma connection options and PostgreSQL dates verified') : fail(`PostgreSQL config: ${(postgresConfigCheck.stderr||postgresConfigCheck.stdout).trim()}`)
 syntaxCheck('server/local-store.js')
 syntaxCheck('server/calendar.js')
 syntaxCheck('public/assets/calendar.js')

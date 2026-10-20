@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import OpenAI from 'openai'
 import { createLocalStore } from './local-store.js'
 import { registerCalendar, normalizeCalendarState } from './calendar.js'
+import { postgresOptions } from './postgres-config.js'
 
 dotenv.config()
 
@@ -26,14 +27,15 @@ const PORT = Number(process.env.PORT || 3001)
 const RELEASE_VERSION = 'V1.1'
 const RELEASE_STAGE = 16
 const RELEASE_NAME = 'mllibden 1.1'
-let hasDatabase = Boolean(process.env.DATABASE_URL)
+const databaseOptions = postgresOptions()
+let hasDatabase = Boolean(databaseOptions.connectionString)
 let openaiClient
 const scrypt = promisify(crypto.scrypt)
 const deployedRuntime=process.env.NODE_ENV==='production'||Boolean(process.env.VERCEL)
 if (deployedRuntime && !process.env.AUTH_SECRET) {
   throw new Error('AUTH_SECRET must be set in production.')
 }
-if(deployedRuntime&&!process.env.DATABASE_URL)throw new Error('DATABASE_URL must be set for persistent production storage.')
+if(deployedRuntime&&!hasDatabase)throw new Error('DATABASE_URL must be set for persistent production storage.')
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex')
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.join(currentDir, '..', 'dist')
@@ -95,7 +97,7 @@ await app.register(cors, {
 })
 
 if (hasDatabase) {
-  await app.register(postgres, { connectionString: process.env.DATABASE_URL })
+  await app.register(postgres, databaseOptions)
 }
 
 if (!process.env.VERCEL && fs.existsSync(distDir)) {
