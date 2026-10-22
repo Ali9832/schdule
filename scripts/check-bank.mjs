@@ -1,0 +1,76 @@
+import fs from 'node:fs'
+import vm from 'node:vm'
+import assert from 'node:assert/strict'
+
+const data=JSON.parse(fs.readFileSync('public/data/master-items.json','utf8'))
+assert.equal(data.items.length,3248)
+assert.equal(new Set(data.items.map(item=>item.id)).size,3248)
+assert.equal(data.categories.length,23)
+assert.equal(Object.keys(data.macroTitles).length,6)
+assert.equal(data.categories.reduce((total,category)=>total+category.count,0),3248)
+for(const category of data.categories) assert.equal(category.count,data.items.filter(item=>item.h===category.h).length)
+for(const [macro,count] of Object.entries(data.macroCounts)) assert.equal(count,data.items.filter(item=>item.macro.split(' ')[0]===macro).length)
+const elements=new Map()
+const stored=new Map()
+const context=vm.createContext({
+ URLSearchParams,location:{search:''},
+ document:{querySelector(){return null},getElementById(id){if(!elements.has(id))elements.set(id,{textContent:'',classList:{add(){},remove(){}}});return elements.get(id)}},
+ localStorage:{setItem(key,value){stored.set(key,value)}},console
+})
+const source=fs.readFileSync('public/assets/master-bank.js','utf8')
+ .replace(/^\(\(\) => \{\s*/,'')
+ .replace(/window\.NovaBank=[\s\S]*$/,'')
+ .replace(/startBank\(\);\s*$/,'')
+vm.runInContext(source,context)
+context.inputData=structuredClone(data)
+vm.runInContext('DATA=inputData',context)
+assert.equal(vm.runInContext('normalizeSearch("يادداشت كاري")',context),'یادداشت کاری')
+context.itemId=data.items[0].id
+vm.runInContext('saveItem(itemId,{status:"☑",note:"<script>example</script>"})',context)
+const edits=JSON.parse(stored.get('nova-master-items-edits-v1'))
+assert.equal(edits[context.itemId].status,'☑')
+assert.equal(edits[context.itemId].note,'<script>example</script>')
+const row=vm.runInContext('rowHtml(DATA.items[0])',context)
+assert.ok(row.includes('checked'))
+assert.ok(row.includes('&lt;script&gt;example&lt;/script&gt;'))
+assert.ok(row.includes('data-note='))
+assert.ok(row.includes('data-action="edit"'))
+assert.ok(row.includes('data-action="delete"'))
+assert.ok(row.indexOf('class="col-actions"')<row.indexOf('class="col-id"'))
+assert.ok(!row.includes('<script>example</script>'))
+vm.runInContext('saveItem(itemId,{text:"عنوان جدید",deleted:true})',context)
+context.inputData=structuredClone(data)
+vm.runInContext('DATA=inputData;applySavedEdits()',context)
+assert.equal(vm.runInContext('DATA.items[0].text',context),'عنوان جدید')
+assert.equal(vm.runInContext('DATA.items[0].deleted',context),true)
+vm.runInContext('saveItem(itemId,{deleted:false})',context)
+assert.equal(JSON.parse(stored.get('nova-master-items-edits-v1'))[context.itemId].deleted,false)
+assert.ok(row.includes('item-completed'))
+context.taskTitle=data.items[0].text
+vm.runInContext('originalTitles=new Map([[itemId,normalizeSearch(taskTitle).trim()]]);synchronizeTasks([{id:"linked-task",title:taskTitle,status:"done"}])',context)
+assert.equal(JSON.parse(stored.get('nova-master-items-edits-v1'))[context.itemId].taskId,'linked-task')
+vm.runInContext('synchronizeTasks([{id:"linked-task",title:"renamed linked task",status:"todo"}])',context)
+assert.equal(vm.runInContext('DATA.items[0].status',context),'☐')
+assert.equal(vm.runInContext('DATA.items[0].text',context),'renamed linked task')
+const mutations=[]
+context.window={apiFetch:async(path,options)=>{mutations.push({path,body:JSON.parse(options.body)});return {}},refreshAll:async()=>{}}
+await vm.runInContext('setStatus(itemId,true)',context)
+assert.equal(mutations[0].path,'/api/tasks/linked-task')
+assert.equal(mutations[0].body.status,'done')
+assert.equal(vm.runInContext('DATA.items[0].status',context),'☑')
+context.window.apiFetch=async()=>{throw new Error('test failure')}
+await vm.runInContext('setStatus(itemId,false)',context)
+assert.equal(vm.runInContext('DATA.items[0].status',context),'☑')
+vm.runInContext('localEdits={};DATA=inputData;DATA.items[0].text=taskTitle;synchronizeTasks([{id:"duplicate-a",title:taskTitle,status:"done"},{id:"duplicate-b",title:taskTitle,status:"todo"}])',context)
+assert.equal(vm.runInContext('Object.keys(localEdits).length',context),0)
+context.orderItems=[{id:'first',excelRow:4,status:'☑'},{id:'second',excelRow:5,status:'☐'},{id:'third',excelRow:6,status:'☑'}]
+assert.equal(vm.runInContext('orderItems.sort(compareBankItems).map(item=>item.id).join(",")',context),'second,first,third')
+vm.runInContext('orderItems.find(item=>item.id==="first").status="☐"',context)
+assert.equal(vm.runInContext('orderItems.sort(compareBankItems).map(item=>item.id).join(",")',context),'first,second,third')
+assert.ok(!Object.hasOwn(data.items[0],'modified'))
+const main=fs.readFileSync('index.html','utf8')
+assert.ok(main.includes('class="page hidden nova-master-bank" id="items"'))
+assert.ok(!main.includes('masterBankFrame'))
+assert.ok(main.includes('id="bank-macroRow"'))
+assert.ok(main.includes('src="/assets/master-bank.js"'))
+console.log('Master bank: 3248 items; totals, search normalization, status, notes and escaping passed.')

@@ -1,0 +1,14 @@
+node_modules
+dist
+.env
+.env.local
+.env.*
+!.env.example
+.idea/
+.vercel/
+*.log
+*.err
+backups/
+.local/
+test-results/browser-profile/
+test-results/edge-profile/
