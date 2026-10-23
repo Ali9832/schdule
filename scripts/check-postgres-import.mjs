@@ -17,7 +17,11 @@ const source = {version:1,memory:{
     spiritual_routines:[],health_metrics:[{id:crypto.randomUUID(),name:'Energy',slug:'energy'}],links:[]}
 }}
 const user = crypto.randomUUID()
+const reportId=crypto.randomUUID()
+source.memory.project_reports={[reportId]:{id:reportId,project_id:projectId,user_id:'local-demo',text:'Project update',report_date:'2026-10-23',version:1,created_at:'2026-10-23T09:00:00Z',updated_at:'2026-10-23T09:00:00Z'}}
 const plan = buildPlan(source,user)
+assert.equal(plan.tables.project_reports[0].text,'Project update')
+assert.equal(plan.tables.project_reports[0].user_id,user)
 assert.equal(plan.counts.tasks,source.memory.tasks.length)
 assert.equal(plan.counts.routines,source.memory.habits.length+source.memory.v11.spiritual_routines.length)
 assert.deepEqual(plan.life.finance,source.memory.finance)

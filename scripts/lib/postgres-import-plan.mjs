@@ -17,7 +17,8 @@ export const columns = Object.fromEntries(Object.entries({
   people: 'id name relation_type organization contact tags cadence_days last_contact_at next_contact_at important_date important_date_label notes status created_at updated_at',
   relationship_commitments: 'id person_id title direction kind status due_date task_id meeting_event_id note created_at updated_at',
   spiritual_routine_details: 'routine_id intention preferred_time minimum_action reflection_prompt updated_at',
-  religious_event_details: 'event_id observance_notes preparation_notes reminder_days source_label updated_at'
+  religious_event_details: 'event_id observance_notes preparation_notes reminder_days source_label updated_at',
+  project_reports: 'id project_id text report_date version created_at updated_at'
 }).map(([table, value]) => [table, value.split(' ')]))
 export const jsonColumns = new Set(['tags', 'participants', 'decisions', 'action_items', 'waiting_items'])
 const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -90,6 +91,7 @@ export function buildPlan(bundle, userId) {
   ;(v11.relationship_commitments || []).forEach(row => add('relationship_commitments', row))
   for (const [routine_id, details] of Object.entries(v11.spiritual_details || {})) add('spiritual_routine_details', { ...details, routine_id })
   for (const [event_id, details] of Object.entries(v11.religious_details || {})) add('religious_event_details', { ...details, event_id })
+  for (const row of Object.values(memory.project_reports || {})) add('project_reports', row)
   const foreignKeys = {
     projects: { area_id: 'areas' }, planner_events: { project_id: 'projects', area_id: 'areas' },
     tasks: { project_id: 'projects', area_id: 'areas', source_meeting_id: 'planner_events' },
@@ -97,7 +99,7 @@ export function buildPlan(bundle, userId) {
     resources: { area_id: 'areas' }, meeting_details: { event_id: 'planner_events', area_id: 'areas' },
     health_metric_logs: { metric_id: 'health_metric_definitions' },
     relationship_commitments: { person_id: 'people', task_id: 'tasks', meeting_event_id: 'planner_events' },
-    spiritual_routine_details: { routine_id: 'routines' }, religious_event_details: { event_id: 'planner_events' }
+    spiritual_routine_details: { routine_id: 'routines' }, religious_event_details: { event_id: 'planner_events' }, project_reports: { project_id: 'projects' }
   }
   for (const [table, fields] of Object.entries(foreignKeys)) for (const row of plan[table]) for (const [field, target] of Object.entries(fields)) {
     if (row[field] && !plan[target].some(parent => parent.id === row[field])) throw new Error(`Dangling reference: ${table}.${field} -> ${target}`)

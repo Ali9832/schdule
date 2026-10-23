@@ -2,6 +2,17 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.6.0] - 2026-10-23
+
+### Added
+- Two dedicated boxes in project details: linked meetings and dated project reports, preserving existing project fields and links.
+- Create project meetings directly in the inspector; they share the existing calendar/meetings records, support explicit held/scheduled status and link to full meeting editing.
+- Persist project reports in a separate user-owned PostgreSQL table with local snapshot support; reports are editable and include optimistic version conflict protection.
+- Include project reports in the existing local-to-PostgreSQL import plan; deleting a project cascades its report history in both storage modes.
+- Reports are visible both in project history and the Reports page, with edit actions returning to the correct project.
+- Idempotent schema migration 018, user/project isolation tests, input validation and immediate confirmed report updates without full-application reloads.
+- Past meeting dates are not treated as proof that a meeting was held. Report lists show the latest 100 entries; unsaved report drafts survive inspector reopening within the same browser session only.
+
 ## [1.5.0] - 2026-10-23
 
 ### Added

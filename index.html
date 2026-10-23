@@ -933,7 +933,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.5.0</small></div>
+<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.6.0</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -3615,11 +3615,12 @@ const v1112PrevFunctional=window.handleFunctionalPageOpen;window.handleFunctiona
   const result=await request(path,options);
   const method=(options.method||'GET').toUpperCase();
   if(method!=='GET'){
-   pages.forEach(page=>dirty.add(page));
-   let applied=false;
-   try{applied=window.NovaFastUI?.applyMutation(path,method,result)||false}catch(error){console.warn('Saved, but local view reconciliation failed:',error)}
+   const reportOnly=/^\/api\/projects\/[^/]+\/reports(?:\/|$)/.test(path);
+   if(reportOnly)dirty.add('reports');else pages.forEach(page=>dirty.add(page));
+   let applied=reportOnly;
+   try{if(!reportOnly)applied=window.NovaFastUI?.applyMutation(path,method,result)||false}catch(error){console.warn('Saved, but local view reconciliation failed:',error)}
    if(!applied)legacyDirty=true;
-   v112Invalidate();if(!/^\/api\/(?:v11\/)?tasks(?:\/|$)/.test(path))V112_REFS_LOADED=false;
+   if(!reportOnly){v112Invalidate();if(!/^\/api\/(?:v11\/)?tasks(?:\/|$)/.test(path))V112_REFS_LOADED=false;}
    window.dispatchEvent(new CustomEvent('nova:data-changed',{detail:{path,method,result}}));
   }
   return result;
@@ -3713,5 +3714,7 @@ function setMobileMenu(open){
 <script src="/assets/fast-mutations.js"></script>
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
 <script src="/assets/today-tasks.js"></script>
+<link rel="stylesheet" href="/assets/project-workspace.css"/>
+<script src="/assets/project-workspace.js"></script>
 </body>
 </html>

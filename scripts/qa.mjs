@@ -22,6 +22,10 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
 }
 syntaxCheck('server/index.js')
 syntaxCheck('server/finance-editor.js')
+syntaxCheck('server/project-workspace.js')
+syntaxCheck('public/assets/project-workspace.js')
+const projectWorkspaceCheck=spawnSync(process.execPath,['scripts/check-project-workspace.mjs'],{cwd:root,encoding:'utf8'})
+projectWorkspaceCheck.status===0 ? pass('Project reports, meeting links, edit conflicts and user isolation verified') : fail(`Project workspace: ${(projectWorkspaceCheck.stderr||projectWorkspaceCheck.stdout).trim()}`)
 syntaxCheck('server/planning-date.js')
 syntaxCheck('public/assets/date-context.js')
 syntaxCheck('public/assets/date-context-ui.js')
@@ -76,7 +80,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')+'\n'+read('server/project-workspace.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])
@@ -84,13 +88,13 @@ const routeKeys=routes.map(([m,p])=>`${m} ${p}`)
 const dupRoutes=routeKeys.filter((x,i,a)=>a.indexOf(x)!==i)
 ;[...new Set(dupRoutes)].length ? fail(`Duplicate routes: ${[...new Set(dupRoutes)].join(', ')}`) : pass(`Unique backend routes: ${routes.length}`)
 
-const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')+'\n'+read('public/assets/finance-editor.js')+'\n'+read('public/assets/date-context-ui.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
+const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')+'\n'+read('public/assets/finance-editor.js')+'\n'+read('public/assets/date-context-ui.js')+'\n'+read('public/assets/project-workspace.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
 const split=(p)=>p.replace(/\$\{[^}]+\}/g,':x').replace(/\/$/,'').split('/')
 const routeMatches=(f,b)=>{const F=split(f),B=split(b); return F.length===B.length && F.every((v,i)=>B[i]?.startsWith(':') || v===B[i])}
 const unmatched=frontRefs.filter(f=>!routes.some(([,b])=>routeMatches(f,b)))
 unmatched.length ? fail(`Frontend API refs without backend route: ${unmatched.join(', ')}`) : pass(`Frontend API references mapped: ${frontRefs.length}/${frontRefs.length}`)
 
-const migrations=['011_canonical_entities.sql','012_outcome_area_control.sql','013_resource_learning_pipeline.sql','014_health_energy_system.sql','015_relationship_people_commitments.sql','016_spiritual_religious_integration.sql','017_calendar_attachments.sql']
+const migrations=['011_canonical_entities.sql','012_outcome_area_control.sql','013_resource_learning_pipeline.sql','014_health_energy_system.sql','015_relationship_people_commitments.sql','016_spiritual_religious_integration.sql','017_calendar_attachments.sql','018_project_reports.sql']
 const missingM=migrations.filter(f=>!exists(`server/migrations/${f}`))
 missingM.length ? fail(`Missing migrations: ${missingM.join(', ')}`) : pass(`Migrations present: ${migrations.length}`)
 

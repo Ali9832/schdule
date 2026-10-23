@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict'
+const base=process.env.NOVA_BASE_URL||'http://127.0.0.1:3016'
+const tabs=await(await fetch('http://127.0.0.1:9228/json/list')).json()
+const socket=new WebSocket(tabs.find(tab=>tab.type==='page').webSocketDebuggerUrl)
+await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject})
+let sequence=0;const pending=new Map(),errors=[],projects=[]
+socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){const task=pending.get(message.id);pending.delete(message.id);message.error?task.reject(message.error):task.resolve(message.result)}if(message.method==='Runtime.exceptionThrown')errors.push(message.params.exceptionDetails)}
+const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}))})
+async function evaluate(expression){const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value}
+const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))
+async function until(expression){for(let i=0;i<140;i++){if(await evaluate(expression))return;await pause(100)}throw Error('Timeout: '+expression)}
+const title='Project workspace audit '+Date.now()
+async function reportSubmit(text){await evaluate(`(()=>{const form=document.querySelector('.pw-report-form');form.elements.text.value=${JSON.stringify(text)};form.elements.text.dispatchEvent(new Event('input'));form.requestSubmit()})()`);await until('!document.querySelector(".pw-report-form button[type=submit]").disabled')}
+try{
+ await send('Page.enable');await send('Runtime.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Network.setBypassServiceWorker',{bypass:true})
+ await send('Page.navigate',{url:base});await pause(400);await until('typeof ProjectWorkspace!=="undefined" && !!V112_DASH')
+ for(const suffix of [' one',' two'])projects.push(await evaluate(`apiFetch('/api/projects',{method:'POST',body:JSON.stringify({name:${JSON.stringify(title+suffix)},description:'Original description',status:'in_progress'})})`))
+ await evaluate(`goPage('projects');openV11Inspector('project',${JSON.stringify(projects[0].id)})`)
+ await until('!!document.querySelector("#v11InspectorBody .project-workspace") && !document.querySelector(".pw-report-form button[type=submit]").disabled')
+ assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .project-workspace > .pw-box").length'),2)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form").elements.report_date.value===DateContext.date'),true)
+ const text='Progress notes <img src=x onerror="window.__reportXSS=true">'
+ await reportSubmit(text)
+ await until('document.querySelectorAll(".pw-report-row").length===1')
+ assert.equal(await evaluate('document.querySelector(".pw-report-text").textContent'),text)
+ assert.equal(await evaluate('!!window.__reportXSS || !!document.querySelector(".pw-report-row img")'),false)
+ await evaluate('document.querySelector(".pw-report-row button").click()');await reportSubmit('Expanded progress notes')
+ assert.equal(await evaluate('document.querySelector(".pw-report-text").textContent'),'Expanded progress notes')
+ const workspace=await evaluate(`apiFetch('/api/projects/${projects[0].id}/workspace')`)
+ assert.equal(workspace.reports.length,1);assert.equal(workspace.reports[0].version,2)
+ // Failed save keeps draft and displays an error, not a fake report.
+ await evaluate(`window.__projectRequest=window.apiFetch;window.apiFetch=async(path,options)=>{if(path.endsWith('/reports')&&options?.method==='POST')throw Error('Offline report test');return window.__projectRequest(path,options)}`)
+ await reportSubmit('Unsaved project draft')
+ assert.equal(await evaluate('document.querySelector(".pw-report-form textarea").value'),'Unsaved project draft')
+ assert.equal(await evaluate('document.querySelectorAll(".pw-report-row").length'),1)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form [role=alert]").textContent'),'Offline report test')
+ await evaluate('window.apiFetch=window.__projectRequest')
+ await evaluate(`document.querySelector('.pw-meeting-form').hidden=false;const form=document.querySelector('.pw-meeting-form');form.elements.title.value='Linked meeting';form.elements.date.value='2099-01-01';form.elements.time.value='09:00';form.elements.summary.value='Meeting agenda';form.requestSubmit()`)
+ await until('document.querySelectorAll(".pw-meeting-row").length===1')
+ let meeting=await evaluate(`(async()=>{const data=await apiFetch('/api/projects/${projects[0].id}/workspace');return data.meetings[0]})()`)
+ assert.equal(meeting.project_id,projects[0].id);assert.equal(meeting.status,'scheduled')
+ const calendar=await evaluate(`apiFetch('/api/calendar?from=2099-01-01&to=2099-01-02')`)
+ assert.ok(calendar.entries.some(row=>row.id===meeting.id))
+ await evaluate('document.querySelector(".pw-meeting-row button").click()')
+ await until('document.querySelectorAll(".pw-meeting-group")[1].querySelectorAll(".pw-meeting-row").length===1')
+ meeting=await evaluate(`(async()=>{const data=await apiFetch('/api/projects/${projects[0].id}/workspace');return data.meetings[0]})()`);assert.equal(meeting.status,'held')
+ // Reopening restores a draft without overwriting persisted reports.
+ await evaluate(`closeV11Inspector();openV11Inspector('project',${JSON.stringify(projects[0].id)})`)
+ await until('!!document.querySelector(".pw-report-row") && !document.querySelector(".pw-report-form button[type=submit]").disabled')
+ assert.equal(await evaluate('document.querySelector(".pw-report-form textarea").value'),'Unsaved project draft')
+ await evaluate(`openV11Inspector('project',${JSON.stringify(projects[1].id)})`)
+ await until(`document.querySelector('.project-workspace')?.dataset.projectId===${JSON.stringify(projects[1].id)} && !document.querySelector('.pw-report-form button[type=submit]').disabled`)
+ assert.equal(await evaluate('document.querySelectorAll(".pw-report-row,.pw-meeting-row").length'),0)
+ await evaluate('goPage("reports")');await until('!!document.querySelector("#projectReportsOverview .pw-report-row")')
+ assert.ok((await evaluate('document.getElementById("projectReportsOverview").textContent')).includes('Expanded progress notes'))
+ await evaluate('document.querySelector("#projectReportsOverview .pw-report-row button").click()')
+ await until('!!document.querySelector(".pw-report-form") && !document.querySelector(".pw-report-form button[type=button]").hidden')
+ assert.equal(await evaluate('V11_INSPECTOR.id'),projects[0].id)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form textarea").value'),'Expanded progress notes')
+ await send('Emulation.setDeviceMetricsOverride',{width:390,height:844,deviceScaleFactor:1,mobile:true})
+ assert.equal(await evaluate('document.querySelector(".project-workspace").scrollWidth<=document.querySelector(".project-workspace").clientWidth+1'),true)
+ assert.equal(errors.length,0,JSON.stringify(errors))
+ console.log('Project browser passed: inspector boxes, report create/edit/persistence/drafts/errors/XSS safety, linked calendar meeting, held status, project isolation, Reports navigation and mobile layout.')
+}finally{
+ await evaluate('if(window.__projectRequest)window.apiFetch=window.__projectRequest')
+ for(const project of projects)await evaluate(`(async()=>{const data=await apiFetch('/api/projects/${project.id}/workspace').catch(()=>null);for(const m of data?.meetings||[])await apiFetch('/api/events/'+m.id,{method:'DELETE'}).catch(()=>{});await apiFetch('/api/projects/${project.id}',{method:'DELETE'}).catch(()=>{})})()`)
+ await send('Emulation.clearDeviceMetricsOverride');socket.close()
+}

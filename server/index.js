@@ -16,6 +16,7 @@ import { registerCalendarAttachments } from './calendar-attachments.js'
 import { postgresOptions } from './postgres-config.js'
 import { registerFinanceEditor } from './finance-editor.js'
 import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
+import { registerProjectWorkspace } from './project-workspace.js'
 
 dotenv.config()
 
@@ -1888,6 +1889,31 @@ app.patch('/api/v11/projects/:id', async (request, reply) => {
   const data=await getV11Canonical(request.user.id);return data.projects.find((x)=>x.id===projectId)
 })
 
+registerProjectWorkspace(app, {
+  project: async (userId, projectId) => hasDatabase ? (await app.pg.query('SELECT id,name FROM projects WHERE user_id=$1 AND id=$2', [userId,projectId])).rows[0] : memory.projects.find(row=>row.id===projectId),
+  projects: listProjects,
+  meetings: async (userId, projectId) => hasDatabase ? (await app.pg.query("SELECT * FROM planner_events WHERE user_id=$1 AND project_id=$2 AND type='meeting' ORDER BY start_at", [userId,projectId])).rows : memory.events.filter(row=>row.project_id===projectId&&row.type==='meeting'),
+  createEvent, updateEvent,
+  reports: {
+    async list(userId, projectId) {
+      if(hasDatabase)return (await app.pg.query('SELECT * FROM project_reports WHERE user_id=$1 AND ($2::uuid IS NULL OR project_id=$2) ORDER BY created_at DESC,id DESC LIMIT 100', [userId,projectId||null])).rows
+      return Object.values(memory.project_reports||{}).filter(row=>row.user_id===userId&&(!projectId||row.project_id===projectId)).sort((a,b)=>b.created_at.localeCompare(a.created_at)||b.id.localeCompare(a.id)).slice(0,100)
+    },
+    async create(row) {
+      if(hasDatabase){await app.pg.query('INSERT INTO project_reports (id,user_id,project_id,text,report_date,version,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)',[row.id,row.user_id,row.project_id,row.text,row.report_date,row.version,row.created_at,row.updated_at]);return}
+      memory.project_reports||={};memory.project_reports[row.id]=row
+    },
+    async get(userId, projectId, reportId) {
+      if(hasDatabase)return (await app.pg.query('SELECT * FROM project_reports WHERE user_id=$1 AND project_id=$2 AND id=$3',[userId,projectId,reportId])).rows[0]
+      const row=memory.project_reports?.[reportId];return row?.user_id===userId&&row.project_id===projectId?row:null
+    },
+    async update(row, version) {
+      if(hasDatabase)return (await app.pg.query('UPDATE project_reports SET text=$1,report_date=$2,version=version+1,updated_at=$3 WHERE id=$4 AND user_id=$5 AND project_id=$6 AND version=$7 RETURNING id',[row.text,row.report_date,row.updated_at,row.id,row.user_id,row.project_id,version])).rows.length>0
+      if(memory.project_reports?.[row.id]?.version!==version)return false
+      memory.project_reports[row.id]=row;return true
+    }
+  }
+})
 app.get('/api/v11/inspector/:type/:id', async (request, reply) => {
   const data=await getV11Canonical(request.user.id), type=String(request.params.type), entityId=request.params.id
   const entity=v11EntityMap(data,type).find((x)=>x.id===entityId || (type==='meeting'&&x.event_id===entityId))
@@ -2009,6 +2035,7 @@ app.delete('/api/projects/:id', async (request, reply) => {
     const index = memory.projects.findIndex((project) => project.id === projectId)
     if (index < 0) return reply.code(404).send({ error: 'پروژه پیدا نشد.' })
     const [removed] = memory.projects.splice(index, 1)
+    for(const [key,row] of Object.entries(memory.project_reports||{}))if(row.project_id===projectId)delete memory.project_reports[key]
     memory.tasks = memory.tasks.map((task) => task.project_id === projectId ? { ...task, project_id: null } : task)
     memory.events = memory.events.map((event) => event.project_id === projectId ? { ...event, project_id: null } : event)
     await addActivity('project', `پروژه «${removed.name}» حذف شد.`)

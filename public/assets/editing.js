@@ -44,6 +44,7 @@
     try{let data;try{data=await apiFetch(`/api/v11/inspector/${encodeURIComponent(type)}/${encodeURIComponent(id)}`)}catch(error){data=v11LocalInspectorData(type,id);if(!data)throw error}
       if(request!==inspectorRequest||owner!==generation)return;
       const entity=data.entity;document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);document.getElementById('v11InspectorType').textContent=(names[type]||'مورد')+' · جزئیات';body.innerHTML=v11InspectorHtml(type,entity,data.linked||[]);body.scrollTop=0;edit.disabled=false;edit.onclick=()=>window.v11EditCurrent(type,entity);
+      if(type==='project')window.ProjectWorkspace?.mount(body,entity);
     }catch(error){if(request===inspectorRequest&&owner===generation){body.replaceChildren();const message=document.createElement('p');message.className='record-edit-error';message.textContent=error.message||'دریافت اطلاعات انجام نشد.';body.append(message)}}
   };
   window.v11EditCurrent=function(type,entity){
