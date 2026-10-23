@@ -65,10 +65,14 @@
   window.renderTodayBase = function () {
     if (!BASE_DATA) return;
     const root = document.getElementById('todayPageBody'); if (!root) return;
-    const rows = (BASE_DATA.tasks || []).filter(row => ctx.matches(row.due_date, 'today'));
-    const done = rows.filter(row => row.status === 'done').length;
+    const isDone = row => window.TodayTasks?.isDone(row) ?? (row.status === 'done');
+    const rows = (BASE_DATA.tasks || []).filter(row => ctx.matches(row.due_date, 'today')).slice().sort((a,b)=>Number(isDone(a))-Number(isDone(b)));
+    const done = rows.filter(isDone).length;
     const habits = BASE_DATA.habits || [], habitDone = habits.filter(row => row.logs?.[ctx.date]).length;
-    root.innerHTML = cardsHtml([{ title: 'کارهای این نما', value: toFaNum(rows.length), sub: label(ctx.date) }, { title: 'انجام‌شده', value: toFaNum(done), sub: `${toFaNum(pct(done, rows.length))}٪ از موارد نمایش‌داده‌شده` }, { title: 'روتین‌های روز انتخابی', value: toFaNum(habitDone), sub: `از ${toFaNum(habits.length)} روتین` }]) + `<div class="functional-card" style="grid-column:1/-1"><h3>کارهای روز انتخابی و بدون موعد</h3><div class="data-list">${rows.map(row => `<div class="data-row"><div><b>${escapeHtml(row.title)}</b><small>${row.due_date ? escapeHtml(faDateLabel(row.due_date)) : 'بدون موعد'}</small></div><span class="badge ${row.status === 'done' ? 'good' : 'warn'}">${row.status === 'done' ? 'انجام‌شده' : 'باز'}</span></div>`).join('') || '<p>برای این روز کاری ثبت نشده است.</p>'}</div></div>`;
+    root.innerHTML = cardsHtml([{ title: 'کارهای این نما', value: toFaNum(rows.length), sub: label(ctx.date) }, { title: 'انجام‌شده', value: toFaNum(done), sub: `${toFaNum(pct(done, rows.length))}٪ از موارد نمایش‌داده‌شده` }, { title: 'روتین‌های روز انتخابی', value: toFaNum(habitDone), sub: `از ${toFaNum(habits.length)} روتین` }]) + `<div class="functional-card today-task-card" style="grid-column:1/-1"><h3>کارهای روز انتخابی و بدون موعد</h3><p>موارد انجام‌شده در انتهای فهرست می‌مانند؛ برای بازگرداندن، تیک را بردارید.</p><div class="data-list today-task-list"></div></div>`;
+    const list=root.querySelector('.today-task-list');
+    if(window.TodayTasks)TodayTasks.render(list,rows);
+    else list.textContent=rows.length?'در حال آماده‌سازی فهرست…':'برای این روز کاری ثبت نشده است.';
   };
   const params = window.v111TaskParams;
   window.v111TaskParams = function (cursor) {

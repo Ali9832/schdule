@@ -2,6 +2,13 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.5.0] - 2026-10-23
+
+### Added
+- Today-view task cards have completion checkboxes, edit actions and confirmed deletion in the requested fourth card under `#todayPageBody`.
+- Completed tasks are struck through, visually muted and stably moved behind open tasks; unchecking reopens a task.
+- Responsive accessible controls, immediate pending completion feedback, duplicate-action protection and failure rollback without application-wide reloads.
+
 ## [1.4.2] - 2026-10-23
 
 ### Fixed
