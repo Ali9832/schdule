@@ -2,6 +2,24 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.4.2] - 2026-10-23
+
+### Fixed
+- Render confirmed task creation/edit/delete responses into shared local views immediately instead of waiting for application-wide reloads.
+- Remove repeated bootstrap/modules downloads, unchanged-reference invalidation and duplicate task-page loads from the save path.
+- Defer and debounce visible-view reconciliation and menu counts; remove startup preloading of hidden legacy analytics.
+- Shorten inspector saves by refreshing the selected record rather than the entire canonical bootstrap and dashboard first.
+- Keep failed-save drafts, prevent double submission, and reject stale in-flight task/dashboard snapshots after a confirmed mutation.
+- Local controlled benchmark with 150 ms added per request: task creation fell from 1,215 ms (1 write + 8 reads before completion) to 165–172 ms (1 write before completion). These are not production latency measurements.
+- Includes the previously prepared routine-cell fix below; v1.4.1 was not published separately. See `docs/PERFORMANCE_FA.md` for reproduction and remaining production checks.
+
+## [1.4.1] - 2026-10-23 (prepared; included in 1.4.2)
+
+### Fixed
+- Make the entire routine day cell a native checkbox label, including its centre and padding, without duplicate toggle handlers.
+- Consistent checkbox sizing, touch targets, keyboard focus and accessible routine/day labels.
+- Fix routine-column sizing and remove its horizontal sticky overlay so it cannot cover day controls after RTL scrolling; column headers remain vertically sticky.
+
 ## [1.4.0] - 2026-10-23
 
 ### Added

@@ -67,9 +67,11 @@
       save.disabled=true;error.textContent='در حال ذخیره…';
       try{await apiFetch(`/api/${route}/${encodeURIComponent(type==='meeting'?entity.event_id||entity.id:entity.id)}`,{method:'PATCH',body:JSON.stringify(patch)});
         if(owner!==generation||request!==inspectorRequest)return;
-        await refreshV11();await v112RefreshDashboard(true);if(owner!==generation||request!==inspectorRequest)return;
-        await window.handleFunctionalPageOpen?.(page);if(owner!==generation||request!==inspectorRequest)return;
-        await openV11Inspector(type,entity.id);showToast('ذخیره شد','تغییرات ثبت شد.');
+        showToast('ذخیره شد','تغییرات ثبت شد.');
+        if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();
+        else await window.handleFunctionalPageOpen?.(page);
+        if(owner!==generation||request!==inspectorRequest)return;
+        await openV11Inspector(type,entity.id);
       }catch(failure){if(owner===generation&&request===inspectorRequest)error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=false}
     };
   };

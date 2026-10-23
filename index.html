@@ -491,6 +491,18 @@ body.theme-dark .habit-load-notice{background:#202a40;border-color:#2e3b58;color
 .habit-combined-scroll .habit-matrix thead th{top:0}
 .habit-check{transition:transform .08s ease, box-shadow .08s ease}.habit-check:active{transform:scale(.94)}
 .habit-updating{opacity:.68;pointer-events:none}
+/* Native label makes the entire day cell a single checkbox hit target. */
+.habit-combined-scroll{--habit-name-width:250px}
+#habitMatrixTable{table-layout:fixed}
+#habitMatrixTable .habit-name{right:auto;width:var(--habit-name-width);min-width:var(--habit-name-width);max-width:var(--habit-name-width);overflow-wrap:anywhere}
+#habitMatrixTable .summary-col{width:105px}
+#habitMatrixTable .count-col{width:82px}
+#habitMatrixTable td.habit-day-toggle-cell{padding:0;height:1px}
+#habitMatrixTable .habit-day-toggle{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-height:44px;box-sizing:border-box;margin:0;cursor:pointer;touch-action:manipulation}
+#habitMatrixTable .habit-day-toggle:hover{background:#61b78c16}
+#habitMatrixTable .habit-day-toggle:focus-within{outline:2px solid #377b72;outline-offset:-3px}
+#habitMatrixTable .habit-check{width:22px;height:22px;min-width:22px;min-height:22px;padding:0;margin:0;box-sizing:border-box;flex:0 0 22px;cursor:pointer}
+@media(max-width:900px){.habit-combined-scroll{--habit-name-width:160px}}
 body.theme-dark .habit-combined-card .habit-success-head{border-color:#2a3042}
 body.theme-dark .habit-week-legend-inline,body.theme-dark .habit-matrix-divider{background:#1c2234;border-color:#2a3042;color:#e7ebf3}
 @media(max-width:900px){.habit-combined-scroll .habit-daily-chart,.habit-combined-scroll .habit-matrix,.habit-week-legend-inline,.habit-matrix-divider{min-width:1250px}}
@@ -921,7 +933,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.4.0</small></div>
+<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.4.2</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -2530,7 +2542,7 @@ function hydrateModuleCards(){
   document.querySelectorAll('.module-card[data-module]').forEach(card=>{const type=card.dataset.module;const m=moduleData(type);if(!m)return;const pe=card.querySelector('.module-percent');if(pe)pe.textContent=`${toFaNum(m.percent||0)}٪`;const meta=card.querySelector('.module-meta');if(meta)meta.textContent=m.meta||'';const bar=card.querySelector('.module-progress>i');if(bar){bar.style.width=`${m.percent||0}%`;bar.style.background=pColor(m.percent||0)}const st=card.querySelector('.module-status');if(st){st.className=`module-status ${m.tone==='good'?'status-good':m.tone==='mid'?'status-mid':'status-low'}`;st.textContent=m.status||'—'}const scroll=card.querySelector('.module-scroll');if(scroll){scroll.innerHTML=(m.items||[]).map(it=>`<div class="module-list-item" data-id="${escapeHtml(it.id)}"><input type="checkbox" ${it.done?'checked':''} onchange="baseToggleModule('${type}','${jsSafe(it.id)}',this.checked)"><span class="item-name">${escapeHtml(it.title)}</span><span class="mini-state ${it.done?'mini-green':'mini-yellow'}">${escapeHtml(it.state||'باز')}</span><button class="module-item-edit" onclick="baseEditModule('${type}','${jsSafe(it.id)}','${jsSafe(it.title)}')">✎</button></div>`).join('')||'<div class="empty">موردی ثبت نشده است.</div>'}const footer=card.querySelector('.module-footer small');if(footer)footer.textContent=`${toFaNum(m.count||0)} مورد • ${toFaNum(m.done||0)} انجام‌شده`;const tog=card.querySelector('.module-toggle');if(tog){const closed=card.classList.contains('collapsed');tog.textContent=closed?'⌄':'⌃';tog.title=closed?'باز کردن باکس':'بستن باکس'}})
 }
 
-async function refreshAll(){v112Invalidate('dashboard');if(V112_LEGACY_LOADED){await v112RefreshLegacy();}await v112RefreshDashboard(true);if(!document.getElementById('habits')?.classList.contains('hidden')&&V112_LEGACY_LOADED)await loadHabitMatrix()}
+async function refreshAll(){if(window.NovaFastUI)return NovaFastUI.refreshVisible();v112Invalidate('dashboard');if(V112_LEGACY_LOADED){await v112RefreshLegacy();}await v112RefreshDashboard(true);if(!document.getElementById('habits')?.classList.contains('hidden')&&V112_LEGACY_LOADED)await loadHabitMatrix()}
 async function baseToggleTask(id,done){await apiFetch(`/api/tasks/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status:done?'done':'todo'})});await refreshAll()}
 async function baseDeleteTask(id){if(!confirm('این آیتم حذف شود؟'))return;await apiFetch(`/api/tasks/${encodeURIComponent(id)}`,{method:'DELETE'});await refreshAll()}
 function baseEditTask(id){const t=BASE_TASKS.find(x=>x.id===id);if(!t)return;BASE_EDIT={kind:'task',id};currentAddType='item';document.getElementById('genericModalTitle').textContent='ویرایش آیتم';document.getElementById('genericModalType').textContent=t.category||"کار";document.getElementById('genericTitleInput').value=t.title;document.getElementById('genericNotes').value=t.description||'';document.getElementById('genericModalBg').classList.remove('hidden')}
@@ -2591,7 +2603,7 @@ window.loadHabitMonthFromApi=loadHabitMatrix;
 function renderHabitDailySuccessBase(data){const root=document.getElementById('habitDailyChart');if(!root)return;let h='<table class="habit-daily-align"><tbody><tr>';h+='<td class="habit-name-spacer"><div class="habit-daily-note">نمودار هر ستون دقیقاً بالای ستون همان روز در ماتریس قرار می‌گیرد.</div></td>';for(let i=0;i<(data.dailyPercent||[]).length;i++){const p=Number(data.dailyPercent[i]||0);h+=`<td class="day-cell" title="روز ${toFaNum(i+1)}: ${toFaNum(p)}٪"><div class="habit-day-bar-wrap"><div class="habit-day-bar ${p?'':'zero'}" style="height:${Math.max(2,p)}%;background:${pColor(p)}"><b>${toFaNum(p)}٪</b></div></div></td>`}h+='<td class="summary-space"></td><td class="summary-space"></td><td class="count-space"></td><td class="count-space"></td></tr><tr>';h+='<td class="habit-name-spacer label-cell">عادت / روتین</td>';for(let d=1;d<=data.days;d++)h+=`<td class="label-cell">${toFaNum(d)}</td>`;h+='<td class="summary-space label-cell">هدف</td><td class="summary-space label-cell">درصد</td><td class="count-space label-cell">تعداد</td><td class="count-space label-cell">ویرایش</td></tr></tbody></table>';root.innerHTML=h}
 function syncHabitScrollsBase(){/* V9.3: نمودار و ماتریس یک اسکرول مشترک دارند */}
 function weekSegmentsBase(days){const out=[];for(let s=1,w=1;s<=days;s+=7,w++)out.push({week:w,count:Math.min(7,days-s+1)});return out}
-function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h='<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td><input class="habit-check" type="checkbox" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h}
+function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h='<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td class="habit-day-toggle-cell"><label class="habit-day-toggle"><input class="habit-check" type="checkbox" aria-label="${escAttr(row.title)}، روز ${toFaNum(i+1)}، ماه ${toFaNum(data.month)} سال ${toFaNum(data.year)}" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></label></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h}
 async function baseToggleHabitDay(id,day,done){
   const m=Number(document.getElementById('habitMonthSelect').value),y=Number(document.getElementById('habitYearSelect').value);
   const data=BASE_HABIT_MATRIX;
@@ -3078,8 +3090,8 @@ function v111TaskParams(cursor='0'){
 }
 async function reloadV111Tasks(preserveScroll=false){
   if(V111_PAGE.loading)return;V111_PAGE.loading=true;const root=document.getElementById('v11WorkspaceRoot');const oldScroll=root?.querySelector('.v111-virtual-scroll')?.scrollTop||0;
-  const criteria=v111TaskParams('0');
-  try{const data=await apiFetch(`/api/v11/tasks/paged?${criteria}`);if(criteria!==v111TaskParams('0')){V111_PAGE.loading=false;return reloadV111Tasks(preserveScroll)}V111_PAGE={...V111_PAGE,...data,items:data.items||[],cursor:'0',loading:false};if(V11_DATA)V11_DATA.tasks=V111_PAGE.items;renderV111Workspace();if(preserveScroll){const s=document.querySelector('#v11WorkspaceRoot .v111-virtual-scroll');if(s)s.scrollTop=oldScroll}v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;console.warn('paged endpoint unavailable, using local canonical tasks',e);V111_PAGE.items=v11FilteredTasks();V111_PAGE.total=V111_PAGE.items.length;V111_PAGE.next_cursor=null;renderV111Workspace();v111HydrateMetrics()}
+  const criteria=v111TaskParams('0'),revision=window.NovaFastUI?.revision||0;
+  try{const data=await apiFetch(`/api/v11/tasks/paged?${criteria}`);if(criteria!==v111TaskParams('0')||revision!==(window.NovaFastUI?.revision||0)){V111_PAGE.loading=false;return reloadV111Tasks(preserveScroll)}V111_PAGE={...V111_PAGE,...data,criteria,items:data.items||[],cursor:'0',loading:false};if(V11_DATA)V11_DATA.tasks=[...V111_PAGE.items];renderV111Workspace();if(preserveScroll){const s=document.querySelector('#v11WorkspaceRoot .v111-virtual-scroll');if(s)s.scrollTop=oldScroll}v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;console.warn('paged endpoint unavailable, using local canonical tasks',e);V111_PAGE.items=v11FilteredTasks();V111_PAGE.total=V111_PAGE.items.length;V111_PAGE.next_cursor=null;renderV111Workspace();v111HydrateMetrics()}
 }
 function debouncedV111Reload(){clearTimeout(V111_FILTER_TIMER);V111_FILTER_TIMER=setTimeout(()=>reloadV111Tasks(),220)}
 async function v111NextPage(){if(!V111_PAGE.next_cursor||V111_PAGE.loading)return;V111_PAGE.loading=true;const criteria=v111TaskParams('0');try{const data=await apiFetch(`/api/v11/tasks/paged?${v111TaskParams(V111_PAGE.next_cursor)}`);if(criteria!==v111TaskParams('0')){V111_PAGE.loading=false;return reloadV111Tasks()}V111_PAGE.items=[...V111_PAGE.items,...(data.items||[])];V111_PAGE.next_cursor=data.next_cursor;V111_PAGE.total=data.total;V111_PAGE.loading=false;renderV111Workspace();v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;showToast('صفحه بعدی',e.message||String(e))}}
@@ -3172,7 +3184,7 @@ function v112RenderDashboard(d){
 
   const dateEl=document.getElementById('v10DashboardDate');if(dateEl)dateEl.textContent=faDateLabel(d.today);v112UpdatePerf(V112_STATS.lastMs,d,false)
 }
-async function v112RefreshDashboard(force=false){const d=await v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000,force});if(window.DateContext&&d.today!==DateContext.date)return d;V112_DASH=d;v112SeedCanonicalFromDashboard(d);v112RenderDashboard(d);return d}
+async function v112RefreshDashboard(force=false){const revision=window.NovaFastUI?.revision||0;const d=await v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000,force});if(window.DateContext&&d.today!==DateContext.date)return d;if(revision!==(window.NovaFastUI?.revision||0))return v112RefreshDashboard(true);V112_DASH=d;v112SeedCanonicalFromDashboard(d);v112RenderDashboard(d);return d}
 async function v112EnsureLegacy(){
   if(V112_LEGACY_LOADED)return BASE_DATA;if(V112_LEGACY_PROMISE)return V112_LEGACY_PROMISE;
   const el=document.getElementById('v112LegacyState');if(el)el.textContent='Loading…';
@@ -3596,13 +3608,18 @@ const v1112PrevFunctional=window.handleFunctionalPageOpen;window.handleFunctiona
 (() => {
  const request=window.apiFetch;
  const dirty=new Set();
+ let legacyDirty=false;
+ const legacyPages=new Set(['today','daily','habits','spiritual','religious','meetings','weekly','focus','waiting','reports','settings','items','health','relationships']);
  const pages=['dashboard','control-center','today','daily','workspace','waiting','focus','projects','goals','areas','resources','archive','schedule','meetings','finance','health','relationships','spiritual','religious','habits','weekly','reports'];
  window.apiFetch=async function(path,options={}){
   const result=await request(path,options);
   const method=(options.method||'GET').toUpperCase();
   if(method!=='GET'){
    pages.forEach(page=>dirty.add(page));
-   v112Invalidate();V112_REFS_LOADED=false;
+   let applied=false;
+   try{applied=window.NovaFastUI?.applyMutation(path,method,result)||false}catch(error){console.warn('Saved, but local view reconciliation failed:',error)}
+   if(!applied)legacyDirty=true;
+   v112Invalidate();if(!/^\/api\/(?:v11\/)?tasks(?:\/|$)/.test(path))V112_REFS_LOADED=false;
    window.dispatchEvent(new CustomEvent('nova:data-changed',{detail:{path,method,result}}));
   }
   return result;
@@ -3611,19 +3628,19 @@ const v1112PrevFunctional=window.handleFunctionalPageOpen;window.handleFunctiona
  window.handleFunctionalPageOpen=async function(page){
   try{
    if(dirty.has(page)){
-    if(V112_LEGACY_LOADED)await v112RefreshLegacy();
+    if(V112_LEGACY_LOADED&&legacyDirty&&legacyPages.has(page)){await v112RefreshLegacy();legacyDirty=false}
     if(page==='dashboard')await v112RefreshDashboard(true);
     if(page==='workspace')await reloadV111Tasks();
    }
    await open?.(page);
    if(page==='dashboard'){
-    await v112EnsureLegacy();hydrateModuleCards();window.NovaBank?.renderDashboard();
+    if(V112_LEGACY_LOADED)hydrateModuleCards();window.NovaBank?.renderDashboard();
    }
    dirty.delete(page);
   }catch(error){showToast('به‌روزرسانی انجام نشد',error.message||String(error));}
  };
- // The visible dashboard uses the same live records as its destination tabs.
- v112EnsureLegacy().then(()=>{hydrateModuleCards();window.NovaBank?.renderDashboard();}).catch(error=>console.warn("نمای کلی synchronization:",error));
+ window.NovaViewSync={markClean:page=>dirty.delete(page)};
+ // Compatibility data is loaded only when a legacy destination is actually opened.
 })();
 
 </script>
@@ -3693,5 +3710,6 @@ function setMobileMenu(open){
 <script src="/assets/finance-editor.js"></script>
 <link rel="stylesheet" href="/assets/date-context.css"/>
 <script src="/assets/date-context-ui.js"></script>
+<script src="/assets/fast-mutations.js"></script>
 </body>
 </html>

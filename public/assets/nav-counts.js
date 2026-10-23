@@ -17,7 +17,7 @@
   running=false;if(again){again=false;schedule()}
  }
  function schedule(){clearTimeout(timer);timer=setTimeout(refresh,180)}
- window.addEventListener('nova:data-changed',schedule);
+ window.addEventListener('nova:data-changed',()=>{clearTimeout(timer);timer=setTimeout(refresh,750)});
  window.addEventListener('nova:page-open',event=>{activePage=event.detail.page;schedule()});
  window.addEventListener('focus',schedule);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule()});

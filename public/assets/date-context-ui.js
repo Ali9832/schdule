@@ -109,7 +109,7 @@
     prepare(page); bars();
     await openPage?.(page);
     if (page === 'today') renderTodayBase();
-    if (page === 'workspace') await reloadV111Tasks();
+    if (page === 'workspace' && V111_PAGE.criteria !== v111TaskParams('0')) await reloadV111Tasks();
     if (page === 'daily') renderDailyTaskManager();
   };
   async function refresh() {
@@ -162,9 +162,12 @@
     if (currentAddType === 'project') { path = '/api/projects'; body = { name: title, description: note, status: 'in_progress', due_date: selectedDate, color: '#7165f3', icon: '✦' }; }
     if (currentAddType === 'finance') { path = '/api/finance/transactions'; body = { type: 'expense', amount: Number(document.getElementById('genericAmount').value), description: title, date: selectedDate || ctx.date, status: 'confirmed', category: 'عمومی' }; }
     genericSaving = true;
-    try { await apiFetch(path, { method: 'POST', body: JSON.stringify(body) }); closeGenericAdd(); showToast('ذخیره شد', title); await refreshAll(); await refresh(); }
+    const buttons = [...document.querySelectorAll('#genericModalBg .modal-actions button')];
+    const submit = buttons[0], originalLabel = submit?.textContent;
+    buttons.forEach(button => button.disabled = true); if (submit) submit.textContent = 'در حال ثبت…';
+    try { await apiFetch(path, { method: 'POST', body: JSON.stringify(body) }); closeGenericAdd(); showToast('ذخیره شد', title); if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();else await refreshAll(); }
     catch (error) { showToast('ذخیره نشد', error.message); }
-    finally { genericSaving = false; }
+    finally { genericSaving = false; buttons.forEach(button => button.disabled = false); if(submit)submit.textContent = originalLabel; }
   };
   window.DateContextUI = { refresh, bars, prepare, get refreshing() { return refreshing; } };
   bars(); prepare(currentPage());

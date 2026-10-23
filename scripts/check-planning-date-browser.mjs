@@ -15,7 +15,7 @@ try {
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable')
   await send('Network.setCacheDisabled', { cacheDisabled: true }); await send('Network.setBypassServiceWorker', { bypass: true })
   await send('Page.navigate', { url: base }); await pause(400)
-  await until('typeof DateContextUI!=="undefined" && typeof BASE_DATA!=="undefined" && !!BASE_DATA')
+  await until('typeof DateContextUI!=="undefined" && !!V112_DASH')
   assert.equal(await evaluate('DateContext.date===DateContext.today()'), true)
   assert.equal(await evaluate('document.querySelectorAll(".page").length===document.querySelectorAll(".planning-date-bar").length'), true)
   await evaluate(`(async()=>{for(const [suffix,due_date] of [[' A','${a}'],[' B','${b}'],[' Undated',null]])await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title:${JSON.stringify(title)}+suffix,due_date,status:'todo'})});})()`)
