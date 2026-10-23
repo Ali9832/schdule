@@ -6,13 +6,16 @@ let lastDeletedId=null;
 let linkedTasks=[];
 let originalTitles=new Map();
 let bankReady=false;
+let bankPromise=null;
+const PAGE_SIZE=50;
+const filteredCategories=new Map(),visibleLimits=new Map();
 let bankIndex=new Map(),bankTitles=new Map(),taskTitles=new Map(),taskLinks=new Map();
 const pendingStatus=new Set();
 const normalizeSearch=s=>String(s).toLowerCase().replace(/ي/g,"ی").replace(/ك/g,"ک").replace(/[\u200c\u200d]/g," ").replace(/\s+/g," ");
 function saveItem(id,patch){
  const item=DATA.items.find(x=>x.id===id);if(!item)return;
  Object.assign(item,patch);localEdits[id]={...(localEdits[id]||{}),...patch};
- if(bankReady){updateRowState(item);if(Object.hasOwn(patch,'status'))reorderCategory(item.h);renderDashboard();}
+ if(bankReady){updateRowState(item);if(Object.hasOwn(patch,'status')){const matches=filteredCategories.get(item.h);matches?.sort(compareBankItems);renderCategory(item.h);}renderDashboard();}
  try{localStorage.setItem(EDIT_KEY,JSON.stringify(localEdits));byId("saveMessage").textContent="تغییرات در همین مرورگر ذخیره شد.";byId("saveMessage").classList.remove("error");}
  catch{byId("saveMessage").textContent="ذخیره در مرورگر ممکن نیست؛ پیش از بستن صفحه خروجی تغییرات را دانلود کنید.";byId("saveMessage").classList.add("error");}
 }
@@ -149,13 +152,22 @@ async function startBank(){
   });
   window.addEventListener('storage',event=>{
    if(event.key!==EDIT_KEY)return;
-   try{localEdits=JSON.parse(event.newValue||'{}');applySavedEdits();const open=[...document.querySelectorAll('.nova-master-bank .category-section.open')].map(section=>section.dataset.h);renderBank();open.forEach(h=>toggleSection(h));refreshCounts();renderDashboard();}catch(error){console.warn('Bank storage:',error);}
+   try{localEdits=JSON.parse(event.newValue||'{}');applySavedEdits();const open=[...document.querySelectorAll('.nova-master-bank .category-section.open')].map(section=>section.dataset.h);renderBank();refreshCounts();open.forEach(h=>toggleSection(h));renderDashboard();}catch(error){console.warn('Bank storage:',error);}
   });
   try{synchronizeTasks(await window.apiFetch('/api/tasks'));}catch(error){console.warn('Task linking:',error);}
   byId("bank").addEventListener("click",handleAction);
   byId("bank").addEventListener("change",event=>{const id=event.target.dataset.item;if(id)setStatus(id,event.target.checked);});
   byId("bank").addEventListener("input",event=>{const id=event.target.dataset.note;if(id){saveItem(id,{note:event.target.value});const row=event.target.closest("tr");row.dataset.search=textBlob(DATA.items.find(x=>x.id===id));}});
  }catch(error){byId("resultSummary").textContent="بارگذاری بانک آیتم‌ها ناموفق بود. صفحه را تازه کنید.";console.error(error);}
+}
+
+function ensureLoaded(){
+ if(bankReady)return Promise.resolve();
+ if(!bankPromise){
+  byId('resultSummary').textContent='در حال دریافت بانک آیتم‌ها…';
+  bankPromise=startBank().finally(()=>{bankPromise=null;});
+ }
+ return bankPromise;
 }
 
 
@@ -203,10 +215,6 @@ function renderMacros(){
 
 
 function renderBank(){
-  const byCat={};
-  DATA.categories.forEach(c=>byCat[c.h]=[]);
-  DATA.items.filter(it=>!it.deleted).forEach(it=>{(byCat[it.h]??=[]).push(it)});
-
   byId("bank").innerHTML=DATA.categories.map(c=>`
     <article class="category-section" id="bank-sec-${c.h}" data-h="${c.h}" data-m="${macroCode(c.macro)}" style="${cssVars(c.h)}">
       <div class="category-header" role="button" tabindex="0" aria-expanded="false" onclick="NovaBank.toggleSection('${c.h}')" onkeydown="if(event.target===this &amp;&amp; (event.key==='Enter' || event.key===' ')){event.preventDefault();NovaBank.toggleSection('${c.h}')}">
@@ -222,9 +230,9 @@ function renderBank(){
             <th class="col-type">نوع</th><th class="col-decision">تصمیم تیم</th><th class="col-ref">مرجع</th>
           </tr></thead>
           <tbody id="bank-tbody-${c.h}">
-            ${byCat[c.h].sort(compareBankItems).map(it=>rowHtml(it)).join("")}
           </tbody>
         </table>
+        <button type="button" class="bank-load-more" onclick="NovaBank.loadMore('${c.h}')" hidden>نمایش موارد بیشتر</button>
       </div>
     </article>`).join("");
 }
@@ -244,14 +252,16 @@ function rowHtml(it){
 }
 
 function toggleSection(h){
+  renderCategory(h);
   const section=byId("sec-"+h); if(section){section.classList.toggle("open");section.querySelector(".category-header").setAttribute("aria-expanded",section.classList.contains("open"));}
 }
 function jumpToCategory(h){
+  renderCategory(h);
   const sec=byId("sec-"+h); if(!sec)return;
   sec.classList.add("open");sec.querySelector(".category-header").setAttribute("aria-expanded","true");
   sec.scrollIntoView({behavior:"smooth",block:"start"});
 }
-function openAll(){document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")})}
+function openAll(){document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{renderCategory(x.dataset.h);x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")})}
 function closeAll(){document.querySelectorAll(".nova-master-bank .category-section").forEach(x=>{x.classList.remove("open");x.querySelector(".category-header").setAttribute("aria-expanded","false")})}
 function setMacro(code){byId("macro").value=code;applyFilters();openMatching()}
 
@@ -260,6 +270,7 @@ function clearFilters(){
   applyFilters();
 }
 function applyFilters(){
+  if(!DATA)return;
   const q=normalizeSearch(byId("q").value.trim());
   const m=byId("macro").value;
   const p=byId("priority").value;
@@ -269,15 +280,10 @@ function applyFilters(){
   DATA.categories.forEach(c=>{
     const sec=byId("sec-"+c.h);
     let catShown=0;
-    sec.querySelectorAll("tbody tr").forEach(tr=>{
-      const okQ=!q || normalizeSearch(tr.dataset.search||"").includes(q);
-      const okM=!m || tr.dataset.m===m;
-      const okP=!p || tr.dataset.priority===p;
-      const okT=!t || tr.dataset.type===t;
-      const ok=okQ&&okM&&okP&&okT;
-      tr.style.display=ok?"":"none";
-      if(ok)catShown++;
-    });
+    const matches=DATA.items.filter(item=>!item.deleted&&item.h===c.h&&(!q||normalizeSearch(textBlob(item)).includes(q))&&(!m||macroCode(item.macro)===m)&&(!p||item.priority===p)&&(!t||item.type===t)).sort(compareBankItems);
+    filteredCategories.set(c.h,matches);visibleLimits.set(c.h,PAGE_SIZE);
+    catShown=matches.length;
+    if(sec.classList.contains('open'))renderCategory(c.h);
     sec.classList.toggle("hidden",catShown===0);
     byId("count-"+c.h).textContent=faDigits(catShown);
     if(catShown){shownCats++;shown+=catShown}
@@ -285,11 +291,25 @@ function applyFilters(){
   byId("resultSummary").textContent=`نمایش ${faDigits(shown)} آیتم در ${faDigits(shownCats)} دسته از مجموع ${faDigits(DATA.items.filter(item=>!item.deleted).length)} آیتم`;
 }
 function openMatching(){
+  openAll();
   document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")});
 }
 
-startBank();
+function renderCategory(h){
+ const items=filteredCategories.get(h)||[];
+ const limit=visibleLimits.get(h)||PAGE_SIZE;
+ const body=byId('tbody-'+h);if(!body)return;
+ body.innerHTML=items.slice(0,limit).map(rowHtml).join('');
+ const more=body.closest('.category-body').querySelector('.bank-load-more');
+ more.hidden=items.length<=limit;
+}
+function loadMore(h){visibleLimits.set(h,(visibleLimits.get(h)||PAGE_SIZE)+PAGE_SIZE);renderCategory(h);}
 
-window.NovaBank={applyFilters,clearFilters,openMatching,closeAll,exportEdits,openAll,toggleSection,jumpToCategory,setMacro,setStatus,renderDashboard,synchronizeTasks};
+window.NovaBank={ensureLoaded,loadMore,applyFilters,clearFilters,openMatching,closeAll,exportEdits,openAll,toggleSection,jumpToCategory,setMacro,setStatus,renderDashboard,synchronizeTasks};
+const dashboardPreview=document.querySelector('.mod-master .module-scroll');
+if(dashboardPreview){
+ dashboardPreview.innerHTML='<button type="button" onclick="goPage(\'items\')">مشاهده بانک آیتم‌ها</button>';
+}
+if(!document.getElementById('items')?.classList.contains('hidden'))ensureLoaded();
 if(new URLSearchParams(location.search).get("page")==="items" && typeof window.goPage==="function")window.goPage("items");
 })();
