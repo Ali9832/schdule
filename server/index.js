@@ -4,6 +4,7 @@ import postgres from '@fastify/postgres'
 import fastifyStatic from '@fastify/static'
 import dotenv from 'dotenv'
 import crypto from 'node:crypto'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { promisify } from 'node:util'
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,10 +14,12 @@ import { createLocalStore } from './local-store.js'
 import { registerCalendar, normalizeCalendarState } from './calendar.js'
 import { registerCalendarAttachments } from './calendar-attachments.js'
 import { postgresOptions } from './postgres-config.js'
+import { registerFinanceEditor } from './finance-editor.js'
 
 dotenv.config()
 
 const app = Fastify({ logger: true })
+const lifeDatabaseScope = new AsyncLocalStorage()
 app.setErrorHandler((error, request, reply) => {
   if (error.validation) {
     return reply.code(400).send({ error: 'ورودی نامعتبر است.', details: error.validation.map((item) => ({ field: item.instancePath || item.params?.missingProperty || item.params?.additionalProperty || '', message: item.message })) })
@@ -674,7 +677,7 @@ async function persistLifeData(userId, life) {
     memory.execution = normalized.execution
     return
   }
-  await app.pg.query(
+  await (lifeDatabaseScope.getStore() || app.pg).query(
     'INSERT INTO user_life_data (user_id, data, updated_at) VALUES ($1, $2::jsonb, NOW()) ON CONFLICT (user_id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()',
     [userId, JSON.stringify(lifeDataSnapshot(life))]
   )
@@ -682,7 +685,7 @@ async function persistLifeData(userId, life) {
 
 async function getLifeData(userId) {
   if (hasDatabase) {
-    const result = await app.pg.query('SELECT data FROM user_life_data WHERE user_id = $1', [userId])
+    const result = await (lifeDatabaseScope.getStore() || app.pg).query('SELECT data FROM user_life_data WHERE user_id = $1', [userId])
     if (result.rows[0]?.data) {
       return normalizeLifeData(result.rows[0].data)
     }
@@ -2722,7 +2725,7 @@ function v1112NormalizeFinance(finance = {}) {
 }
 function v1112Summary(finance = {}) {
   const f = v1112NormalizeFinance(finance), month = v1112MonthKey()
-  const monthTx = f.transactions.filter(x => String(x.date || '').slice(0, 7) === month && x.status !== 'cancelled')
+  const monthTx = f.transactions.filter(x => String(x.date || '').slice(0, 7) === month && (!x.status || x.status === 'confirmed'))
   const income = monthTx.filter(x => x.type === 'income').reduce((a,b)=>a+v1112Num(b.amount),0)
   const expense = monthTx.filter(x => x.type === 'expense').reduce((a,b)=>a+v1112Num(b.amount),0)
   const liquid = f.accounts.filter(x => x.status !== 'closed').reduce((a,b)=>a+v1112Num(b.balance),0)
@@ -2743,6 +2746,22 @@ async function v1112Payload(userId) {
   return {stage:'V11.12',finance:{...finance,transactions,commitments,budgets:summary.budgets},summary,generated_at:new Date().toISOString()}
 }
 app.get('/api/v11.12/finance', async request => v1112Payload(request.user.id))
+registerFinanceEditor(app, {
+  life: getLifeData, saveLife: persistLifeData, payload: v1112Payload, id, today,
+  // Serialize finance-editor writes across serverless instances as well as locally.
+  withUserLock: async (userId, action) => {
+    if (!hasDatabase) return action()
+    const client = await app.pg.connect()
+    try {
+      await client.query('BEGIN')
+      await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [`finance-editor:${userId}`])
+      const result = await lifeDatabaseScope.run(client, action)
+      await client.query('COMMIT')
+      return result
+    } catch (error) { await client.query('ROLLBACK'); throw error }
+    finally { client.release() }
+  }
+})
 app.post('/api/v11.12/budgets', async (request, reply) => {
   const life=await getLifeData(request.user.id), f=v1112NormalizeFinance(life.finance), body=request.body||{}, name=String(body.name||body.category||'').trim(), limit=Math.max(0,v1112Num(body.limit_amount))
   if(!name || !limit) return reply.code(400).send({error:'نام و سقف بودجه الزامی است.'})

@@ -21,6 +21,10 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('server/finance-editor.js')
+syntaxCheck('public/assets/finance-editor.js')
+const financeCheck=spawnSync(process.execPath,['scripts/check-finance-editor.mjs'],{cwd:root,encoding:'utf8'})
+financeCheck.status===0 ? pass('Finance creation, editing, settlement and accounting verified') : fail(`Finance: ${(financeCheck.stderr||financeCheck.stdout).trim()}`)
 syntaxCheck('server/postgres-config.js')
 const postgresConfigCheck=spawnSync(process.execPath,['scripts/check-postgres-config.mjs'],{cwd:root,encoding:'utf8'})
 postgresConfigCheck.status===0 ? pass('Prisma connection options and PostgreSQL dates verified') : fail(`PostgreSQL config: ${(postgresConfigCheck.stderr||postgresConfigCheck.stdout).trim()}`)
@@ -63,7 +67,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])
@@ -71,7 +75,7 @@ const routeKeys=routes.map(([m,p])=>`${m} ${p}`)
 const dupRoutes=routeKeys.filter((x,i,a)=>a.indexOf(x)!==i)
 ;[...new Set(dupRoutes)].length ? fail(`Duplicate routes: ${[...new Set(dupRoutes)].join(', ')}`) : pass(`Unique backend routes: ${routes.length}`)
 
-const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
+const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')+'\n'+read('public/assets/finance-editor.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
 const split=(p)=>p.replace(/\$\{[^}]+\}/g,':x').replace(/\/$/,'').split('/')
 const routeMatches=(f,b)=>{const F=split(f),B=split(b); return F.length===B.length && F.every((v,i)=>B[i]?.startsWith(':') || v===B[i])}
 const unmatched=frontRefs.filter(f=>!routes.some(([,b])=>routeMatches(f,b)))

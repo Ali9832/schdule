@@ -2,6 +2,15 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.3.0] - 2026-10-23
+
+### Added
+- Dedicated add/edit forms inside every finance box: accounts, monthly budgets, commitments, debts and transactions.
+- Visible paid/received history, pending transaction confirmation and explicit full-debt/commitment settlement.
+- Optional linked settlement transactions with account balance updates; status-only settlement for previously recorded payments.
+- Idempotent settlements, validated user-scoped writes, safe balance correction when editing transactions and locked settled financial fields.
+- Finance API regression tests; settlement records do not initiate bank transfers. Installment-by-installment payment tracking is not included.
+
 ## [1.2.0] - 2026-10-23
 
 ### Added
