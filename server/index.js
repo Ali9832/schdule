@@ -10,6 +10,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import OpenAI from 'openai'
 import { createLocalStore } from './local-store.js'
+import { registerCalendar, normalizeCalendarState } from './calendar.js'
+import { postgresOptions } from './postgres-config.js'
 
 dotenv.config()
 
@@ -22,15 +24,18 @@ app.setErrorHandler((error, request, reply) => {
   return reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({ error: error.statusCode && error.statusCode < 500 ? error.message : 'خطای داخلی سرور.' })
 })
 const PORT = Number(process.env.PORT || 3001)
-const RELEASE_VERSION = 'V11.12.2'
+const RELEASE_VERSION = 'V1.1'
 const RELEASE_STAGE = 16
-const RELEASE_NAME = 'Dashboard Consolidation Production Release'
-let hasDatabase = Boolean(process.env.DATABASE_URL)
+const RELEASE_NAME = 'mllibden 1.1'
+const databaseOptions = postgresOptions()
+let hasDatabase = Boolean(databaseOptions.connectionString)
 let openaiClient
 const scrypt = promisify(crypto.scrypt)
-if (process.env.NODE_ENV === 'production' && !process.env.AUTH_SECRET) {
+const deployedRuntime=process.env.NODE_ENV==='production'||Boolean(process.env.VERCEL)
+if (deployedRuntime && !process.env.AUTH_SECRET) {
   throw new Error('AUTH_SECRET must be set in production.')
 }
+if(deployedRuntime&&!hasDatabase)throw new Error('DATABASE_URL must be set for persistent production storage.')
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex')
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.join(currentDir, '..', 'dist')
@@ -40,7 +45,7 @@ const localStore = !process.env.VERCEL && process.env.NODE_ENV !== 'production' 
   : null
 
 const defaultSettings = {
-  display_name: 'کاربر NOVA',
+  display_name: 'molibden',
   workspace_name: 'NOVA',
   theme: 'light',
   page_titles: {}
@@ -92,10 +97,10 @@ await app.register(cors, {
 })
 
 if (hasDatabase) {
-  await app.register(postgres, { connectionString: process.env.DATABASE_URL })
+  await app.register(postgres, databaseOptions)
 }
 
-if (fs.existsSync(distDir)) {
+if (!process.env.VERCEL && fs.existsSync(distDir)) {
   await app.register(fastifyStatic, { root: distDir, prefix: '/', wildcard: false })
 }
 
@@ -184,7 +189,7 @@ const memory = {
   execution: { task_meta: {}, focus_sessions: [], current_focus: null },
   v11: { areas: [], resources: [], links: [], project_meta: {}, people: [], relationship_commitments: [], relationship_seeded: false },
   settings: {
-    display_name: 'مهسا رضایی',
+    display_name: 'molibden',
     workspace_name: 'NOVA',
     theme: 'light',
     page_titles: {
@@ -221,16 +226,16 @@ function seedMemory() {
     learning: id()
   }
   memory.projects.push(
-    { id: projectIds.site, name: 'راه‌اندازی سایت شخصی', description: 'ساخت یک خانه دیجیتال آرام برای ایده‌ها و کارها.', due_date: addDays(18), color: '#7165f3', icon: '⌘', status: 'in_progress', created_at: new Date().toISOString() },
+    { id: projectIds.site, name: 'رسیدگی به کارهای شخصی', description: 'مرتب‌کردن کارهای عقب‌افتاده و برنامه‌های این ماه.', due_date: addDays(18), color: '#7165f3', icon: '⌘', status: 'in_progress', created_at: new Date().toISOString() },
     { id: projectIds.health, name: 'ریتم سالم صبحگاهی', description: 'ساختن صبح‌هایی که انرژی روز را تنظیم می‌کنند.', due_date: addDays(11), color: '#45b98c', icon: '☼', status: 'in_progress', created_at: new Date().toISOString() },
     { id: projectIds.learning, name: 'یادگیری زبان اسپانیایی', description: '۲۰ دقیقه تمرین پیوسته، بدون فشار اضافه.', due_date: addDays(32), color: '#e8996b', icon: '✦', status: 'in_progress', created_at: new Date().toISOString() }
   )
   memory.tasks.push(
     { id: id(), title: 'مرور هدف‌های فصل پاییز', description: 'سه نتیجه مهم فصل را روی کاغذ بیاور.', due_date: today(), priority: 'high', status: 'in_progress', estimate_minutes: 25, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: id(), title: 'ارسال نسخه اولیه به سارا', description: 'بازخورد اولیه را تا قبل از جلسه بگیر.', due_date: today(), priority: 'medium', status: 'todo', estimate_minutes: 35, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: id(), title: 'هماهنگی زمان یک قرار', description: 'یک زمان مناسب برای قرار پیدا کن و با طرف مقابل هماهنگ کن.', due_date: today(), priority: 'medium', status: 'todo', estimate_minutes: 35, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'پیاده‌روی عصرگاهی', description: 'سی دقیقه بدون هدفون، فقط برای خالی‌کردن ذهن.', due_date: today(), priority: 'low', status: 'todo', estimate_minutes: 30, project_id: projectIds.health, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'تمرین درس ۴ اسپانیایی', description: 'مرور واژه‌ها و ساخت پنج جمله جدید.', due_date: addDays(1), priority: 'medium', status: 'todo', estimate_minutes: 20, project_id: projectIds.learning, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-    { id: id(), title: 'طراحی صفحه معرفی', description: 'نسخه مینیمال صفحه معرفی را نهایی کن.', due_date: addDays(-1), priority: 'high', status: 'done', estimate_minutes: 50, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+    { id: id(), title: 'مرتب‌کردن مدارک شخصی', description: 'مدارک مهم را دسته‌بندی و در جای مشخص نگهداری کن.', due_date: addDays(-1), priority: 'high', status: 'done', estimate_minutes: 50, project_id: projectIds.site, created_at: new Date().toISOString(), updated_at: new Date().toISOString() },
     { id: id(), title: 'خرید میوه و سبزی', description: 'برای آماده‌سازی میان‌وعده‌های هفته.', due_date: addDays(2), priority: 'low', status: 'todo', estimate_minutes: 25, project_id: projectIds.health, created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   )
   const seededTasks = memory.tasks
@@ -239,7 +244,7 @@ function seedMemory() {
   if (seededTasks[2]) memory.execution.task_meta[seededTasks[2].id] = { context: 'بیرون', energy: 'low', waiting_on: '', resume_note: '', blocked_on: '', updated_at: new Date().toISOString() }
 
   memory.activity.push(
-    { id: id(), kind: 'done', text: 'تسک «طراحی صفحه معرفی» انجام شد.', created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString() },
+    { id: id(), kind: 'done', text: 'تسک «مرتب‌کردن مدارک شخصی» انجام شد.', created_at: new Date(Date.now() - 1000 * 60 * 42).toISOString() },
     { id: id(), kind: 'project', text: 'پروژه «ریتم سالم صبحگاهی» ساخته شد.', created_at: new Date(Date.now() - 1000 * 60 * 160).toISOString() },
     { id: id(), kind: 'assistant', text: 'همراه NOVA یک برنامه سبک پیشنهاد داد.', created_at: new Date(Date.now() - 1000 * 60 * 300).toISOString() }
   )
@@ -247,7 +252,7 @@ function seedMemory() {
     { id: id(), title: 'بلوک تمرکز عمیق', type: 'focus', start_at: `${today()}T10:30:00`, end_at: `${today()}T12:00:00`, color: '#7165f3', project_id: projectIds.site, notes: 'اعلان‌ها خاموش', created_at: new Date().toISOString() },
     { id: id(), title: 'مرور هفتگی', type: 'review', start_at: `${today()}T16:00:00`, end_at: `${today()}T16:30:00`, color: '#e8996b', project_id: null, notes: 'سه برد و یک اصلاح کوچک', created_at: new Date().toISOString() },
     { id: id(), title: 'پیاده‌روی عصرگاهی', type: 'health', start_at: `${today()}T18:30:00`, end_at: `${today()}T19:00:00`, color: '#45b98c', project_id: projectIds.health, notes: '', created_at: new Date().toISOString() },
-    { id: id(), title: 'جلسه هماهنگی هفتگی', type: 'meeting', start_at: `${today()}T14:00:00`, end_at: `${today()}T14:45:00`, color: '#8f4268', project_id: null, notes: 'NOVA_MEETING::{"unit":"داخلی","participants":"تیم اصلی","agenda":"مرور وضعیت پروژه‌ها و تعیین اولویت هفته","summary":"مرور کارهای هفته و تصمیم درباره اولویت‌های بعدی","decisions":"تمرکز هفته روی تحویل نسخه اولیه سایت باشد.","actions":[{"id":"seed-action-1","text":"ارسال نسخه اولیه به سارا","task_id":null},{"id":"seed-action-2","text":"جمع‌بندی تصمیم‌های جلسه در پروژه","task_id":null}],"notes":"اقدام‌های بعدی ثبت و پیگیری شوند."}', created_at: new Date().toISOString() }
+    { id: id(), title: 'جلسه هماهنگی هفتگی', type: 'meeting', start_at: `${today()}T14:00:00`, end_at: `${today()}T14:45:00`, color: '#8f4268', project_id: null, notes: 'NOVA_MEETING::{"unit":"داخلی","participants":"تیم اصلی","agenda":"مرور وضعیت پروژه‌ها و تعیین اولویت هفته","summary":"مرور کارهای هفته و تصمیم درباره اولویت‌های بعدی","decisions":"تمرکز هفته روی تحویل نسخه اولیه سایت باشد.","actions":[{"id":"seed-action-1","text":"هماهنگی زمان یک قرار","task_id":null},{"id":"seed-action-2","text":"جمع‌بندی تصمیم‌های جلسه در پروژه","task_id":null}],"notes":"اقدام‌های بعدی ثبت و پیگیری شوند."}', created_at: new Date().toISOString() }
   )
   memory.goals.push(
     { id: id(), area: 'سلامت', title: 'سه جلسه حرکت در هفته', target: 3, current: 2, unit: 'جلسه', due_date: addDays(45), status: 'in_progress', priority: 'high', next_action: 'رزرو زمان سه‌شنبه', note: 'هدف کوچک، پایدار و قابل اندازه‌گیری.' },
@@ -268,7 +273,7 @@ function seedMemory() {
   )
   memory.daily_logs.push(
     { id: id(), date: today(), top_task: 'مرور هدف‌های فصل', energy: 8, mood: 'متمرکز', note: 'صبح امروز تمرکز خوبی داشتم.' },
-    { id: id(), date: addDays(-1), top_task: 'طراحی صفحه معرفی', energy: 7, mood: 'خوب', note: 'یک قدم کوچک اما واقعی.' }
+    { id: id(), date: addDays(-1), top_task: 'مرتب‌کردن مدارک شخصی', energy: 7, mood: 'خوب', note: 'یک قدم کوچک اما واقعی.' }
   )
   memory.ideas.push(
     { id: id(), title: 'خبرنامه هفتگی تمرکز', area: 'محتوا', impact: 'بالا', status: 'idea', next_action: 'نمونه‌سازی قالب', note: '' },
@@ -347,6 +352,7 @@ async function initDatabase() {
   try {
     await app.pg.query('SELECT 1')
   } catch (error) {
+    if(deployedRuntime)throw new Error('PostgreSQL connection failed; refusing temporary production storage.',{cause:error})
     app.log.warn({ err: error }, 'PostgreSQL unavailable; using memory fallback')
     hasDatabase = false
     const saved = localStore?.load()
@@ -356,6 +362,7 @@ async function initDatabase() {
     return
   }
   await app.pg.query(fs.readFileSync(path.join(currentDir, 'schema.sql'), 'utf8'))
+  if(deployedRuntime)return
   const { rows } = await app.pg.query('SELECT COUNT(*)::int AS count FROM tasks')
   if (!rows[0].count) {
     // Keep the first-run experience useful even with a fresh PostgreSQL database.
@@ -603,7 +610,7 @@ function normalizeExecution(input = {}) {
     dashboard: { now: rawDash.now !== false, decision: rawDash.decision !== false, attention: rawDash.attention !== false, projects: rawDash.projects !== false, areas: rawDash.areas !== false, routines: rawDash.routines !== false, review: rawDash.review !== false },
     saved_views
   }
-  return { task_meta, focus_sessions, current_focus: cf ? { task_id: cf.task_id || null, started_at: cf.started_at || new Date().toISOString(), planned_minutes: Math.max(0, Number(cf.planned_minutes) || 25) } : null, planning: { current_cycle, reviews }, personalization }
+  return { task_meta, focus_sessions, current_focus: cf ? { task_id: cf.task_id || null, started_at: cf.started_at || new Date().toISOString(), planned_minutes: Math.max(0, Number(cf.planned_minutes) || 25) } : null, planning: { current_cycle, reviews }, personalization, calendar: normalizeCalendarState(input.calendar) }
 }
 
 function normalizeLifeData(input = {}) {
@@ -1610,6 +1617,17 @@ for(const p of data.projects){if(!p.due_date||p.lifecycle_status==='archived'||!
 for(const o of data.outcomes||[]){if(!o.due_date||o.status==='done'||!v115InRange(o.due_date,from,to))continue;entries.push({id:`outcome-deadline-${o.id}`,entity_id:o.id,source_type:'outcome',type:'outcome_deadline',title:`موعد هدف: ${o.title}`,start_at:`${o.due_date}T23:20:00`,end_at:`${o.due_date}T23:30:00`,all_day:true,area_id:o.area_id||null,area_name:areaMap.get(o.area_id)||''})}
 entries.sort((a,b)=>String(a.start_at).localeCompare(String(b.start_at)));const conflicts=v115FindConflicts(entries),todayCount=entries.filter(e=>v115EntryDate(e)===todayIso).length,meetings=entries.filter(e=>e.type==='meeting').length,deadlines=entries.filter(e=>['deadline','project_deadline','outcome_deadline'].includes(e.type)).length,focusBlocks=entries.filter(e=>e.type==='focus').length;const unscheduled=data.tasks.filter(t=>t.status!=='done'&&!t.due_date&&!String(t.waiting_on||'').trim()).slice(0,20).map(t=>({id:t.id,title:t.title,project_id:t.project_id||null,project_name:projectMap.get(t.project_id)||'',context:t.context||'',energy:t.energy||'',estimate_minutes:t.estimate_minutes||0}));return {stage:'V11.5',range:{from,to},entries,unscheduled,summary:{today_count:todayCount,range_count:entries.length,meetings,deadlines,focus_blocks:focusBlocks,conflicts},references:{projects:data.projects.map(p=>({id:p.id,name:p.name,lifecycle_status:p.lifecycle_status})),areas:data.areas.map(a=>({id:a.id,name:a.name}))},generated_at:new Date().toISOString()}}
 app.get('/api/v11.5/schedule',async(request)=>v115SchedulePayload(request.user.id,request.query||{}))
+registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
+  createOutcome:async(userId,body)=>{
+    if(!hasDatabase)return v117SaveMemoryOutcome(userId,null,body);
+    return (await app.pg.query('INSERT INTO outcomes (id,user_id,title,status,due_date,note) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',[id(),userId,body.title,body.status,body.due_date,body.note])).rows[0]
+  },
+  updateOutcome:async(userId,outcomeId,patch)=>{
+    if(!hasDatabase){const life=await getLifeData(userId);await persistLifeData(userId,{...life,goals:life.goals.map(item=>item.id===outcomeId?{...item,...patch}:item)});return}
+    const allowed=['title','due_date','status','note'];const keys=Object.keys(patch).filter(key=>allowed.includes(key));if(!keys.length)return;
+    await app.pg.query(`UPDATE outcomes SET ${keys.map((key,index)=>`${key}=$${index+1}`).join(',')},updated_at=NOW() WHERE id=$${keys.length+1} AND user_id=$${keys.length+2}`,[...keys.map(key=>patch[key]),outcomeId,userId])
+  }
+})
 app.post('/api/v11.5/schedule/events',async(request,reply)=>{try{return reply.code(201).send(await createEvent(request.user.id,request.body||{}))}catch(error){return reply.code(400).send({error:error.message})}})
 app.post('/api/v11.5/schedule/task/:id',async(request,reply)=>{try{const data=await getV11Canonical(request.user.id),task=data.tasks.find(t=>t.id===request.params.id);if(!task)return reply.code(404).send({error:'تسک پیدا نشد.'});const start=String(request.body?.start_at||''),end=String(request.body?.end_at||'');const note=JSON.stringify({v115:{task_id:task.id,note:'Task time block'}});const created=await createEvent(request.user.id,{title:task.title,type:'focus',start_at:start,end_at:end,project_id:task.project_id||null,notes:note,color:'#7165f3'});return reply.code(201).send(created)}catch(error){return reply.code(400).send({error:error.message})}})
 app.get('/api/v11.5/health',async()=>({ok:true,stage:'V11.5',storage:hasDatabase?'postgresql':'memory',capabilities:['unified-schedule','today-agenda','week-calendar','month-calendar','timeline-view','task-deadlines','project-milestones','focus-time-blocking','conflict-detection','meeting-and-event-unification'],now:new Date().toISOString()}))

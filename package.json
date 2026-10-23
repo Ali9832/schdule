@@ -1,12 +1,12 @@
 {
-  "name": "nova-life-planner",
-  "version": "11.12.2",
+  "name": "mllibden",
+  "version": "1.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19.0"
+    "node": "22.x"
   },
   "type": "module",
-  "description": "NOVA V11.12.2 — dashboard consolidation + full master item bank categories.",
+  "description": "Molibden personal planner with unified Persian calendar and Vercel API.",
   "scripts": {
     "db:import": "node scripts/import-local-to-postgres.mjs",
     "dev": "concurrently -k -n API,WEB -c magenta,cyan \"npm run server:dev\" \"npm run client:dev\"",

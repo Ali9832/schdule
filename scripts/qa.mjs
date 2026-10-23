@@ -21,7 +21,18 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('server/postgres-config.js')
+const postgresConfigCheck=spawnSync(process.execPath,['scripts/check-postgres-config.mjs'],{cwd:root,encoding:'utf8'})
+postgresConfigCheck.status===0 ? pass('Prisma connection options and PostgreSQL dates verified') : fail(`PostgreSQL config: ${(postgresConfigCheck.stderr||postgresConfigCheck.stdout).trim()}`)
 syntaxCheck('server/local-store.js')
+syntaxCheck('server/calendar.js')
+syntaxCheck('public/assets/calendar.js')
+syntaxCheck('public/assets/auth.js')
+syntaxCheck('api/index.js')
+const vercelCheck=spawnSync(process.execPath,['scripts/check-vercel.mjs'],{cwd:root,encoding:'utf8'})
+vercelCheck.status===0 ? pass('Vercel handler and persistent production configuration verified') : fail(`Vercel: ${(vercelCheck.stderr||vercelCheck.stdout).trim()}`)
+const calendarCheck=spawnSync(process.execPath,['scripts/check-calendar.mjs'],{cwd:root,encoding:'utf8'})
+calendarCheck.status===0 ? pass('Calendar validation, persistence and multi-source actions verified') : fail(`Calendar: ${(calendarCheck.stderr||calendarCheck.stdout).trim()}`)
 syntaxCheck('scripts/import-local-to-postgres.mjs')
 syntaxCheck('scripts/lib/postgres-import-plan.mjs')
 const importCheck=spawnSync(process.execPath,['scripts/check-postgres-import.mjs'],{cwd:root,encoding:'utf8'})
@@ -49,7 +60,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])
@@ -57,7 +68,7 @@ const routeKeys=routes.map(([m,p])=>`${m} ${p}`)
 const dupRoutes=routeKeys.filter((x,i,a)=>a.indexOf(x)!==i)
 ;[...new Set(dupRoutes)].length ? fail(`Duplicate routes: ${[...new Set(dupRoutes)].join(', ')}`) : pass(`Unique backend routes: ${routes.length}`)
 
-const frontRefs=[...new Set([...html.matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
+const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
 const split=(p)=>p.replace(/\$\{[^}]+\}/g,':x').replace(/\/$/,'').split('/')
 const routeMatches=(f,b)=>{const F=split(f),B=split(b); return F.length===B.length && F.every((v,i)=>B[i]?.startsWith(':') || v===B[i])}
 const unmatched=frontRefs.filter(f=>!routes.some(([,b])=>routeMatches(f,b)))
@@ -73,9 +84,9 @@ const missingCritical=critical.filter(p=>!routePaths.has(p))
 missingCritical.length ? fail(`Critical routes missing: ${missingCritical.join(', ')}`) : pass(`Critical integration routes present: ${critical.length}`)
 
 const pkg=JSON.parse(read('package.json'))
-pkg.version==='11.12.2' ? pass('Package version: 11.12.2') : fail(`Unexpected package version: ${pkg.version}`)
-html.includes('NOVA V11.12.2') ? pass('V11.12.2 release branding present') : fail('V11.12.2 release branding missing')
-read('sw.js').includes('nova-v11-12-1-dashboard') ? pass('PWA cache namespace updated') : fail('PWA cache namespace is stale')
+pkg.version==='1.1.0' && pkg.name==='mllibden' ? pass('Package: mllibden 1.1.0') : fail(`Unexpected package identity: ${pkg.name} ${pkg.version}`)
+html.includes('<title>نوا — فضای شخصی molibden</title>') && !html.includes('مهسا رضایی') ? pass('Product identity is current') : fail('Product identity is stale')
+;['sw.js','public/sw.js','dist/sw.js'].every(file=>read(file).includes('nova-v11-12-2-bank-topics-live-counts')) ? pass('PWA cache namespace updated and synchronized') : fail('PWA cache namespace is stale')
 
 console.log('\nNOVA FINAL STATIC QA')
 console.log('====================')

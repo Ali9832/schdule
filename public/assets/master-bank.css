@@ -1,3 +1,10 @@
+.nova-master-bank .item-edit label{display:block;margin-bottom:8px;font-size:11px}
+.nova-master-bank .item-edit select{display:block;width:100%;max-width:100%;min-width:0;margin-top:5px;padding:8px;border:1px solid #dfe7ea;border-radius:8px;background:#fff}
+.nova-master-bank .bank-topic-filters{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:12px 0;padding:12px;background:#fff;border:1px solid #dfe7ea;border-radius:12px;font-size:12px}
+.nova-master-bank .bank-topic-filters label{display:flex;align-items:center;gap:8px;max-width:100%}
+.nova-master-bank .bank-topic-filters select{max-width:100%;min-width:0;padding:8px;border:1px solid #dfe7ea;border-radius:8px;background:#fff}
+.nova-master-bank .bank-topic{display:block;width:fit-content;padding:4px 8px;margin-top:6px;border-radius:6px;background:#edf6f4;color:#17655f;font-size:10px}
+.nova-master-bank .bank-review-label{display:inline-block;margin-top:5px;color:#94620d;font-size:10px}
 .nova-master-bank{
   --bg:#f4f7f8;--panel:#fff;--line:#dfe7ea;--text:#173642;--muted:#7b8d96;
   --teal:#0f716b;--shadow:0 8px 24px rgba(23,54,66,.07)
@@ -21,27 +28,27 @@
 .nova-master-bank .section-title{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:18px 0 9px}
 .nova-master-bank .section-title h3{font-size:14px;margin:0}
 .nova-master-bank .section-title p{font-size:8px;color:var(--muted);margin:4px 0 0}
-.nova-master-bank .macro-row{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.nova-master-bank .macro-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:12px}
 .nova-master-bank .macro{background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 11px;box-shadow:0 5px 14px rgba(23,54,66,.04);cursor:pointer}
 .nova-master-bank .macro b{font-size:10px;display:block}
 .nova-master-bank .macro span{font-size:7.5px;color:var(--muted);display:block;margin-top:4px;line-height:1.6}
 .nova-master-bank .macro strong{display:block;font-size:14px;margin-top:7px}
 .nova-master-bank .bank{margin-top:16px}
-.nova-master-bank .category-section{--c-tint:#f7fafb;--c-accent:#6b8791;--c-line:#dfe7ea;background:#fff;border:1px solid var(--c-line);border-radius:14px;margin-bottom:10px;overflow:hidden;box-shadow:0 7px 20px rgba(23,54,66,.05)}
+.nova-master-bank .category-section{--c-tint:#f7fafb;--c-accent:#6b8791;--c-text:#31545d;--c-line:#dfe7ea;background:#fff;border:1px solid var(--c-line);border-inline-start:5px solid var(--c-accent);border-radius:14px;margin-bottom:12px;overflow:hidden;box-shadow:0 7px 20px rgba(23,54,66,.05)}
 .nova-master-bank .category-section.hidden{display:none}
-.nova-master-bank .category-header{background:var(--c-tint);padding:12px 14px;display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;cursor:pointer;border-right:5px solid var(--c-accent)}
+.nova-master-bank .category-header{background:var(--c-tint);padding:16px 14px;display:grid;grid-template-columns:auto 1fr auto auto;gap:10px;align-items:center;cursor:pointer}
 .nova-master-bank .category-header .hcode{font-size:9px;color:var(--c-accent);font-weight:900;border:1px solid var(--c-line);background:rgba(255,255,255,.75);border-radius:999px;padding:4px 7px}
-.nova-master-bank .category-header h4{font-size:11px;margin:0}
+.nova-master-bank .category-header h4{font-size:12px;margin:0;color:var(--c-text)}
 .nova-master-bank .category-header small{display:block;font-size:7.5px;color:#70848d;margin-top:4px}
 .nova-master-bank .category-header .count{font-size:13px;font-weight:900;color:var(--c-accent)}
-.nova-master-bank .category-header .toggle{border:1px solid var(--c-line);background:#fff;border-radius:7px;width:29px;height:29px;color:#536f79}
+.nova-master-bank .category-header .toggle{border:1px solid var(--c-line);background:#fff;border-radius:9px;width:31px;height:31px;color:var(--c-text)}
 .nova-master-bank .category-body{display:none}
 .nova-master-bank .category-section.open .category-body{display:block}
 .nova-master-bank .category-section.open .toggle{transform:rotate(180deg)}
 .nova-master-bank .item-table{width:100%;min-width:1000px;border-collapse:collapse;table-layout:fixed}
-.nova-master-bank .item-table thead th{position:sticky;top:122px;background:#f6f9fa;border-bottom:1px solid #dfe7ea;padding:8px 7px;font-size:7.5px;color:#5f747d;z-index:5}
+.nova-master-bank .item-table thead th{position:sticky;top:122px;background:var(--c-tint);border-bottom:1px solid var(--c-line);padding:8px 7px;font-size:7.5px;color:var(--c-text);z-index:5}
 .nova-master-bank .item-table td{border-bottom:1px solid #eef2f3;padding:8px 7px;font-size:8px;vertical-align:top;line-height:1.7}
-.nova-master-bank .item-table tbody tr:hover{background:#fbfdfd}
+.nova-master-bank .item-table tbody tr:hover{background:var(--c-tint)}
 .nova-master-bank .col-check{width:34px;text-align:center}
 .nova-master-bank .col-id{width:76px}
 .nova-master-bank .col-prio{width:78px}

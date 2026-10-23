@@ -12,3 +12,9 @@ backups/
 .local/
 test-results/browser-profile/
 test-results/edge-profile/
+test-results/
+runtime/
+.runtime/
+*.zip
+.codex/
+.agents/
