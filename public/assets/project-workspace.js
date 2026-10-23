@@ -46,21 +46,24 @@
     const reportDate = field(reportForm, 'report_date', 'تاریخ گزارش', 'date'); reportDate.required = true; reportDate.value = day();
     const reportError = node('p', '', 'record-edit-error'); reportError.setAttribute('role', 'alert');
     const actions = node('div', null, 'pw-form-actions'), save = node('button', 'ثبت گزارش'); save.type = 'submit'; save.disabled = true;
-    const cancel = button('انصراف از ویرایش', () => resetReport()); cancel.hidden = true; actions.append(save, cancel);
+    const cancel = button('انصراف از ویرایش', () => {reportDraft?.clear();drafts.delete(draftKey());resetReport();}); cancel.hidden = true; actions.append(save, cancel);
     reportForm.append(reportError, actions); const reportList = node('div', 'در حال دریافت…', 'pw-report-list');
     reportBox.append(reportForm, node('h4', 'گزارش‌های ثبت‌شده (۱۰۰ گزارش اخیر)'), reportList); root.append(meetingBox, reportBox);
+    let reportDraft;
     function draftKey() { return `${project.id}:${editing?.id || 'new'}`; }
     function remember() { drafts.set(draftKey(), { text: reportText.value, date: reportDate.value }); }
     reportText.oninput = remember; reportDate.onchange = remember;
     function resetReport() {
       editing = null; const draft = drafts.get(draftKey()); reportText.value = draft?.text || ''; reportDate.value = draft?.date || day();
       save.textContent = 'ثبت گزارش'; cancel.hidden = true; reportError.textContent = '';
+      reportDraft=window.NoavaDrafts?.bind(reportForm,'project-report:'+draftKey());
     }
     function editReport(report) {
       if (savingReport || !current()) return;
       remember(); editing = data.reports.find(row => row.id === report.id) || report;
       const draft = drafts.get(draftKey()); reportText.value = draft?.text ?? editing.text; reportDate.value = draft?.date || editing.report_date;
       save.textContent = 'ثبت تغییرات گزارش'; cancel.hidden = false; reportError.textContent = '';
+      reportDraft=window.NoavaDrafts?.bind(reportForm,'project-report:'+draftKey());
       reportForm.scrollIntoView({ block: 'nearest' }); reportText.focus();
     }
     function renderReports() {
@@ -98,6 +101,7 @@
         const report = await apiFetch(`${base}/reports${edited ? '/' + encodeURIComponent(edited.id) : ''}`, { method: edited ? 'PATCH' : 'POST', body: JSON.stringify(payload) });
         data.reports = [report, ...data.reports.filter(row => row.id !== report.id)].sort((a,b)=>b.created_at.localeCompare(a.created_at));
         if(drafts.get(key)?.text===payload.text&&drafts.get(key)?.date===payload.report_date)drafts.delete(key);
+        window.NoavaDrafts?.clear('project-report:'+key);
         if(current()){resetReport();renderReports();showToast('گزارش ذخیره شد', edited ? 'تغییرات گزارش ثبت شد.' : project.name);}
       } catch(error){if(current())reportError.textContent=error.message || 'گزارش ذخیره نشد.';}
       finally{savingReport=false;save.disabled=cancel.disabled=reportText.disabled=reportDate.disabled=false;}
@@ -107,6 +111,7 @@
       savingMeeting=true;meetingSave.disabled=true;meetingError.textContent='';
       try {
         const meeting=await apiFetch(`${base}/meetings`,{method:'POST',body:JSON.stringify({title:meetingTitle.value,date:meetingDate.value,time:meetingTime.value,duration:Number(duration.value),status:status.value,summary:summary.value})});
+        meetingDraft?.clear();
         data.meetings.push(meeting);if(current()){renderMeetings();meetingForm.hidden=true;meetingTitle.value='';summary.value='';showToast('جلسه ثبت شد','در تقویم و بخش جلسات هم قابل مشاهده است.');}
       }catch(error){if(current())meetingError.textContent=error.message;}finally{savingMeeting=false;meetingSave.disabled=false;}
     };
@@ -114,7 +119,7 @@
       try { const next=await apiFetch(`${base}/workspace`);if(!current())return;data=next;renderMeetings();renderReports();save.disabled=false; }
       catch(error){if(current()){meetingList.replaceChildren(node('p',error.message,'record-edit-error'),button('تلاش دوباره',load));reportList.textContent='دریافت گزارش‌ها انجام نشد.';}}
     }
-    const controller={editReport,ready:null};controllers.set(project.id,controller);resetReport();PersianUI.scan(root);controller.ready=load();return controller;
+    const controller={editReport,ready:null};controllers.set(project.id,controller);resetReport();PersianUI.scan(root);const meetingDraft=window.NoavaDrafts?.bind(meetingForm,'project-meeting:'+project.id);controller.ready=load();return controller;
   }
   let reportRequest=0;
   async function loadOverview() {

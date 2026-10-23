@@ -86,7 +86,7 @@ function App() {
     finance: { accounts: [], transactions: [], debts: [] },
     settings: {
       display_name: 'مهسا رضایی',
-      workspace_name: 'NOVA',
+      workspace_name: 'NOAVA',
       page_titles: {}
     }
   })
@@ -140,9 +140,10 @@ function App() {
       journal: 'ثبت روزانه',
       calendar: 'تقویم تمرکز',
       analytics: 'تحلیل عملکرد',
-      settings: 'تنظیمات'
+      settings: 'تنظیمات',
+      profile: 'پروفایل کاربری'
     }
-    document.title = `${labels[view] || fallback[view] || 'NOVA'} · ${data.settings?.workspace_name || 'NOVA'}`
+    document.title = `${labels[view] || fallback[view] || 'NOAVA'} · ${data.settings?.workspace_name || 'NOAVA'}`
   }, [view, data.settings])
 
   const visibleTasks = useMemo(() => {
@@ -416,6 +417,8 @@ function App() {
     { id: 'analytics', label: titleFor('analytics', 'تحلیل عملکرد'), icon: <span className="nav-icon nav-icon--text">◒</span> }
   ]
 
+  const openProfile = () => { setView('profile'); setMobileNav(false) }
+
   if (!token || !user) return <AuthScreen onAuth={handleAuth} />
 
   return (
@@ -423,7 +426,7 @@ function App() {
       <aside className={`sidebar ${mobileNav ? 'sidebar--open' : ''}`}>
         <div className="brand">
           <div className="brand-mark"><span></span><span></span><span></span></div>
-          <div><strong>NOVA</strong><small>زندگی، با ریتم تو</small></div>
+          <div><strong>NOAVA</strong><small>آوای نو</small></div>
         </div>
         <div className="workspace-switcher">
           <div className="avatar avatar--small">م</div>
@@ -438,6 +441,9 @@ function App() {
             </button>
           ))}
           <p className="nav-caption nav-caption--spaced">تنظیمات</p>
+          <button className={`nav-item ${view === 'profile' ? 'nav-item--active' : ''}`} onClick={openProfile}>
+            <span className="nav-icon nav-icon--text">◉</span><span>پروفایل کاربری</span>
+          </button>
           <button className={`nav-item ${view === 'settings' ? 'nav-item--active' : ''}`} onClick={() => { setView('settings'); setMobileNav(false) }}>
             <span className="nav-icon nav-icon--text">⚙</span><span>{titleFor('settings', 'تنظیمات')}</span>
           </button>
@@ -451,10 +457,10 @@ function App() {
             <div><strong>۷ روز پیوسته</strong><span>ریتمت را حفظ کن!</span></div>
             <span className="streak-dots">•••</span>
           </div>
-          <div className="profile-row">
+          <div className="profile-row profile-row--button" role="button" tabIndex={0} onClick={openProfile} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); openProfile() } }}>
             <div className="avatar">م</div>
             <div><strong>{user.display_name || data.settings?.display_name}</strong><span>{user.email}</span></div>
-            <button className="icon-button icon-button--muted" title="خروج" onClick={logout}>↪</button>
+            <button className="icon-button icon-button--muted" title="خروج" onClick={(event) => { event.stopPropagation(); logout() }}>↪</button>
           </div>
         </div>
       </aside>
@@ -462,11 +468,11 @@ function App() {
       <main className="main-content">
         <header className="topbar">
           <button className="mobile-menu icon-button" onClick={() => setMobileNav((value) => !value)}>{icons.menu}</button>
-          <div className="breadcrumb"><span>فضای شخصی</span><b>/</b><strong>{view === 'settings' ? titleFor('settings', 'تنظیمات') : navItems.find((item) => item.id === view)?.label}</strong></div>
+          <div className="breadcrumb"><span>فضای شخصی</span><b>/</b><strong>{view === 'settings' ? titleFor('settings', 'تنظیمات') : view === 'profile' ? 'پروفایل کاربری' : navItems.find((item) => item.id === view)?.label}</strong></div>
           <div className="topbar-actions">
             <label className="search-box"><span>{icons.search}</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="جست‌وجو در برنامه..." /><kbd>⌘ K</kbd></label>
             <button className="icon-button notification-button" onClick={() => notify('فعلاً اعلان جدیدی نداری.')}>♢<i></i></button>
-            <button className="top-avatar avatar">م</button>
+            <button className="top-avatar avatar" onClick={openProfile} aria-label="باز کردن پروفایل کاربری" title="پروفایل کاربری">م</button>
           </div>
         </header>
 
@@ -522,6 +528,7 @@ function App() {
           {view === 'calendar' && <CalendarView tasks={data.tasks} events={data.events} onStatus={changeTaskStatus} onAddTask={() => setModal({ type: 'task' })} onAddEvent={() => setModal({ type: 'event' })} onEditEvent={(event) => setModal({ type: 'event', item: event })} onDeleteEvent={removeEvent} />}
           {view === 'analytics' && <AnalyticsView stats={data.stats} tasks={data.tasks} projects={data.projects} />}
           {view === 'settings' && <SettingsView settings={data.settings} onSave={saveSettings} onReset={() => saveSettings({ page_titles: {} })} />}
+          {view === 'profile' && <ProfileView user={user} settings={data.settings} onLogout={logout} />}
         </div>
       </main>
 
@@ -550,6 +557,18 @@ function App() {
       {selectedTask ? <TaskDetail task={selectedTask} onClose={() => setSelectedTask(null)} onStatus={changeTaskStatus} onEdit={(task) => { setSelectedTask(null); setModal({ type: 'task', item: task }) }} /> : null}
     </div>
   )
+}
+
+function ProfileView({ user, settings, onLogout }) {
+  const displayName = user?.display_name || settings?.display_name || 'کاربر'
+  return <>
+    <section className="page-heading"><div><span className="eyebrow"><span className="eyebrow-dot"></span>حساب من</span><h1>پروفایل کاربری</h1><p>اطلاعات حساب و فضای کاری شما</p></div></section>
+    <section className="profile-page-panel">
+      <div className="profile-page-avatar" aria-hidden="true">{displayName.slice(0, 1)}</div>
+      <div className="profile-page-details"><h2>{displayName}</h2><p>{user?.email || 'نشانی ایمیل ثبت نشده'}</p><span>عضو فضای {settings?.workspace_name || 'NOAVA'}</span></div>
+      <button className="secondary-button profile-logout" onClick={onLogout}>خروج از حساب</button>
+    </section>
+  </>
 }
 
 function AuthScreen({ onAuth }) {
@@ -581,7 +600,7 @@ function AuthScreen({ onAuth }) {
   return (
     <main className="auth-page" dir="rtl">
       <section className="auth-card">
-        <div className="brand auth-brand"><div className="brand-mark"><span></span><span></span><span></span></div><div><strong>NOVA</strong><small>برنامه‌ریزی شخصی، برای هر نفر</small></div></div>
+        <div className="brand auth-brand"><div className="brand-mark"><span></span><span></span><span></span></div><div><strong>NOAVA</strong><small>برنامه‌ریزی شخصی، برای هر نفر</small></div></div>
         <h1>{mode === 'login' ? 'خوش آمدی' : 'حساب جدید بساز'}</h1>
         <p>{mode === 'login' ? 'برای دیدن فضای شخصی خود وارد شو.' : 'هر کاربر فضای خصوصی و داده‌های مستقل خودش را دارد.'}</p>
         <form className="auth-form" onSubmit={submit}>
@@ -589,7 +608,7 @@ function AuthScreen({ onAuth }) {
           <label className="field"><span>ایمیل</span><input required type="email" dir="ltr" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="name@example.com" /></label>
           <label className="field"><span>رمز عبور</span><input required minLength="8" type="password" dir="ltr" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="حداقل ۸ کاراکتر" /></label>
           {error ? <p className="auth-error">{error}</p> : null}
-          <button className="primary-button" disabled={busy}>{busy ? 'لطفاً صبر کن...' : mode === 'login' ? 'ورود به NOVA' : 'ساخت حساب'}</button>
+          <button className="primary-button" disabled={busy}>{busy ? 'لطفاً صبر کن...' : mode === 'login' ? 'ورود به NOAVA' : 'ساخت حساب'}</button>
         </form>
         <button className="auth-switch" onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError('') }}>
           {mode === 'login' ? 'حساب نداری؟ ثبت‌نام کن' : 'حساب داری؟ وارد شو'}
@@ -734,13 +753,13 @@ function SettingsView({ settings, onSave, onReset }) {
   const defaults = { dashboard: 'نمای کلی', today: 'امروز', tasks: 'تسک‌ها', projects: 'پروژه‌ها', calendar: 'تقویم تمرکز', analytics: 'تحلیل عملکرد', settings: 'تنظیمات' }
   const [form, setForm] = useState({
     display_name: settings?.display_name || 'مهسا رضایی',
-    workspace_name: settings?.workspace_name || 'NOVA',
+    workspace_name: settings?.workspace_name || 'NOAVA',
     page_titles: { ...defaults, ...(settings?.page_titles || {}) }
   })
   useEffect(() => {
     setForm({
       display_name: settings?.display_name || 'مهسا رضایی',
-      workspace_name: settings?.workspace_name || 'NOVA',
+      workspace_name: settings?.workspace_name || 'NOAVA',
       page_titles: { ...defaults, ...(settings?.page_titles || {}) }
     })
   }, [settings])
@@ -783,7 +802,7 @@ function JournalView({ logs = [], onAdd, onEdit, onDelete }) {
 function AssistantPanel({ open, messages, input, setInput, busy, onClose, onSend }) {
   if (!open) return null
   const suggestions = ['امروز را برایم اولویت‌بندی کن', 'این ایده را به پروژه تبدیل کن', 'یک برنامه سبک برای فردا بچین']
-  return <aside className="assistant-panel"><div className="assistant-header"><div className="assistant-title"><span className="assistant-avatar">{icons.spark}</span><div><strong>همراه NOVA</strong><span>دستیار برنامه‌ریزی تو</span></div></div><button className="icon-button icon-button--muted" onClick={onClose}>{icons.close}</button></div><div className="assistant-status"><span></span> آماده برای فکر کردن با تو</div><div className="assistant-messages">{messages.map((message, index) => <div className={`message message--${message.role}`} key={`${message.role}-${index}`}><div className="message-bubble">{message.text}</div>{message.actions?.length ? <div className="assistant-actions">{message.actions.map((action, actionIndex) => <span key={actionIndex}>{action}</span>)}</div> : null}</div>)}{busy ? <div className="message message--assistant"><div className="message-bubble typing"><i></i><i></i><i></i></div></div> : null}</div><div className="assistant-suggestions">{suggestions.map((suggestion) => <button key={suggestion} onClick={() => onSend(suggestion)}>{suggestion}</button>)}</div><form className="assistant-input" onSubmit={(event) => { event.preventDefault(); onSend() }}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="مثلاً: جلسه دندانپزشکی را برای سه‌شنبه..." /><button aria-label="ارسال">{icons.arrow}</button></form><small className="assistant-disclaimer">پیشنهادها توسط هوش مصنوعی تولید می‌شوند؛ قبل از اجرا مرورشان کن.</small></aside>
+  return <aside className="assistant-panel"><div className="assistant-header"><div className="assistant-title"><span className="assistant-avatar">{icons.spark}</span><div><strong>همراه NOAVA</strong><span>دستیار برنامه‌ریزی تو</span></div></div><button className="icon-button icon-button--muted" onClick={onClose}>{icons.close}</button></div><div className="assistant-status"><span></span> آماده برای فکر کردن با تو</div><div className="assistant-messages">{messages.map((message, index) => <div className={`message message--${message.role}`} key={`${message.role}-${index}`}><div className="message-bubble">{message.text}</div>{message.actions?.length ? <div className="assistant-actions">{message.actions.map((action, actionIndex) => <span key={actionIndex}>{action}</span>)}</div> : null}</div>)}{busy ? <div className="message message--assistant"><div className="message-bubble typing"><i></i><i></i><i></i></div></div> : null}</div><div className="assistant-suggestions">{suggestions.map((suggestion) => <button key={suggestion} onClick={() => onSend(suggestion)}>{suggestion}</button>)}</div><form className="assistant-input" onSubmit={(event) => { event.preventDefault(); onSend() }}><input value={input} onChange={(event) => setInput(event.target.value)} placeholder="مثلاً: جلسه دندانپزشکی را برای سه‌شنبه..." /><button aria-label="ارسال">{icons.arrow}</button></form><small className="assistant-disclaimer">پیشنهادها توسط هوش مصنوعی تولید می‌شوند؛ قبل از اجرا مرورشان کن.</small></aside>
 }
 
 function ModalShell({ title, subtitle, children, onClose }) {

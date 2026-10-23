@@ -1,6 +1,35 @@
-# Molibden changelog
+# NOAVA changelog
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
+
+## [2.0.0] - 2026-10-24
+
+Upgrade: **1.6.0 → 2.0.0**. Previous commit: `0a974cae181857f7431ee5bd7bd827ce5dd4010b`. The release commit is referenced by annotated tag [`v2.0.0`](https://github.com/Ali9832/schdule/releases/tag/v2.0.0); resolve locally with `git rev-parse v2.0.0^{commit}`. Author: `molibdengit`.
+
+### Breaking change: monetary API unit
+- All financial amounts now use **TOMAN**, including accounts, budgets, debts, installments, commitments and transactions. Finance API consumers must send toman instead of rial. Existing API paths are retained.
+- Legacy snapshots without `finance.currency_unit: "TOMAN"` are divided by 10 on read without modifying the source. The next normal write persists converted amounts with the marker; subsequent reads/writes do not divide again. No startup-wide database rewrite/scan is performed. Signed balances and fractional toman are preserved.
+- The major version reflects this API unit change. Package identity becomes `noava`; deployment URL and Git repository stay unchanged.
+
+### Added and fixed
+- NOAVA branding and «آوای نو» slogan, title, sidebar, PWA manifest and notification names; old storage keys and structured meeting prefixes remain compatible.
+- Academic course registration/editing, course filters, Saturday–Friday timetable, exams, quizzes, homework, study and course projects, sharing existing calendar/tasks/projects and recurrence. Server checks course/project ownership.
+- Sidebar and top avatar open the account page with the signed-in user's identity.
+- Real backdrop clicks close the day dialog; inside clicks and drags originating inside do not.
+- Account-scoped local drafts for calendar, finance, general forms, inspector edits, project reports/meetings, meeting/outcome/resource composers and quick capture. Drafts survive accidental close/reload, expire after 30 days and clear after successful save, explicit discard or logout. Passwords and file contents are excluded.
+- Task checkboxes/status changes strike through and dim completed records, move them to the bottom and guard pending writes. Server pagination sorts done tasks last; calendar completion appears immediately and follows the same ordering.
+- Daily overdue review supports completion/deletion, selection and explicit carry-forward. Recurring items move one occurrence while preserving the series and future state.
+- Service-worker namespace `noava-v2.0.0` clears previous app caches.
+
+### Validation
+- Build passed; 61 QA checks passed; all 13 local smoke endpoints returned 200. Financial conversion/formatting and academic/overdue API tests passed.
+- Browser coverage: branding/profile, draft reload/discard/account isolation, grouped toman entry, real backdrop clicks, academic recurrence/project links, completion order and mobile layout.
+- Regression checks: project reports/meetings, Today actions, financial settlement/balances, routine hit targets and confirmed-write performance. Final results are recorded in `IMPLEMENTATION_REPORT_FA.md`.
+
+### Limits and remaining work
+- Drafts belong to the current browser; no cross-device synchronization. Unsaved file/audio selections must be selected again after reload. Closed-site push reminders remain outside this release.
+- Automatic overdue review covers the previous 730 days. Older items remain in original views. Group transfers are sequential: successful transfers stay committed if a later request fails; only unprocessed rows remain to retry.
+- Production account workflows require authentication. Deployment health checks confirm version/commit/storage, not a production write test.
 
 ## [1.6.0] - 2026-10-23
 

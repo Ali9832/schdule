@@ -1,5 +1,5 @@
 import {calendarExtraSchema,normalizeCalendarExtras,validateExtras,expandCalendarEntry,occurrences,shiftDays,reminderTimes} from './calendar-rules.js'
-export const calendarKinds=['task','meeting','exam','class','homework','study','project','personal','religious','appointment','goal','focus','review']
+export const calendarKinds=['task','meeting','exam','quiz','class','homework','study','project','personal','religious','appointment','goal','focus','review']
 export function normalizeCalendarState(value){
   if(!value||typeof value!=='object'||Array.isArray(value))return {}
   return Object.fromEntries(Object.entries(value).filter(([key])=>/^(task|event|project|outcome):[\w-]{1,100}$/.test(key)).slice(-20000).map(([key,item])=>[key,{
@@ -26,7 +26,7 @@ export function registerCalendar(app,deps){
       const entry={key,source,id:entity.id,title:entity.title||entity.name,kind:meta?.kind||kind,date,end_date:endDate||date,
         all_day:source==='event'?meta?.all_day??false:meta?.all_day??true,start_time:source==='event'?String(entity.start_at).slice(11,16):meta?.start_time||'09:00',end_time:source==='event'?String(entity.end_at||entity.start_at).slice(11,16):meta?.end_time||'10:00',
         done:source==='task'?entity.status==='done':source==='project'?entity.status==='done':source==='outcome'?entity.status==='done':meta?.done||false,
-        description:description||'',color:meta?.color||'',priority:entity.priority||meta.priority||'medium',...extra};
+        description:description||'',project_id:entity.project_id||null,color:meta?.color||'',priority:entity.priority||meta.priority||'medium',...extra};
       const offset=forReminders&&meta.due_date?Math.round((Date.parse(meta.due_date)-Date.parse(date))/86400000):0;
       entries.push(...expandCalendarEntry(entry,{...meta,priority:source==='task'?entity.priority||meta.priority:meta.priority||entity.priority},shiftDays(from,-offset),shiftDays(to,-offset)))
     }
@@ -56,10 +56,11 @@ export function registerCalendar(app,deps){
   }
   app.post('/api/calendar',{schema:{body:{...schema,required:['title','date','kind']}}},async(request,reply)=>{
     const body=request.body,userId=request.user.id;validate(body);const kind=body.kind;let entity,source;
-    if(['task','homework'].includes(kind)){source='task';entity=await createTask(userId,{title:body.title.trim(),description:body.description||'',due_date:body.date,priority:body.priority||'medium',status:body.done?'done':'todo',category:kind==='homework'?'تکالیف':'شخصی'})}
+    await validateLinks(userId,body);
+    if(['task','homework'].includes(kind)){source='task';entity=await createTask(userId,{title:body.title.trim(),description:body.description||'',due_date:body.date,priority:body.priority||'medium',status:body.done?'done':'todo',project_id:body.project_id||null,category:kind==='homework'?'تکالیف':'شخصی'})}
     else if(kind==='project'){source='project';entity=await createProject(userId,{name:body.title.trim(),description:body.description||'',due_date:body.date,status:body.done?'done':'in_progress'})}
     else if(kind==='goal'){source='outcome';entity=await createOutcome(userId,{title:body.title.trim(),note:body.description||'',due_date:body.date,status:body.done?'done':'active'})}
-    else{source='event';entity=await createEvent(userId,{title:body.title.trim(),type:['meeting','religious','appointment','focus','review'].includes(kind)?kind:'personal',start_at:`${body.date}T${body.all_day!==false?'00:00':body.start_time||'09:00'}:00`,end_at:`${body.end_date||body.date}T${body.all_day!==false?'23:59':body.end_time||'10:00'}:00`,notes:body.description||'',color:body.color||'#268874'})}
+    else{source='event';entity=await createEvent(userId,{title:body.title.trim(),project_id:body.project_id||null,type:['meeting','religious','appointment','focus','review'].includes(kind)?kind:'personal',start_at:`${body.date}T${body.all_day!==false?'00:00':body.start_time||'09:00'}:00`,end_at:`${body.end_date||body.date}T${body.all_day!==false?'23:59':body.end_time||'10:00'}:00`,notes:body.description||'',color:body.color||'#268874'})}
     await saveState(userId,source+':'+entity.id,{...normalizeCalendarExtras(body),kind,all_day:body.all_day!==false,done:body.done===true,start_time:body.start_time||'09:00',end_time:body.end_time||'10:00',color:body.color||''})
     return reply.code(201).send({source,id:entity.id,key:source+':'+entity.id})
   })
@@ -71,7 +72,8 @@ export function registerCalendar(app,deps){
       if(Object.keys(body).some(key=>!['occurrence_date','done'].includes(key)))fail('ویرایش مشخصات از طریق مجموعه انجام می‌شود.')
       await saveState(userId,key,{exceptions:{...old.exceptions,[body.occurrence_date]:{...old.exceptions?.[body.occurrence_date],done:body.done===true}}});return {ok:true}
     }
-    const patch={};if(body.title!==undefined)patch[source==='project'?'name':'title']=body.title.trim();if(body.description!==undefined)patch[source==='event'?'notes':source==='outcome'?'note':'description']=body.description;
+    await validateLinks(userId,body);
+    const patch={};if(body.project_id!==undefined&&['task','event'].includes(source))patch.project_id=body.project_id||null;if(body.title!==undefined)patch[source==='project'?'name':'title']=body.title.trim();if(body.description!==undefined)patch[source==='event'?'notes':source==='outcome'?'note':'description']=body.description;
     if(source==='event'){
       const date=body.date||String(current.start_at).slice(0,10),endDate=body.end_date||body.date||String(current.end_at||current.start_at).slice(0,10),allDay=body.all_day??old.all_day??false;
       if(['date','end_date','start_time','end_time','all_day'].some(key=>body[key]!==undefined)){
@@ -87,10 +89,37 @@ export function registerCalendar(app,deps){
       if(body.done!==undefined)patch.status=body.done?'done':old.previous_status&&old.previous_status!=='done'?old.previous_status:source==='project'?'in_progress':source==='outcome'?'active':'todo';
       if(Object.keys(patch).length)await({task:updateTask,project:updateProject,outcome:updateOutcome}[source])(userId,id,patch)
     }
-    const change={kind:source==='task'?'task':source==='project'?'project':source==='outcome'?'goal':calendarKinds.includes(current.type)?current.type:'personal',all_day:source!=='event',...old};for(const key of ['kind','done','all_day','start_time','end_time','color','priority','due_date','due_time','reminders','recurrence'])if(body[key]!==undefined)change[key]=body[key];if(body.done===true&&previousStatus!=='done')change.previous_status=previousStatus||'';
+    const change={kind:source==='task'?'task':source==='project'?'project':source==='outcome'?'goal':calendarKinds.includes(current.type)?current.type:'personal',all_day:source!=='event',...old};for(const key of ['kind','done','all_day','start_time','end_time','color','priority','due_date','due_time','reminders','recurrence','course_id'])if(body[key]!==undefined)change[key]=body[key];if(body.done===true&&previousStatus!=='done')change.previous_status=previousStatus||'';
     if(body.recurrence!==undefined&&JSON.stringify(normalizeCalendarExtras(body).recurrence)!==JSON.stringify(old.recurrence)||body.date!==undefined&&body.date!==String(current.start_at||current.due_date||'').slice(0,10))change.exceptions={};
     await saveState(userId,key,change);return {ok:true}
   })
+  async function validateLinks(userId,body){
+    if(body.project_id)await find(userId,'project',body.project_id);
+    if(body.course_id&&!(await life(userId)).modules?.academic?.some(course=>course.id===body.course_id))fail('درس مرتبط پیدا نشد.');
+  }
+  const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  app.get('/api/calendar/overdue',async request=>{
+    const to=shiftDays(today(),-1),from=shiftDays(to,-729),result=await list(request.user.id,from,to);
+    return {from,to,entries:result.entries.filter(item=>!item.done&&item.end_date<today())};
+  });
+  app.post('/api/calendar/:source/:id/carry-forward',async request=>{
+    const userId=request.user.id,{source,id}=request.params,current=await find(userId,source,id),metadata=await state(userId),key=source+':'+id,old=metadata[key]||{},occurrence=request.body?.occurrence_date,start=String(current.start_at||current.due_date||'').slice(0,10),target=today();
+    if(old.recurrence){
+      if(!validDate(occurrence)||!occurrences(start,old.recurrence,occurrence,occurrence).length)fail('نوبت معتبر انتخاب کنید.');
+      const exception=old.exceptions?.[occurrence]||{};
+      if((exception.moved_to||occurrence)>=target||exception.done||exception.skipped)fail('این نوبت عقب‌افتاده نیست.');
+      await saveState(userId,key,{exceptions:{...old.exceptions,[occurrence]:{...exception,moved_to:target}}});
+    }else{
+      if(!validDate(start)||start>=target||old.done||current.status==='done')fail('این آیتم عقب‌افتاده نیست.');
+      if(source==='event'){
+        const duration=Math.round((Date.parse(String(current.end_at||current.start_at).slice(0,10))-Date.parse(start))/86400000);
+        if(shiftDays(start,duration)>=target)fail('برنامه هنوز پایان نیافته است.');
+        await updateEvent(userId,id,{start_at:target+String(current.start_at).slice(10),end_at:shiftDays(target,duration)+String(current.end_at||current.start_at).slice(10)});
+      }else await({task:updateTask,project:updateProject,outcome:updateOutcome}[source])(userId,id,{due_date:target});
+      if(old.due_date)await saveState(userId,key,{due_date:shiftDays(old.due_date,Math.round((Date.parse(target)-Date.parse(start))/86400000))});
+    }
+    return {ok:true,date:target};
+  });
   app.delete('/api/calendar/:source/:id',async request=>{
     const {source,id}=request.params,userId=request.user.id;await find(userId,source,id)
     if(request.query?.occurrence_date){

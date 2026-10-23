@@ -101,6 +101,28 @@ try{
   const future=new Date(Date.now()+30*60000),dueDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(future),dueTime=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Tehran',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(future)
   const independent=await request('POST','/api/calendar',{title:'Independent deadline reminder',kind:'personal',date:'2000-01-01',due_date:dueDate,due_time:dueTime,reminders:[15]},201)
   assert.ok((await request('GET','/api/calendar/reminders')).reminders.some(row=>row.id===independent.id),'deadline reminders must work even when the event start is outside the reminder window')
-  console.log('PASS recurrence for all 13 kinds, Persian month/year boundaries, per-occurrence state, deadlines, priority, reminder times, private image/audio attachments and size/type validation')
+  user('one').modules={academic:[{id:'course-one',title:'Math'}]};user('one').projects.push({id:'project-one',name:'Course project'});
+  const academic=await request('POST','/api/calendar',{title:'Quiz',kind:'quiz',date:dueDate,course_id:'course-one',project_id:'project-one'},201);
+  const linked=(await request('GET',`/api/calendar?from=${dueDate}&to=${dueDate}`)).entries.find(row=>row.id===academic.id);
+  assert.equal(linked.kind,'quiz');assert.equal(linked.course_id,'course-one');assert.equal(linked.project_id,'project-one');
+  await request('POST','/api/calendar',{title:'Foreign course',kind:'class',date:dueDate,course_id:'course-one'},400,{'test-user':'two'});
+  await request('POST','/api/calendar',{title:'Foreign project',kind:'class',date:dueDate,project_id:'project-one'},404,{'test-user':'two'});
+  const yesterday=new Date(Date.parse(dueDate+'T12:00:00Z')-86400000).toISOString().slice(0,10);
+  const recurring=await request('POST','/api/calendar',{title:'Weekly overdue',kind:'class',date:yesterday,recurrence:{frequency:'weekly',count:3}},201);
+  await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday});
+  const moved=(await request('GET',`/api/calendar?from=${dueDate}&to=${dueDate}`)).entries.find(row=>row.id===recurring.id);
+  assert.equal(moved.date,dueDate);assert.equal(moved.occurrence_date,yesterday);assert.equal(moved.series_date,yesterday);
+  assert.equal((await request('GET',`/api/calendar?from=${yesterday}&to=${yesterday}`)).entries.some(row=>row.id===recurring.id),false);
+  await request('PATCH',`/api/calendar/event/${recurring.id}`,{done:true,occurrence_date:yesterday});
+  assert.equal((await request('GET',`/api/calendar?from=${dueDate}&to=${dueDate}`)).entries.find(row=>row.id===recurring.id).done,true);
+  const nextWeek=new Date(Date.parse(yesterday+'T12:00:00Z')+7*86400000).toISOString().slice(0,10);
+  assert.equal((await request('GET',`/api/calendar?from=${nextWeek}&to=${nextWeek}`)).entries.find(row=>row.id===recurring.id).done,false);
+  await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday},400);
+  await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday},404,{'test-user':'two'});
+  const late=await request('POST','/api/calendar',{title:'Late homework',kind:'homework',date:yesterday},201);
+  assert.ok((await request('GET','/api/calendar/overdue')).entries.some(row=>row.id===late.id));
+  await request('POST',`/api/calendar/task/${late.id}/carry-forward`,{});assert.equal(user('one').tasks.find(row=>row.id===late.id).due_date,dueDate);
+  console.log('PASS academic course/project links, quiz, user isolation, overdue review and per-occurrence carry-forward without shifting the series')
+  console.log('PASS recurrence, Persian month/year boundaries, per-occurrence state, deadlines, priority, reminder times, private image/audio attachments and size/type validation')
   console.log('PASS calendar validation, multi-source CRUD, completion/undo, moving, safe unscheduling, metadata persistence, user isolation and structured-note preservation')
 }finally{await app.close()}

@@ -37,10 +37,11 @@ export function occurrences(start,rule,from,to,duration=0){
 }
 export function normalizeCalendarExtras(item={}){
  const recurrence=item.recurrence&&['daily','weekly','monthly','yearly'].includes(item.recurrence.frequency)?{frequency:item.recurrence.frequency,interval:Math.max(1,Math.min(365,Number(item.recurrence.interval)||1)),until:validDate(item.recurrence.until)?item.recurrence.until:null,count:Number.isInteger(item.recurrence.count)&&item.recurrence.count>0?Math.min(1000,item.recurrence.count):null}:null
- return {priority:['low','medium','high'].includes(item.priority)?item.priority:'medium',due_date:validDate(item.due_date)?item.due_date:null,due_time:validTime(item.due_time)?item.due_time:'23:59',reminders:[...new Set(Array.isArray(item.reminders)?item.reminders.filter(n=>Number.isInteger(n)&&n>=0&&n<=10080):[])].slice(0,3),recurrence,
-  exceptions:Object.fromEntries(Object.entries(item.exceptions||{}).filter(([date])=>validDate(date)).slice(-2000).map(([date,value])=>[date,{done:value?.done===true,skipped:value?.skipped===true}]))}
+ return {course_id:String(item.course_id||'').slice(0,100),priority:['low','medium','high'].includes(item.priority)?item.priority:'medium',due_date:validDate(item.due_date)?item.due_date:null,due_time:validTime(item.due_time)?item.due_time:'23:59',reminders:[...new Set(Array.isArray(item.reminders)?item.reminders.filter(n=>Number.isInteger(n)&&n>=0&&n<=10080):[])].slice(0,3),recurrence,
+  exceptions:Object.fromEntries(Object.entries(item.exceptions||{}).filter(([date])=>validDate(date)).slice(-2000).map(([date,value])=>[date,{done:value?.done===true,skipped:value?.skipped===true,...(validDate(value?.moved_to)?{moved_to:value.moved_to}:{})}]))}
 }
 export const calendarExtraSchema={
+ course_id:{type:'string',maxLength:100},project_id:{anyOf:[{type:'string',maxLength:100},{type:'null'}]},
  due_date:{anyOf:[{type:'null'},{type:'string'}]},due_time:{type:'string'},priority:{type:'string',enum:['low','medium','high']},
  reminders:{type:'array',maxItems:3,uniqueItems:true,items:{type:'integer',minimum:0,maximum:10080}},
  recurrence:{anyOf:[{type:'null'},{type:'object',additionalProperties:false,required:['frequency'],properties:{frequency:{type:'string',enum:['daily','weekly','monthly','yearly']},interval:{type:'integer',minimum:1,maximum:365},until:{anyOf:[{type:'string'},{type:'null'}]},count:{anyOf:[{type:'integer',minimum:1,maximum:1000},{type:'null'}]}}}]},occurrence_date:{type:'string'}
@@ -54,11 +55,12 @@ export function validateExtras(body,start,fail){
 export function expandCalendarEntry(entry,metadata,from,to){
  const duration=dayDiff(entry.end_date,entry.date),rule=metadata.recurrence
  const {exceptions,...extras}=normalizeCalendarExtras(metadata)
- return occurrences(entry.date,rule,from,to,duration).filter(date=>!metadata.exceptions?.[date]?.skipped).map(date=>{
-  const delta=dayDiff(date,entry.date)
+ const moved=Object.entries(metadata.exceptions||{}).filter(([,value])=>validDate(value.moved_to)&&value.moved_to<=to&&shiftDays(value.moved_to,duration)>=from).map(([date])=>date)
+ return [...new Set([...occurrences(entry.date,rule,from,to,duration),...moved])].filter(original=>{const exception=metadata.exceptions?.[original],date=exception?.moved_to||original;return !exception?.skipped&&date<=to&&shiftDays(date,duration)>=from}).map(original=>{
+  const date=metadata.exceptions?.[original]?.moved_to||original,delta=dayDiff(date,entry.date)
   return {...entry,...extras,due_date:metadata.due_date?shiftDays(metadata.due_date,delta):null,
-   key:rule?`${entry.source}:${entry.id}@${date}`:entry.key,series_key:entry.key,date,end_date:shiftDays(date,duration),series_date:entry.date,series_end_date:entry.end_date,series_due_date:metadata.due_date||null,
-   done:rule?metadata.exceptions?.[date]?.done===true:entry.done,occurrence_date:rule?date:null,priority:metadata.priority||entry.priority}
+   key:rule?`${entry.source}:${entry.id}@${original}`:entry.key,series_key:entry.key,date,end_date:shiftDays(date,duration),series_date:entry.date,series_end_date:entry.end_date,series_due_date:metadata.due_date||null,
+   done:rule?metadata.exceptions?.[original]?.done===true:entry.done,occurrence_date:rule?original:null,priority:metadata.priority||entry.priority}
  })
 }
 export function reminderTimes(entry){

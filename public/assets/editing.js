@@ -59,7 +59,8 @@
     }
     const error=document.createElement('p');error.className='record-edit-error';error.setAttribute('role','status');error.setAttribute('aria-live','polite');
     const actions=document.createElement('div');actions.className='record-edit-actions';const save=document.createElement('button'),cancel=document.createElement('button');save.type='submit';save.textContent='ذخیره تغییرات';cancel.type='button';cancel.textContent='انصراف';actions.append(save,cancel);form.append(error,actions);body.replaceChildren(form);body.scrollTop=0;window.PersianUI?.scan(form);controls.values().next().value?.focus();
-    cancel.onclick=()=>openV11Inspector(type,entity.id);
+    const draft=window.NoavaDrafts?.bind(form,`inspector:${type}:${entity.id}`);
+    cancel.onclick=()=>{draft?.clear();openV11Inspector(type,entity.id)};
     form.onsubmit=async event=>{
       event.preventDefault();if(save.disabled||owner!==generation||request!==inspectorRequest)return;if(!form.reportValidity())return;
       const patch={};for(const [key,input] of controls){const value=input.value;patch[key]=input.type==='number'?Number(value||0):key.endsWith('_id')||input.dataset.persianType?value||null:value.trim()}
@@ -67,6 +68,7 @@
       const route={project:'v11/projects',task:'v11/tasks',area:'v11/areas',resource:'v11/resources',outcome:'v11.7/outcomes',routine:entity.routine_type==='spiritual'?'v11.11/spiritual-routines':'habits',event:'events',meeting:'events'}[type];if(!route){error.textContent='ویرایش این مورد در دسترس نیست.';return}
       save.disabled=true;error.textContent='در حال ذخیره…';
       try{await apiFetch(`/api/${route}/${encodeURIComponent(type==='meeting'?entity.event_id||entity.id:entity.id)}`,{method:'PATCH',body:JSON.stringify(patch)});
+        draft?.clear();
         if(owner!==generation||request!==inspectorRequest)return;
         showToast('ذخیره شد','تغییرات ثبت شد.');
         if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();

@@ -64,8 +64,8 @@ function renderCommandOverview(d){
   if(!meeting.children.length){const empty=document.createElement('p');empty.className='home-empty';empty.textContent='جلسه‌ای پیش رو نیست. برنامه‌های دیگر را در تقویم ببین.';meeting.append(empty)}
 }
 async function submitHomeTask(event){
-  event.preventDefault();const input=document.getElementById('homeTaskInput'),title=input.value.trim(),button=event.currentTarget.querySelector('button'),status=document.getElementById('homeCaptureStatus');if(!title||button.disabled)return;
+  event.preventDefault();const form=event.currentTarget,input=document.getElementById('homeTaskInput'),title=input.value.trim(),button=form.querySelector('button'),status=document.getElementById('homeCaptureStatus');if(!title||button.disabled)return;
   button.disabled=true;status.textContent='در حال ثبت…';
-  try{await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:'یادداشت‌های ورودی',status:'todo',priority:'medium',due_date:window.DateContext?.date||todayIso()})});input.value='';status.textContent='کار برای تاریخ انتخاب‌شده ثبت شد.';v112Invalidate('dashboard');if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();else await v112RefreshDashboard(true)}catch(error){status.textContent='ثبت انجام نشد. '+(error.message||'دوباره تلاش کن.')}finally{button.disabled=false;input.focus()}
+  try{await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:'یادداشت‌های ورودی',status:'todo',priority:'medium',due_date:window.DateContext?.date||todayIso()})});form._noavaDraft?.clear();input.value='';status.textContent='کار برای تاریخ انتخاب‌شده ثبت شد.';v112Invalidate('dashboard');if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();else await v112RefreshDashboard(true)}catch(error){status.textContent='ثبت انجام نشد. '+(error.message||'دوباره تلاش کن.')}finally{button.disabled=false;input.focus()}
 }
 if(typeof V112_DASH!=='undefined'&&V112_DASH)renderSimpleHome(V112_DASH);

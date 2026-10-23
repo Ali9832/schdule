@@ -8,6 +8,11 @@
   const button = (action, kind, id, label) => `<button type="button" data-finance-action="${action}" data-kind="${kind}" data-id="${esc(id || '')}">${label}</button>`;
   let dialog, busy = false;
   function field(key, label, value = '', type = 'text', extra = '') {
+    if (['balance', 'amount', 'limit_amount', 'installment'].includes(key)) {
+      type = 'text'; label = label.replace(/ریال/g, 'تومان');
+      value = window.NoavaMoney?.format(value) ?? value;
+      extra = extra.replace(/(?:min|step)="[^"]*"/g, '') + ' data-money-toman inputmode="decimal" dir="ltr"';
+    }
     return `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" ${extra}></label>`;
   }
   function select(key, label, value, options) {
@@ -53,19 +58,23 @@
     dialog.innerHTML = `<form id="financeEditorForm" class="record-edit-form"><h2>${pay ? 'ثبت پرداخت / دریافت' : id ? 'ویرایش ' + names[kind] : 'افزودن ' + names[kind]}</h2><div class="record-edit-grid">${fields}</div><div class="record-edit-error" role="alert"></div><div class="record-edit-actions"><button type="submit">${pay ? 'تأیید ثبت' : 'ذخیره'}</button><button type="button" data-close>انصراف</button></div></form>`;
     const form = dialog.querySelector('form');
     if (!pay && (settled(row) || row.settlement_id)) for (const key of ['account', 'direction', 'type', 'date', 'status']) { const input = form.elements.namedItem(key); if (input) input.disabled = true; }
-    form.querySelector('[data-close]').onclick = close;
+    const draft = window.NoavaDrafts?.bind(form, `finance:${kind}:${id || 'new'}:${pay ? 'pay' : 'edit'}`);
+    window.NoavaMoney?.enhance(form);
+    form.querySelector('[data-close]').onclick = () => { draft?.clear(); close(); };
     dialog.oncancel = event => { if (busy) event.preventDefault(); };
     form.onsubmit = async event => {
       event.preventDefault(); if (busy || !form.reportValidity()) return;
       const body = Object.fromEntries(new FormData(form));
       // FormData reads the displayed Persian date; the enhanced value getter returns ISO.
       form.querySelectorAll('input[data-persian-type]:not(:disabled)').forEach(input => { body[input.name] = input.value; });
+      for (const input of form.querySelectorAll('[data-money-toman]:not(:disabled)')) body[input.name] = NoavaMoney.parse(input.value);
+      if (Object.values(body).some(value => typeof value === 'number' && !Number.isFinite(value))) { form.querySelector('[role=alert]').textContent = 'مبلغ معتبر وارد کنید.'; return; }
       if (pay && kind !== 'transactions') body.record_transaction = form.elements.record_transaction.checked;
       busy = true; form.querySelectorAll('button').forEach(b => b.disabled = true);
       try {
         const path = `/api/finance-editor/${kind}${id ? '/' + encodeURIComponent(id) : ''}${pay ? '/settle' : ''}`;
         V1112_DATA = await apiFetch(window.DateContext ? DateContext.query(path) + (DateContext.scoped('finance') ? '' : '&all_dates=1') : path, { method: pay || !id ? 'POST' : 'PATCH', body: JSON.stringify(body) });
-        v1112Render(); busy = false; dialog.close();
+        draft?.clear(); v1112Render(); busy = false; dialog.close();
         showToast('ذخیره شد', pay ? 'وضعیت پرداخت ثبت شد.' : names[kind] + ' ذخیره شد.');
       } catch (error) { form.querySelector('[role=alert]').textContent = error.message || 'ذخیره انجام نشد؛ دوباره تلاش کنید.'; }
       finally { busy = false; form.querySelectorAll('button').forEach(b => b.disabled = false); }

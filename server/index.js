@@ -15,6 +15,7 @@ import { registerCalendar, normalizeCalendarState } from './calendar.js'
 import { registerCalendarAttachments } from './calendar-attachments.js'
 import { postgresOptions } from './postgres-config.js'
 import { registerFinanceEditor } from './finance-editor.js'
+import { normalizeFinanceAmounts } from './finance-units.js'
 import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 import { registerProjectWorkspace } from './project-workspace.js'
 
@@ -33,7 +34,7 @@ const PORT = Number(process.env.PORT || 3001)
 const applicationPackage = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 const RELEASE_VERSION = applicationPackage.version
 const RELEASE_STAGE = 16
-const RELEASE_NAME = `Molibden ${RELEASE_VERSION}`
+const RELEASE_NAME = `NOAVA ${RELEASE_VERSION}`
 const databaseOptions = postgresOptions()
 let hasDatabase = Boolean(databaseOptions.connectionString)
 let openaiClient
@@ -353,6 +354,7 @@ async function initDatabase() {
     const saved = localStore?.load()
     if (saved) Object.assign(memory, saved)
     else seedMemory()
+    memory.finance = normalizeFinanceAmounts(memory.finance)
     localStore?.save(memory)
     return
   }
@@ -395,7 +397,7 @@ async function initDatabase() {
         weekly_plan: memory.weekly_plan,
         daily_logs: memory.daily_logs,
         ideas: memory.ideas,
-        finance: memory.finance,
+        finance: normalizeFinanceAmounts(memory.finance),
         modules: memory.modules
       })])
       await app.pg.query('COMMIT')
@@ -424,7 +426,7 @@ async function initDatabase() {
       weekly_plan: memory.weekly_plan,
       daily_logs: memory.daily_logs,
       ideas: memory.ideas,
-      finance: memory.finance
+      finance: normalizeFinanceAmounts(memory.finance)
     })])
   }
 }
@@ -650,15 +652,7 @@ function normalizeLifeData(input = {}) {
     weekly_plan: Array.isArray(input.weekly_plan) ? input.weekly_plan : [],
     daily_logs: Array.isArray(input.daily_logs) ? input.daily_logs.map(normalizeJournal) : [],
     ideas: Array.isArray(input.ideas) ? input.ideas.map(normalizeIdea).filter((item) => item.title) : [],
-    finance: input.finance && typeof input.finance === 'object'
-      ? {
-          accounts: Array.isArray(input.finance.accounts) ? input.finance.accounts : [],
-          transactions: Array.isArray(input.finance.transactions) ? input.finance.transactions : [],
-          debts: Array.isArray(input.finance.debts) ? input.finance.debts : [],
-          budgets: Array.isArray(input.finance.budgets) ? input.finance.budgets : [],
-          commitments: Array.isArray(input.finance.commitments) ? input.finance.commitments : []
-        }
-      : { accounts: [], transactions: [], debts: [], budgets: [], commitments: [] },
+    finance: normalizeFinanceAmounts(input.finance && typeof input.finance === 'object' ? input.finance : {}),
     modules: input.modules && typeof input.modules === 'object'
       ? Object.fromEntries(Object.entries(input.modules).map(([key, value]) => [key, Array.isArray(value) ? value : []]))
       : { spiritual: [], religious: [], health: [], learning: [], relations: [], review: [] },
@@ -692,7 +686,9 @@ async function getLifeData(userId) {
       return normalizeLifeData(result.rows[0].data)
     }
   }
-  return normalizeLifeData(lifeDataSnapshot(memory))
+  const normalized = normalizeLifeData(lifeDataSnapshot(memory))
+  memory.finance = normalized.finance
+  return normalized
 }
 
 async function updateLifeCollection(userId, collection, payload = {}) {
@@ -1421,7 +1417,7 @@ app.get('/api/v11/tasks/paged', async (request) => {
   if (maxMinutes) rows = rows.filter((t) => !Number(t.estimate_minutes || 0) || Number(t.estimate_minutes || 0) <= maxMinutes)
 
   const priorityWeight = (p) => ({ urgent: 0, high: 1, medium: 2, low: 3 }[p] ?? 4)
-  rows.sort((a, b) => String(a.due_date || '9999-12-31').localeCompare(String(b.due_date || '9999-12-31')) || priorityWeight(a.priority) - priorityWeight(b.priority) || String(a.title || '').localeCompare(String(b.title || '')))
+  rows.sort((a, b) => Number(a.status==='done')-Number(b.status==='done') || String(a.due_date || '9999-12-31').localeCompare(String(b.due_date || '9999-12-31')) || priorityWeight(a.priority) - priorityWeight(b.priority) || String(a.title || '').localeCompare(String(b.title || '')))
   const total = rows.length
   const items = rows.slice(cursor, cursor + limit)
   const next = cursor + items.length
@@ -1930,7 +1926,7 @@ app.get('/api/v11/inspector/:type/:id', async (request, reply) => {
 app.get('/api/health', async () => ({ ok: true, version: RELEASE_VERSION, release: RELEASE_VERSION, commit: process.env.VERCEL_GIT_COMMIT_SHA || null, stage: RELEASE_STAGE, release_name: RELEASE_NAME, storage: hasDatabase ? 'postgresql' : 'memory', now: new Date().toISOString() }))
 
 app.get('/api/release', async () => ({
-  name: 'Molibden',
+  name: 'NOAVA',
   version: RELEASE_VERSION,
   commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
   release: RELEASE_VERSION,
@@ -2211,7 +2207,7 @@ app.post('/api/finance/transactions', async (request, reply) => {
   const amount = Number(body.amount)
   if (!Number.isFinite(amount) || amount <= 0) return reply.code(400).send({ error: 'مبلغ تراکنش باید بزرگ‌تر از صفر باشد.' })
   if (!['income', 'expense'].includes(body.type)) return reply.code(400).send({ error: 'نوع تراکنش نامعتبر است.' })
-  const transaction = { ...body, id: body.id || id(), date: body.date || today(), amount, type: body.type, status: body.status || 'confirmed', currency: body.currency || 'IRR' }
+  const transaction = { ...body, id: body.id || id(), date: body.date || today(), amount, type: body.type, status: body.status || 'confirmed', currency: 'TOMAN' }
   await persistLifeData(request.user.id, { ...life, finance: { ...(life.finance || {}), transactions: [...(life.finance?.transactions || []), transaction] } })
   await addActivity(request.user.id, 'finance', `تراکنش «${transaction.description || 'بدون عنوان'}» ثبت شد.`)
   return reply.code(201).send(transaction)
@@ -2236,7 +2232,7 @@ app.post('/api/finance/accounts', async (request, reply) => {
   const life = await getLifeData(request.user.id)
   const body = request.body || {}
   if (!String(body.name || '').trim()) return reply.code(400).send({ error: 'نام حساب الزامی است.' })
-  const account = { ...body, name: String(body.name).trim(), id: body.id || id(), balance: Number(body.balance) || 0, currency: body.currency || 'IRR', status: body.status || 'active' }
+  const account = { ...body, name: String(body.name).trim(), id: body.id || id(), balance: Number(body.balance) || 0, currency: 'TOMAN', status: body.status || 'active' }
   await persistLifeData(request.user.id, { ...life, finance: { ...(life.finance || {}), accounts: [...(life.finance?.accounts || []), account] } })
   return reply.code(201).send(account)
 })
@@ -2283,7 +2279,7 @@ app.delete('/api/finance/debts/:id', async (request, reply) => {
 })
 
 
-const allowedModuleTypes = new Set(['spiritual','religious','health','learning','relations','review'])
+const allowedModuleTypes = new Set(['spiritual','religious','health','learning','relations','review','academic'])
 
 function moduleSummary(type, items = []) {
   const done = items.filter((item) => item.done).length
@@ -2749,7 +2745,8 @@ function v1112NormalizeFinance(finance = {}) {
     transactions: Array.isArray(finance.transactions) ? finance.transactions : [],
     debts: Array.isArray(finance.debts) ? finance.debts : [],
     budgets: Array.isArray(finance.budgets) ? finance.budgets : [],
-    commitments: Array.isArray(finance.commitments) ? finance.commitments : []
+    commitments: Array.isArray(finance.commitments) ? finance.commitments : [],
+    currency_unit: 'TOMAN'
   }
 }
 function v1112Summary(finance = {}, selectedDate) {
@@ -2825,7 +2822,7 @@ app.post('/api/v11.12/commitments/:id/create-event', async (request, reply) => {
 })
 app.post('/api/v11.12/transactions', async (request, reply) => {
   const life=await getLifeData(request.user.id), f=v1112NormalizeFinance(life.finance), body=request.body||{}, amount=Math.max(0,v1112Num(body.amount)); if(!amount)return reply.code(400).send({error:'مبلغ تراکنش الزامی است.'})
-  const type=body.type==='income'?'income':'expense', row={id:id(),date:String(body.date||today()).slice(0,10),type,amount,category:String(body.category||'عمومی'),description:String(body.description||'تراکنش'),account:String(body.account||''),status:'confirmed',currency:'IRR',created_at:new Date().toISOString()}
+  const type=body.type==='income'?'income':'expense', row={id:id(),date:String(body.date||today()).slice(0,10),type,amount,category:String(body.category||'عمومی'),description:String(body.description||'تراکنش'),account:String(body.account||''),status:'confirmed',currency:'TOMAN',created_at:new Date().toISOString()}
   f.transactions.push(row)
   const acc=f.accounts.find(a=>a.name===row.account||a.id===row.account); if(acc)acc.balance=v1112Num(acc.balance)+(type==='income'?amount:-amount)
   await persistLifeData(request.user.id,{...life,finance:f}); return reply.code(201).send(await v1112Payload(request.user.id))

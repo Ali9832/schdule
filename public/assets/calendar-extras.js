@@ -11,13 +11,13 @@
   const sync=()=>{for(const name of ['repeat_interval','repeat_until','repeat_count'])inputs[name].closest('label').hidden=!inputs.repeat_frequency.value;inputs.repeat_interval.required=!!inputs.repeat_frequency.value;inputs.due_time.closest('label').hidden=!inputs.due_date.value}
   inputs.repeat_frequency.addEventListener('change',sync);inputs.due_date.addEventListener('change',sync);sync()
   const label=node('label','ضمیمهٔ عکس یا صوت'),files=node('input');files.type='file';files.multiple=true;files.name='attachments';files.accept='image/png,image/jpeg,image/gif,image/webp,audio/mpeg,audio/wav,audio/x-wav,audio/ogg,audio/webm,audio/mp4,audio/x-m4a';label.append(files)
-  const message=node('p','هر فایل حداکثر ۲ مگابایت؛ حداکثر ۵ ضمیمه برای هر آیتم. عکس و صوت از حساب خودتان قابل دسترسی‌اند.');message.className='uc-form-hint';const selected=node('p');selected.setAttribute('role','status')
+  const message=node('p','هر فایل حداکثر ۲ مگابایت؛ حداکثر ۵ ضمیمه برای هر آیتم. عکس و صوت از حساب خودتان قابل دسترسی‌اند. فایل ذخیره‌نشده پس از رفرش باید دوباره انتخاب شود.');message.className='uc-form-hint';const selected=node('p');selected.setAttribute('role','status')
   let pending=values.files||[]
   files.onchange=()=>{pending=[...files.files];selected.textContent=pending.map(file=>file.name).join('، ');files.setCustomValidity(pending.length>5?'حداکثر ۵ فایل انتخاب کنید.':pending.some(file=>file.size>2097152)?'حداکثر حجم هر فایل ۲ مگابایت است.':'');files.reportValidity();form.dispatchEvent(new Event('input'))}
   if(pending.length)selected.textContent=pending.map(file=>file.name).join('، ')
   form.append(label,message,selected)
   const hint=node('p','تکرارهای ماهانه و سالانه بر اساس تقویم شمسی‌اند؛ اگر روز در ماه مقصد وجود نداشته باشد، آخرین روز ماه انتخاب می‌شود. یادآوری فقط هنگام بازبودن سایت بررسی می‌شود.');hint.className='uc-form-hint';form.append(hint,button('فعال‌کردن اعلان مرورگر',async()=>{hint.textContent='Notification' in window?(await Notification.requestPermission()==='granted'?'اعلان مرورگر فعال شد؛ برای دریافت یادآوری سایت باید باز باشد.':'اعلان مرورگر مجاز نشده است؛ یادآوری داخل سایت نمایش داده می‌شود.'):'این مرورگر اعلان را پشتیبانی نمی‌کند؛ یادآوری داخل سایت فعال است.'}))
-  return ()=>({due_date:inputs.due_date.value||null,due_time:inputs.due_time.value||'23:59',recurrence:inputs.repeat_frequency.value?{frequency:inputs.repeat_frequency.value,interval:Number(inputs.repeat_interval.value)||1,until:inputs.repeat_until.value||null,count:inputs.repeat_count.value?Number(inputs.repeat_count.value):null}:null,reminders:inputs.reminder.value===''?[]:[Number(inputs.reminder.value)],files:pending})
+  const value=()=>({due_date:inputs.due_date.value||null,due_time:inputs.due_time.value||'23:59',recurrence:inputs.repeat_frequency.value?{frequency:inputs.repeat_frequency.value,interval:Number(inputs.repeat_interval.value)||1,until:inputs.repeat_until.value||null,count:inputs.repeat_count.value?Number(inputs.repeat_count.value):null}:null,reminders:inputs.reminder.value===''?[]:[Number(inputs.reminder.value)],files:pending});value.sync=sync;return value
  }
  async function encode(files){
   if(files.length>5)throw Error('حداکثر ۵ ضمیمه انتخاب کنید.')
@@ -66,8 +66,8 @@
    seen.add(reminder.key);showToast('یادآوری',reminder.title)
    if('Notification' in window&&Notification.permission==='granted'){
     const options={body:reminder.title,tag:reminder.key}
-    if(navigator.serviceWorker?.controller)navigator.serviceWorker.ready.then(registration=>registration.showNotification('یادآوری Molibden',options)).catch(()=>{})
-    else try{new Notification('یادآوری Molibden',options)}catch{}
+    if(navigator.serviceWorker?.controller)navigator.serviceWorker.ready.then(registration=>registration.showNotification('یادآوری NOAVA',options)).catch(()=>{})
+    else try{new Notification('یادآوری NOAVA',options)}catch{}
    }
   }
  }

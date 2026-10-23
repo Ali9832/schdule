@@ -1,12 +1,12 @@
 {
-  "name": "mllibden",
-  "version": "1.6.0",
+  "name": "noava",
+  "version": "2.0.0",
   "private": true,
   "engines": {
     "node": "22.x"
   },
   "type": "module",
-  "description": "Molibden personal planner with unified Persian calendar and Vercel API.",
+  "description": "NOAVA personal planner with unified Persian calendar and Vercel API.",
   "scripts": {
     "db:import": "node scripts/import-local-to-postgres.mjs",
     "dev": "concurrently -k -n API,WEB -c magenta,cyan \"npm run server:dev\" \"npm run client:dev\"",

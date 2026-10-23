@@ -1,5 +1,5 @@
 (() => {
-  const kinds={task:['کار','#377b72'],meeting:['جلسه','#6678b8'],exam:['امتحان','#b95c69'],class:['کلاس و درس','#6376c0'],homework:['تکلیف','#a77834'],study:['مطالعه','#537e9a'],project:['پروژه','#8769a9'],personal:['برنامهٔ شخصی','#448a76'],religious:['مناسبت مذهبی','#7b719b'],appointment:['قرار','#469197'],goal:['هدف','#ad7952'],focus:['تمرکز','#7b6cac'],review:['مرور','#7e8860']};
+  const kinds={task:['کار','#377b72'],meeting:['جلسه','#6678b8'],exam:['امتحان','#b95c69'],quiz:['کوییز','#ad637f'],class:['کلاس و درس','#6376c0'],homework:['تکلیف','#a77834'],study:['مطالعه','#537e9a'],project:['پروژه','#8769a9'],personal:['برنامهٔ شخصی','#448a76'],religious:['مناسبت مذهبی','#7b719b'],appointment:['قرار','#469197'],goal:['هدف','#ad7952'],focus:['تمرکز','#7b6cac'],review:['مرور','#7e8860']};
   const viewNames={day:'روز',week:'هفته',month:'ماه',quarter:'فصل',year:'سال'};
   const root=document.getElementById('unifiedCalendar');
   const store='molibden.calendar.preferences.v1';let prefs={view:'month',showDone:true,compact:false,weekend:true,hiddenKinds:[],colors:{}};
@@ -17,7 +17,7 @@
   const button=(text,action,className='')=>{const b=el('button',className,text);b.type='button';b.onclick=action;return b};
   const color=item=>item.color||prefs.colors?.[item.kind]||kinds[item.kind]?.[1]||'#448a76';
   const visible=item=>(prefs.showDone||!item.done)&&!prefs.hiddenKinds.includes(item.kind)&&(!state.search||`${item.title} ${item.description}`.toLowerCase().includes(state.search.toLowerCase()));
-  const dayItems=(value,all=false)=>state.entries.filter(item=>item.date<=value&&item.end_date>=value&&(all||visible(item))).sort((a,b)=>Number(b.all_day)-Number(a.all_day)||a.start_time.localeCompare(b.start_time));
+  const dayItems=(value,all=false)=>state.entries.filter(item=>item.date<=value&&item.end_date>=value&&(all||visible(item))).sort((a,b)=>Number(a.done)-Number(b.done)||Number(b.all_day)-Number(a.all_day)||a.start_time.localeCompare(b.start_time));
   const savePrefs=()=>{prefs.view=state.view;try{localStorage.setItem(store,JSON.stringify(prefs))}catch{}};
   function range(){
     const p=jalali(state.anchor);let from,to;
@@ -76,10 +76,12 @@
     root.append(content,el('p','uc-help','روی هر روز بزنید تا همهٔ آیتم‌ها را ببینید، انجام‌شده کنید یا تغییر دهید.'));window.PersianUI?.scan(root);if(focused==='ucSearch')document.getElementById(focused)?.focus();
   }
   function conflicts(value){const timed=dayItems(value).filter(item=>!item.all_day&&!item.done);let count=0;for(let i=0;i<timed.length;i++)for(let j=i+1;j<timed.length;j++)if(`${timed[i].date}T${timed[i].start_time}`<`${timed[j].end_date}T${timed[j].end_time}`&&`${timed[j].date}T${timed[j].start_time}`<`${timed[i].end_date}T${timed[i].end_time}`)count++;return count}
-  async function openDay(value,create=false){
+  async function openDay(value,create=false,seed={}){
+    state.initial=create?seed:{};
+    const references=state.referencesAt&&Date.now()-state.referencesAt<60000?Promise.resolve():Promise.all([apiFetch('/api/projects'),apiFetch('/api/modules/academic/items')]).then(([projects,courses])=>{state.projects=projects;state.courses=courses.items;state.referencesAt=Date.now();}).catch(()=>{state.projects||=[];state.courses||=[];});
     state.anchor=value;window.DateContext?.set(value,'calendar');
-    if(state.dialog?.open){state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';await ensureDay(value);renderDay();return}
-    AppOverlays.closeAll();const dialog=el('dialog','uc-day-dialog');dialog.id='calendarDayDialog';dialog.setAttribute('aria-label','برنامهٔ روز');state.dialog=dialog;state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';document.body.append(dialog);dialog.addEventListener('close',()=>{if(state.dialog===dialog){state.dialog=null;state.selected=null;state.editing=null;state.draft=null}dialog.remove()});dialog.addEventListener('cancel',event=>{event.preventDefault();dialog.close()});renderDay();dialog.showModal();await ensureDay(value);if(state.dialog===dialog&&dialog.open)renderDay();
+    if(state.dialog?.open){state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';renderDay();await Promise.all([ensureDay(value),references]);renderDay();return}
+    AppOverlays.closeAll();const dialog=el('dialog','uc-day-dialog');dialog.id='calendarDayDialog';dialog.setAttribute('aria-label','برنامهٔ روز');state.dialog=dialog;state.selected=value;state.editing=create||window.NoavaDrafts?.read('calendar:new:'+value)?'new':null;state.draft=null;state.message='';document.body.append(dialog);dialog.addEventListener('close',()=>{if(state.dialog===dialog){state.dialog=null;state.selected=null;state.editing=null;state.draft=null}dialog.remove()});dialog.addEventListener('cancel',event=>{event.preventDefault();dialog.close()});let outside=false;const isOutside=e=>{const r=dialog.getBoundingClientRect();return e.target===dialog&&(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)};dialog.addEventListener('pointerdown',e=>{outside=isOutside(e)});dialog.addEventListener('click',e=>{if(outside&&isOutside(e))dialog.close();outside=false});renderDay();dialog.showModal();await Promise.all([ensureDay(value),references]);if(state.dialog===dialog&&dialog.open)renderDay();
   }
   async function ensureDay(value){if(value>=state.from&&value<=state.to)return;try{const result=await apiFetch(`/api/calendar?from=${value}&to=${value}`),map=new Map(state.entries.map(item=>[item.key,item]));result.entries.forEach(item=>map.set(item.key,item));state.entries=[...map.values()]}catch(error){state.message=error.message||'دریافت روز انجام نشد.'}}
   async function mutate(action,message){
@@ -88,9 +90,15 @@
     catch(error){if(owner===state.dialog)state.message='ذخیره انجام نشد: '+(error.message||'دوباره تلاش کنید.')}
     finally{state.busy=false;render();if(state.dialog?.open)renderDay()}
   }
+  async function toggleItem(item,done){
+    if(state.busy)return;state.busy=true;const old=item.done;item.done=done;render();if(state.dialog?.open)renderDay();
+    try{await apiFetch(`/api/calendar/${item.source}/${encodeURIComponent(item.id)}`,{method:'PATCH',body:JSON.stringify({done,...(item.occurrence_date?{occurrence_date:item.occurrence_date}:{})})});window.NovaFastUI?.scheduleVisibleRefresh();}
+    catch(error){item.done=old;state.message='ذخیره انجام نشد: '+error.message;}
+    finally{state.busy=false;render();if(state.dialog?.open)renderDay();}
+  }
   function agendaItem(item,value,editable=true){
     const row=el('article','uc-agenda-item'+(item.done?' done':''));row.dataset.key=item.key;row.style.setProperty('--item-color',color(item));
-    const check=el('input');check.type='checkbox';check.checked=item.done;check.disabled=state.busy;check.setAttribute('aria-label','انجام‌شده: '+item.title);check.onchange=()=>mutate(()=>apiFetch(`/api/calendar/${item.source}/${encodeURIComponent(item.id)}`,{method:'PATCH',body:JSON.stringify({done:check.checked,...(item.occurrence_date?{occurrence_date:item.occurrence_date}:{})})}),check.checked?'انجام‌شده ثبت شد.':'آیتم دوباره باز شد.');
+    const check=el('input');check.type='checkbox';check.checked=item.done;check.disabled=state.busy;check.setAttribute('aria-label','انجام‌شده: '+item.title);check.onchange=()=>toggleItem(item,check.checked);
     const main=el('div','uc-agenda-text');main.append(el('strong','',item.title),el('small','',`${kinds[item.kind]?.[0]||'برنامه'} · ${item.all_day?'تمام روز':num(item.start_time)+' تا '+num(item.end_time)}${item.end_date!==item.date?' · تا '+faDateLabel(item.end_date):''}`));if(item.description)main.append(el('p','',item.description));
     if(window.CalendarExtras)main.append(el('small','',CalendarExtras.summary(item)),CalendarExtras.attachments(item));
     const actions=el('div','uc-item-actions');const edit=button('✎',()=>{if(!editable){openDay(value).then(()=>{if(!state.dialog?.open)return;state.editing=item;state.draft=null;renderDay()});return}state.editing=item;state.draft=null;state.message='';renderDay()},'uc-edit');edit.setAttribute('aria-label','ویرایش '+item.title);edit.title='ویرایش و جابه‌جایی تاریخ';
@@ -113,32 +121,37 @@
   }
   function editor(item){
     if(item?.recurrence)item={...item,date:item.series_date,end_date:item.series_end_date,due_date:item.series_due_date};
-    const form=el('form','uc-editor');form.id='calendarItemForm';form.append(el('h3','',item?'ویرایش و جابه‌جایی آیتم':'برنامهٔ جدید'));const inputs={},values=state.draft||item||{};
-    function field(name,label,type,value,options=null){const wrap=el('label','',label),input=el(options?'select':type==='textarea'?'textarea':'input');if(options)options.forEach(([key,label])=>input.add(new Option(label,key)));else if(type!=='textarea')input.type=type;input.name=name;input.id='calendarInput-'+name;input.value=value??'';if(['title','date','end_date','start_time','end_time'].includes(name))input.required=true;if(name==='title')input.maxLength=200;wrap.append(input);inputs[name]=input;return wrap}
+    const form=el('form','uc-editor');form.id='calendarItemForm';form.append(el('h3','',item?'ویرایش و جابه‌جایی آیتم':'برنامهٔ جدید'));const inputs={},values=state.draft||item||state.initial||{};
+    function field(name,label,type,value,options=null){const wrap=el('label','',label),input=el(options?'select':type==='textarea'?'textarea':'input');if(options){options.forEach(([key,label])=>input.add(new Option(label,key)));if(value&&!options.some(([key])=>key===value))input.add(new Option('مورد انتخاب‌شده',value));}else if(type!=='textarea')input.type=type;input.name=name;input.id='calendarInput-'+name;input.value=value??'';if(['title','date','end_date','start_time','end_time'].includes(name))input.required=true;if(name==='title')input.maxLength=200;wrap.append(input);inputs[name]=input;return wrap}
     const grid=el('div','uc-form-grid');grid.append(field('title','عنوان','text',values.title||''),field('kind','نوع برنامه','select',values.kind||'task',Object.entries(kinds).filter(([key])=>item?.source!=='event'||!['task','homework','project','goal'].includes(key)).map(([key,[label]])=>[key,label])),field('date','تاریخ شروع / موعد','date',values.date||state.selected),field('end_date','تاریخ پایان','date',values.end_date||state.selected),field('start_time','ساعت شروع (۲۴ ساعته)','time',values.start_time||'09:00'),field('end_time','ساعت پایان (۲۴ ساعته)','time',values.end_time||'10:00'),field('priority','اولویت','select',values.priority||'medium',[['low','کم'],['medium','متوسط'],['high','بالا']]));
     const allDay=el('label','uc-check-label'),check=el('input');check.type='checkbox';check.name='all_day';check.checked=values.all_day??true;allDay.append(check,document.createTextNode('تمام روز / بدون ساعت مشخص'));grid.append(allDay);form.append(grid,field('description','توضیحات','textarea',values.description||''));
     const extra=CalendarExtras.fields(form,grid,inputs,values,field);
+    grid.append(field('course_id','درس مرتبط','select',values.course_id||'',[['','بدون درس'],...(state.courses||[]).map(c=>[c.id,c.title])]));
+    if(!item||['task','event'].includes(item.source))grid.append(field('project_id','پروژه مرتبط','select',values.project_id||'',[['','بدون پروژه'],...(state.projects||[]).map(p=>[p.id,p.name])]));
     if(item)form.append(CalendarExtras.attachments(item));
     const hint=el('p','uc-form-hint','با تغییر تاریخ، آیتم به روز انتخاب‌شده منتقل می‌شود.');if(item?.recurrence)hint.textContent='ویرایش این فرم روی کل مجموعهٔ تکرار اعمال می‌شود. برای انجام یا حذف فقط یک نوبت، از دکمه‌های همان نوبت استفاده کنید.';if(item?.source==='event'&&['meeting','religious'].includes(item.kind))hint.textContent+=' اطلاعات تخصصی این مورد در بخش خودش حفظ می‌شود.';form.append(hint);
-    const error=el('p','uc-form-error');error.setAttribute('role','alert');const actions=el('div','uc-form-actions'),save=el('button','uc-primary',item?'ذخیره تغییرات':'ثبت برنامه');save.type='submit';actions.append(save,button('انصراف',()=>{state.editing=null;renderDay()}));form.append(error,actions);
+    const draft=window.NoavaDrafts?.bind(form,'calendar:'+(item?item.source+':'+item.id:'new:'+state.selected));
+    const error=el('p','uc-form-error');error.setAttribute('role','alert');const actions=el('div','uc-form-actions'),save=el('button','uc-primary',item?'ذخیره تغییرات':'ثبت برنامه');save.type='submit';actions.append(save,button('انصراف',()=>{draft?.clear();state.editing=null;state.draft=null;renderDay()}));form.append(error,actions);
     const sync=()=>{const timed=!check.checked;inputs.start_time.disabled=inputs.end_time.disabled=!timed;inputs.start_time.required=inputs.end_time.required=timed;const single=item?item.source!=='event':['task','homework','project','goal'].includes(inputs.kind.value);inputs.end_date.closest('label').hidden=single;inputs.end_date.required=!single;if(single)inputs.end_date.value=inputs.date.value};check.onchange=sync;inputs.kind.onchange=sync;let previousDate=inputs.date.value;inputs.date.onchange=()=>{if(inputs.date.value){const duration=(Date.parse(inputs.end_date.value)-Date.parse(previousDate))/86400000;if(Number.isFinite(duration)&&duration>=0)inputs.end_date.value=add(inputs.date.value,duration);previousDate=inputs.date.value}sync()};sync();
     if(item&&['task','project','outcome'].includes(item.source))inputs.kind.disabled=true;
+    extra.sync?.();
     form.onsubmit=event=>{
       event.preventDefault();if(state.busy||!form.reportValidity())return;const dateValue=inputs.date.value,endDate=inputs.end_date.value||dateValue,start=inputs.start_time.value||'09:00',end=inputs.end_time.value||'10:00';
       if(endDate<dateValue||(!check.checked&&endDate===dateValue&&end<=start)){error.textContent='پایان باید بعد از شروع باشد.';return}
       const {files,...details}=extra();
-      const body={...details,title:inputs.title.value.trim(),kind:inputs.kind.value,date:dateValue,end_date:endDate,all_day:check.checked,start_time:start,end_time:end,priority:inputs.priority.value,description:inputs.description.value};
+      const body={...details,course_id:inputs.course_id.value,...(inputs.project_id?{project_id:inputs.project_id.value||null}:{}),title:inputs.title.value.trim(),kind:inputs.kind.value,date:dateValue,end_date:endDate,all_day:check.checked,start_time:start,end_time:end,priority:inputs.priority.value,description:inputs.description.value};
       if(!body.title){error.textContent='عنوان را وارد کنید.';return}state.draft=body;const moved=item&&body.date!==item.date;
       state.draft={...body,files};
       mutate(async()=>{
         const uploads=await CalendarExtras.encode(files);
         const result=await apiFetch(item?`/api/calendar/${item.source}/${encodeURIComponent(item.id)}`:'/api/calendar',{method:item?'PATCH':'POST',body:JSON.stringify(body)});
+        draft?.clear();
         try{await CalendarExtras.upload(item||result,uploads)}catch(error){return {warning:'آیتم ذخیره شد، اما بارگذاری بعضی ضمیمه‌ها انجام نشد: '+error.message+' برای تلاش مجدد، ویرایش آیتم را باز کنید.'}}
       },moved?'آیتم به '+faDateLabel(body.date)+' منتقل شد.':item?'تغییرات ذخیره شد.':'برنامه ثبت شد.');
     };form.addEventListener('input',()=>{state.draft={...extra(),title:inputs.title.value,kind:inputs.kind.value,date:inputs.date.value,end_date:inputs.end_date.value,start_time:inputs.start_time.value,end_time:inputs.end_time.value,priority:inputs.priority.value,all_day:check.checked,description:inputs.description.value}});return form;
   }
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='calendar')await load()};
-  let refreshTimer;window.addEventListener('nova:data-changed',()=>{if(state.busy)return;clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.getElementById('calendar').classList.contains('hidden'))load()},120)});
+  let refreshTimer;window.addEventListener('nova:data-changed',event=>{if(/\/api\/(projects|modules\/academic)/.test(event.detail?.path||''))state.referencesAt=0;if(state.busy)return;clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.getElementById('calendar').classList.contains('hidden'))load()},120)});
   window.UnifiedCalendar={load,openDay,setView,shift,state,prefs,range,render};render();
   if(new URLSearchParams(location.search).get('page')==='calendar'){
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>goPage('calendar'),{once:true});else goPage('calendar');

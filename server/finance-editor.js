@@ -28,7 +28,7 @@ export function registerFinanceEditor(app, { life, saveLife, payload, id, today,
     if (account) account.balance = number(account.balance || 0) + sign * (transaction.type === 'income' ? 1 : -1) * number(transaction.amount)
   }
   function normalize(kind, body, current, f) {
-    const row = { ...current }
+    const row = { ...current, currency: 'TOMAN' }
     const allowed = {
       accounts: ['name', 'balance', 'note', 'masked', 'status'],
       budgets: ['name', 'category', 'limit_amount', 'period', 'note'],

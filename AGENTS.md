@@ -1,6 +1,6 @@
 # Release workflow
 
-- Work on the current Molibden application on main. Never replace it with the legacy NOVA ZIP.
+- Work on the current NOAVA application on main. Never replace it with the legacy NOVA ZIP.
 - For every deployable update, increment the version using MAJOR.MINOR.PATCH (Semantic Versioning): patch for compatible fixes, minor for compatible features, major for breaking changes.
 - Keep package.json, both root version fields in package-lock.json, the visible app-version label in index.html, and cache names in sw.js and public/sw.js synchronized.
 - API version is read from package.json. Keep existing versioned API route names compatible; do not rename API paths as part of a release bump.
