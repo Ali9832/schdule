@@ -24,9 +24,10 @@ app.setErrorHandler((error, request, reply) => {
   return reply.code(error.statusCode && error.statusCode < 500 ? error.statusCode : 500).send({ error: error.statusCode && error.statusCode < 500 ? error.message : 'خطای داخلی سرور.' })
 })
 const PORT = Number(process.env.PORT || 3001)
-const RELEASE_VERSION = 'V1.1'
+const applicationPackage = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+const RELEASE_VERSION = applicationPackage.version
 const RELEASE_STAGE = 16
-const RELEASE_NAME = 'mllibden 1.1'
+const RELEASE_NAME = `Molibden ${RELEASE_VERSION}`
 const databaseOptions = postgresOptions()
 let hasDatabase = Boolean(databaseOptions.connectionString)
 let openaiClient
@@ -1872,10 +1873,12 @@ app.get('/api/v11/inspector/:type/:id', async (request, reply) => {
   return {type,entity,linked}
 })
 
-app.get('/api/health', async () => ({ ok: true, release: RELEASE_VERSION, stage: RELEASE_STAGE, release_name: RELEASE_NAME, storage: hasDatabase ? 'postgresql' : 'memory', now: new Date().toISOString() }))
+app.get('/api/health', async () => ({ ok: true, version: RELEASE_VERSION, release: RELEASE_VERSION, commit: process.env.VERCEL_GIT_COMMIT_SHA || null, stage: RELEASE_STAGE, release_name: RELEASE_NAME, storage: hasDatabase ? 'postgresql' : 'memory', now: new Date().toISOString() }))
 
 app.get('/api/release', async () => ({
-  name: 'NOVA Personal Operating System',
+  name: 'Molibden',
+  version: RELEASE_VERSION,
+  commit: process.env.VERCEL_GIT_COMMIT_SHA || null,
   release: RELEASE_VERSION,
   stage: RELEASE_STAGE,
   release_name: RELEASE_NAME,
