@@ -7,6 +7,9 @@ let linkedTasks=[];
 let originalTitles=new Map();
 let originalItems=new Map();
 let bankReady=false;
+let bankPromise=null;
+const PAGE_SIZE=50;
+const filteredCategories=new Map(),visibleLimits=new Map();
 let bankIndex=new Map(),bankTitles=new Map(),taskTitles=new Map(),taskLinks=new Map();
 const pendingStatus=new Set();
 const normalizeSearch=s=>String(s).toLowerCase().replace(/ي/g,"ی").replace(/ك/g,"ک").replace(/[\u200c\u200d]/g," ").replace(/\s+/g," ");
@@ -92,6 +95,7 @@ function renderDashboard(){
  const total=document.querySelector('#items .kpis .kpi b');if(total)total.textContent=faDigits(active.length);
 }
 function exportEdits(){
+ if(!bankReady){ensureLoaded().then(()=>{if(bankReady)exportEdits()});return;}
  const blob=new Blob([JSON.stringify({version:1,items:localEdits},null,2)],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="NOVA_Master_Item_Edits.json";a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function applySavedEdits(){
@@ -157,7 +161,7 @@ async function handleAction(event){
    finally{delete row.dataset.saving;row.querySelectorAll('button').forEach(button=>button.disabled=false);}
   }
   saveItem(id,{text,h:category.h,category:category.title,macro:category.macro,subcategory,categoryReviewed:true,classification:{...item.classification,needsReview:false,reason:'دسته‌بندی انتخاب‌شده توسط کاربر'}});
-  row.remove();byId('tbody-'+category.h).insertAdjacentHTML('beforeend',rowHtml(item));reorderCategory(category.h);
+  row.remove();
   refreshCounts();if(moved){clearFilters();jumpToCategory(category.h);}return;
  }
  if(button.dataset.action==='delete'){
@@ -167,7 +171,7 @@ async function handleAction(event){
 }
 function undoDelete(){
  const item=DATA.items.find(item=>item.id===lastDeletedId);if(!item)return;
- saveItem(item.id,{deleted:false});byId('tbody-'+item.h).insertAdjacentHTML('beforeend',rowHtml(item));reorderCategory(item.h);lastDeletedId=null;refreshCounts();
+ saveItem(item.id,{deleted:false});lastDeletedId=null;refreshCounts();
 }
 async function startBank(){
  try{
@@ -186,7 +190,7 @@ async function startBank(){
   });
   window.addEventListener('storage',event=>{
    if(event.key!==EDIT_KEY)return;
-   try{localEdits=JSON.parse(event.newValue||'{}');applySavedEdits();const open=[...document.querySelectorAll('.nova-master-bank .category-section.open')].map(section=>section.dataset.h);renderBank();open.forEach(h=>toggleSection(h));refreshCounts();renderDashboard();}catch(error){console.warn('Bank storage:',error);}
+   try{localEdits=JSON.parse(event.newValue||'{}');applySavedEdits();const open=[...document.querySelectorAll('.nova-master-bank .category-section.open')].map(section=>section.dataset.h);renderBank();refreshCounts();open.forEach(h=>toggleSection(h));renderDashboard();}catch(error){console.warn('Bank storage:',error);}
   });
   try{synchronizeTasks(await window.apiFetch('/api/tasks'));}catch(error){console.warn('Task linking:',error);}
   byId("bank").addEventListener("click",handleAction);
@@ -195,6 +199,14 @@ async function startBank(){
  }catch(error){byId("resultSummary").textContent="بارگذاری بانک آیتم‌ها ناموفق بود. صفحه را تازه کنید.";console.error(error);}
 }
 
+function ensureLoaded(){
+ if(bankReady)return Promise.resolve();
+ if(!bankPromise){
+  byId('resultSummary').textContent='در حال دریافت بانک آیتم‌ها…';
+  bankPromise=startBank().finally(()=>{bankPromise=null;});
+ }
+ return bankPromise;
+}
 
 const faDigits=s=>String(s).replace(/\d/g,d=>"۰۱۲۳۴۵۶۷۸۹"[d]);
 const byId=id=>document.getElementById("bank-"+id)||document.getElementById(id);
@@ -249,10 +261,6 @@ function initFilters(){
 }
 
 function renderBank(){
-  const byCat={};
-  DATA.categories.forEach(c=>byCat[c.h]=[]);
-  DATA.items.filter(it=>!it.deleted).forEach(it=>{(byCat[it.h]??=[]).push(it)});
-
   byId("bank").innerHTML=DATA.categories.map(c=>`
     <article class="category-section" id="bank-sec-${c.h}" data-h="${c.h}" data-m="${macroCode(c.macro)}" style="${cssVars(c.h)}">
       <div class="category-header" role="button" tabindex="0" aria-expanded="false" onclick="NovaBank.toggleSection('${c.h}')" onkeydown="if(event.target===this &amp;&amp; (event.key==='Enter' || event.key===' ')){event.preventDefault();NovaBank.toggleSection('${c.h}')}">
@@ -268,9 +276,9 @@ function renderBank(){
             <th class="col-type">نوع</th><th class="col-decision">تصمیم تیم</th><th class="col-ref">مرجع</th>
           </tr></thead>
           <tbody id="bank-tbody-${c.h}">
-            ${byCat[c.h].sort(compareBankItems).map(it=>rowHtml(it)).join("")}
           </tbody>
         </table>
+        <button type="button" class="bank-load-more" onclick="NovaBank.loadMore('${c.h}')" hidden>نمایش موارد بیشتر</button>
       </div>
     </article>`).join("");
 }
@@ -290,43 +298,45 @@ function rowHtml(it){
 }
 
 function toggleSection(h){
+  if(!byId('sec-'+h)?.classList.contains('open'))renderCategory(h);
   const section=byId("sec-"+h); if(section){section.classList.toggle("open");section.querySelector(".category-header").setAttribute("aria-expanded",section.classList.contains("open"));}
 }
 function jumpToCategory(h){
+  renderCategory(h);
   const sec=byId("sec-"+h); if(!sec)return;
   sec.classList.add("open");sec.querySelector(".category-header").setAttribute("aria-expanded","true");
   sec.scrollIntoView({behavior:"smooth",block:"start"});
 }
-function openAll(){document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")})}
+function openAll(){document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{renderCategory(x.dataset.h);x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")})}
 function closeAll(){document.querySelectorAll(".nova-master-bank .category-section").forEach(x=>{x.classList.remove("open");x.querySelector(".category-header").setAttribute("aria-expanded","false")})}
 function setMacro(code){byId("macro").value=code;applyFilters();openMatching()}
 
 function clearFilters(){
+  if(!bankReady)return;
   byId("q").value="";byId("macro").value="";byId("priority").value="";byId("type").value="";
   byId('topic').value='';byId('review').checked=false;
   applyFilters();
 }
 function applyFilters(){
+  if(!DATA)return;
   const q=normalizeSearch(byId("q").value.trim());
   const m=byId("macro").value;
   const p=byId("priority").value;
   const t=byId("type").value;
+  const topic=byId('topic').value,review=byId('review').checked;
+  const grouped=new Map(DATA.categories.map(c=>[c.h,[]]));
+  for(const item of DATA.items){
+   if(item.deleted||q&&!normalizeSearch(textBlob(item)).includes(q)||m&&macroCode(item.macro)!==m||p&&item.priority!==p||t&&item.type!==t||topic&&item.subcategory!==topic||review&&!item.classification?.needsReview)continue;
+   grouped.get(item.h)?.push(item);
+  }
   let shown=0, shownCats=0;
 
   DATA.categories.forEach(c=>{
     const sec=byId("sec-"+c.h);
-    let catShown=0;
-    sec.querySelectorAll("tbody tr").forEach(tr=>{
-      const okQ=!q || normalizeSearch(tr.dataset.search||"").includes(q);
-      const okM=!m || tr.dataset.m===m;
-      const okP=!p || tr.dataset.priority===p;
-      const okT=!t || tr.dataset.type===t;
-      const okTopic=!byId('topic').value||tr.dataset.topic===byId('topic').value;
-      const okReview=!byId('review').checked||tr.dataset.review==='true';
-      const ok=okQ&&okM&&okP&&okT&&okTopic&&okReview;
-      tr.style.display=ok?"":"none";
-      if(ok)catShown++;
-    });
+    const matches=grouped.get(c.h).sort(compareBankItems),catShown=matches.length;
+    filteredCategories.set(c.h,matches);visibleLimits.set(c.h,PAGE_SIZE);
+    if(sec.classList.contains('open'))renderCategory(c.h);
+    else byId('tbody-'+c.h).replaceChildren();
     sec.classList.toggle("hidden",catShown===0);
     byId("count-"+c.h).textContent=faDigits(catShown);
     if(catShown){shownCats++;shown+=catShown}
@@ -334,11 +344,20 @@ function applyFilters(){
   byId("resultSummary").textContent=`نمایش ${faDigits(shown)} آیتم در ${faDigits(shownCats)} دسته از مجموع ${faDigits(DATA.items.filter(item=>!item.deleted).length)} آیتم`;
 }
 function openMatching(){
-  document.querySelectorAll(".nova-master-bank .category-section:not(.hidden)").forEach(x=>{x.classList.add("open");x.querySelector(".category-header").setAttribute("aria-expanded","true")});
+  openAll();
 }
 
-startBank();
+function renderCategory(h){
+ const body=byId('tbody-'+h);if(!body)return;
+ const items=(filteredCategories.get(h)||[]).sort(compareBankItems),limit=visibleLimits.get(h)||PAGE_SIZE;
+ body.innerHTML=items.slice(0,limit).map(rowHtml).join('');
+ body.closest('.category-body').querySelector('.bank-load-more').hidden=items.length<=limit;
+}
+function loadMore(h){visibleLimits.set(h,(visibleLimits.get(h)||PAGE_SIZE)+PAGE_SIZE);renderCategory(h);}
 
-window.NovaBank={applyFilters,clearFilters,openMatching,closeAll,exportEdits,openAll,toggleSection,jumpToCategory,setMacro,setStatus,renderDashboard,synchronizeTasks};
+window.NovaBank={ensureLoaded,loadMore,applyFilters,clearFilters,openMatching,closeAll,exportEdits,openAll,toggleSection,jumpToCategory,setMacro,setStatus,renderDashboard,synchronizeTasks};
+const dashboardPreview=document.querySelector('.mod-master .module-scroll');
+if(dashboardPreview)dashboardPreview.innerHTML='<button type="button" onclick="goPage(\'items\')">مشاهده و مدیریت بانک آیتم‌ها</button>';
+if(!document.getElementById('items')?.classList.contains('hidden'))ensureLoaded();
 if(new URLSearchParams(location.search).get("page")==="items" && typeof window.goPage==="function")window.goPage("items");
 })();

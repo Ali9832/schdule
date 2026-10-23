@@ -7,7 +7,7 @@ socket.onmessage=event=>{const m=JSON.parse(event.data);if(m.id){const p=pending
 function send(method,params={}){return new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}))})}
 async function evaluate(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw new Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value}
 const pause=ms=>new Promise(r=>setTimeout(r,ms))
-async function ready(){for(let i=0;i<100;i++){if(await evaluate('typeof NovaBank!=="undefined" && document.querySelectorAll("#bank-bank tr[data-id]").length===3248'))return;await pause(150)}throw new Error('Bank did not load')}
+async function ready(){await pause(300);for(let i=0;i<100;i++){if(await evaluate('typeof NovaBank!=="undefined" && document.querySelectorAll("#bank-bank .category-section").length===65')){await evaluate('NovaBank.openAll();document.querySelectorAll("#bank-bank .category-section").forEach(section=>{while(!section.querySelector(".bank-load-more").hidden)NovaBank.loadMore(section.dataset.h)})');return}await pause(150)}throw new Error('Bank did not load')}
 let snapshot;
 try{
  await send('Page.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Page.navigate',{url:'http://127.0.0.1:3001/?page=items'});await ready();await pause(500)

@@ -9,7 +9,7 @@ async function evaluate(expression){const r=await send('Runtime.evaluate',{expre
 const pause=ms=>new Promise(r=>setTimeout(r,ms))
 try{
  await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Page.navigate',{url:'http://127.0.0.1:3001/?page=items'})
- for(let i=0;i<100;i++){if(await evaluate('typeof NovaNavCounts!=="undefined" && document.querySelectorAll("#bank-bank tr[data-id]").length===3248'))break;await pause(200)}
+ for(let i=0;i<100;i++){if(await evaluate('typeof NovaNavCounts!=="undefined" && document.querySelectorAll("#bank-bank .category-section").length===65'))break;await pause(200)}
  await pause(1200);await evaluate('NovaNavCounts.refresh()');await pause(600)
  assert.equal(await evaluate('document.querySelectorAll("#bank-bank tr[data-id]").length'),3248)
  const comparison=await evaluate(`(async()=>{const d=await apiFetch('/api/v11.2/dashboard');return {badge:document.getElementById('habitNavBadge').textContent,expected:toFaNum(d.routines.active),taskBadge:document.getElementById('v11TaskBadge').textContent,tasks:toFaNum(d.summary.tasks_open)}})()`)

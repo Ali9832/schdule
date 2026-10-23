@@ -920,7 +920,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.1.1</small></div>
+<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.1.2</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -2016,6 +2016,8 @@ function syncSidebarNavigation(id){
   reveal();requestAnimationFrame(reveal);
 }
 function goPage(id){
+  if(id==='items')window.NovaBank?.ensureLoaded();
+  window.dispatchEvent(new CustomEvent('nova:page-open',{detail:{page:id}}));
   window.AppOverlays?.closeAll();
   document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
   document.getElementById(id).classList.remove('hidden');
@@ -3232,7 +3234,7 @@ function setV113ReviewType(t){V113_REVIEW_TYPE=t;renderV113Review()}
 async function saveV113Review(){const payload={type:V113_REVIEW_TYPE,date:new Date().toISOString().slice(0,10),wins:document.getElementById('v113Wins')?.value||'',lessons:document.getElementById('v113Lessons')?.value||'',stop:document.getElementById('v113Stop')?.value||'',start:document.getElementById('v113StartReview')?.value||'',continue:document.getElementById('v113Continue')?.value||'',next_theme:document.getElementById('v113NextTheme')?.value||'',note:document.getElementById('v113ReviewNote')?.value||''};try{await apiFetch('/api/v11.3/reviews',{method:'POST',body:JSON.stringify(payload)});V113_DATA=null;await loadV113Planning(true);showToast("مرور ثبت شد",`${v113FaType(payload.type)} • ${payload.date}`)}catch(e){const r={id:'local-'+Date.now(),...payload,created_at:new Date().toISOString()};V113_DATA=V113_DATA||v113Fallback();V113_DATA.reviews=[r,...(V113_DATA.reviews||[])];showToast('حالت Preview',"مرور به‌صورت نمایشی ثبت شد.")}renderV113Review()}
 const v113OldFunctional=window.handleFunctionalPageOpen;
 window.handleFunctionalPageOpen=async function(id){if(id==='weekly'){await loadV113Planning();renderV113Cycle();return}if(id==='reports'){await loadV113Planning();renderV113Review();return}if(v113OldFunctional)await v113OldFunctional(id)};
-setTimeout(()=>loadV113Planning().catch(()=>{}),250);
+// Planning is loaded when its view opens.
 
 </script>
 <div class="v111-offline-banner hidden" id="v111OfflineBanner">☁ <span id="v111OfflineText">آفلاین — تغییرات در صف ذخیره می‌شوند.</span></div>
@@ -3299,7 +3301,7 @@ async function v115CreateEvent(){const title=document.getElementById('v115Title'
 async function v115ScheduleTaskPrompt(taskId,title){const date=await AppDialogs.ask(`تاریخ زمان‌بندی برای «${title}» (YYYY-MM-DD):`,v115Iso(new Date()));if(!date)return;const start=await AppDialogs.ask('ساعت شروع (HH:MM):','09:00');if(!start)return;const minutes=Number(await AppDialogs.ask('مدت بلوک به دقیقه:','45')||45);const st=new Date(`${date}T${start}:00`),en=new Date(st.getTime()+Math.max(5,minutes)*60000);try{await apiFetch(`/api/v11.5/schedule/task/${encodeURIComponent(taskId)}`,{method:'POST',body:JSON.stringify({start_at:`${date}T${start}:00`,end_at:`${v115Iso(en)}T${String(en.getHours()).padStart(2,'0')}:${String(en.getMinutes()).padStart(2,'0')}:00`})});showToast("کار زمان‌بندی شد",title);await loadV115Schedule(true)}catch(e){showToast('زمان‌بندی انجام نشد',e.message||'خطا')}}
 function v115OpenEntry(source,id){if(source==='task')return openV11Inspector('task',id);if(source==='project')return openV11Inspector('project',id);if(source==='outcome')return openV11Inspector('outcome',id);if(source==='event'||source==='meeting')return openV11Inspector(source==='meeting'?'meeting':'event',id)}
 const v115OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v115OldFunctional)await v115OldFunctional(id);if(id==='schedule')await loadV115Schedule(true)};
-setTimeout(()=>{loadV115Schedule(false).catch(()=>{})},600);
+// Schedule is loaded when its view opens.
 </script>
 <script>
 // ============================================================
@@ -3341,7 +3343,7 @@ async function v116PatchAction(mid,aid,status){try{const r=await apiFetch(`/api/
 async function v116PatchDecision(mid,did,status){try{const r=await apiFetch(`/api/v11.6/meetings/${encodeURIComponent(mid)}/decisions/${encodeURIComponent(did)}`,{method:'PATCH',body:JSON.stringify({status})});V116_DATA=r.payload||V116_DATA}catch(e){const d=V116_DATA.items.find(x=>x.id===mid)?.details.decisions.find(x=>x.id===did);if(d)d.status=status;v116RebuildLocalRegisters()}renderV116()}
 async function v116PatchWaiting(mid,wid,status){try{const r=await apiFetch(`/api/v11.6/meetings/${encodeURIComponent(mid)}/waiting/${encodeURIComponent(wid)}`,{method:'PATCH',body:JSON.stringify({status})});V116_DATA=r.payload||V116_DATA}catch(e){const w=V116_DATA.items.find(x=>x.id===mid)?.details.waiting_items.find(x=>x.id===wid);if(w)w.status=status;v116RebuildLocalRegisters()}renderV116()}
 const v116OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v116OldFunctional)await v116OldFunctional(id);if(id==='meetings')await loadV116(true)};
-setTimeout(()=>loadV116(false).catch(()=>{}),750);
+// Meetings are loaded when their view opens.
 </script>
 <script>
 // ===== NOVA V11.7 Goals, Outcomes & Area Control =====
@@ -3391,7 +3393,7 @@ async function v117DeleteOutcome(){if(!V117_EDIT_ID||!confirm("این هدف ح�
 async function v117EditArea(id){const a=(V117_DATA?.areas||[]).find(x=>x.id===id);if(!a)return;const standard=await AppDialogs.ask("انتظار از این حوزه این حوزه چیست؟",a.standard||'');if(standard===null)return;const description=await AppDialogs.ask("توضیح کوتاه حوزه",a.description||'');if(description===null)return;try{await apiFetch(`/api/v11/areas/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({standard,description})});V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){a.standard=standard;a.description=description}renderV117Areas()}
 async function v117CreateArea(){const inp=document.getElementById('v117NewArea'),name=inp?.value.trim();if(!name)return;try{await apiFetch('/api/v11/areas',{method:'POST',body:JSON.stringify({name,icon:'◫'})});inp.value='';V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){const a={id:`preview-a-${Date.now()}`,name,icon:'◫',standard:'',description:'',control_state:'stable',control_reason:'استثنای مهمی دیده نمی‌شود',tasks_open:0,waiting:0,projects_active:0,outcomes_active:0};V117_DATA.areas.push(a);inp.value=''}renderV117All()}
 const v117OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v117OldFunctional)await v117OldFunctional(id);if(['goals','areas'].includes(id))await loadV117(true)};
-setTimeout(()=>loadV117(false).catch(()=>{}),900);
+// Outcomes are loaded when their view opens.
 </script>
 <aside aria-hidden="true" class="v118-composer" id="v118Composer">
 <div class="v118-composer-head"><div><span>ویرایش منبع</span><h2 id="v118ComposerTitle">منبع جدید</h2></div><button onclick="v118CloseComposer()">×</button></div>
@@ -3451,7 +3453,7 @@ async function v118CreateAction(){if(!V118_EDIT_ID)return showToast('اول ذخ
 async function v118LinkOutcome(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن.");const oid=document.getElementById('v118OutcomeLink')?.value;if(!oid)return showToast("هدف انتخاب نشده","یک هدف انتخاب کن.");try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/outcomes/${encodeURIComponent(oid)}`,{method:'POST',body:'{}'});V118_DATA=res.payload;showToast("هدف متصل شد","منبع به نتیجه مرتبط شد.")}catch(e){const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID),o=V118_DATA.references.outcomes.find(x=>x.id===oid);if(r&&o)r.linked=[...(r.linked||[]),{type:'outcome',id:o.id,label:o.title,relation:'supports'}]}v118OpenComposer(V118_EDIT_ID);renderV118()}
 async function v118Archive(){if(!V118_EDIT_ID)return;try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/archive`,{method:'POST',body:JSON.stringify({completed_at:v118Today()})});V118_DATA=res.payload}catch(e){const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID);if(r){r.status='archived';r.completed_at=v118Today()}}v118CloseComposer();renderV118();showToast('آرشیو شد',"منبع از سطح توجه روزانه خارج شد.")}
 const v118OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v118OldFunctional)await v118OldFunctional(id);if(id==='resources')await loadV118(true)};
-setTimeout(()=>loadV118(false).catch(()=>{}),1100);
+// Learning is loaded when its view opens.
 </script>
 <script id="v119Script">
 // NOVA V11.9 — Health, Energy & Sustainable Performance
@@ -3492,7 +3494,7 @@ async function v119QuickLog(id,name){const m=V119_DATA?.metrics.find(x=>x.id===i
 async function v119AddMetric(){const name=document.getElementById('v119CustomName')?.value.trim();if(!name)return showToast('نام شاخص لازم است','یک نام برای شاخص بنویس.');const body={name,unit:document.getElementById('v119CustomUnit')?.value||'',target_min:document.getElementById('v119CustomMin')?.value||null,target_max:document.getElementById('v119CustomMax')?.value||null,good_direction:document.getElementById('v119CustomDir')?.value||'range',category:'custom',value_type:'number',icon:'＋'};try{V119_DATA=await apiFetch('/api/v11.9/metrics',{method:'POST',body:JSON.stringify(body)})}catch(e){V119_DATA.metrics.push({id:`preview-hm-${Date.now()}`,slug:`custom_${Date.now()}`,...body,latest_value:null,avg7:null,control:{state:'no_data',label:'بدون داده'},series:v119Days().map(date=>({date,value:null}))});V119_DATA.summary.metrics++ ;V119_DATA.summary.no_data++}['v119CustomName','v119CustomUnit','v119CustomMin','v119CustomMax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('شاخص اضافه شد',name)}
 async function v119AddAppointment(){const title=document.getElementById('v119ApptTitle')?.value.trim(),start=document.getElementById('v119ApptStart')?.value;if(!title||!start)return showToast('اطلاعات ناقص','عنوان و زمان شروع را وارد کن.');const body={title,start_at:new Date(start).toISOString(),end_at:document.getElementById('v119ApptEnd')?.value?new Date(document.getElementById('v119ApptEnd').value).toISOString():null,provider:document.getElementById('v119ApptProvider')?.value||'',location:document.getElementById('v119ApptLocation')?.value||'',note:document.getElementById('v119ApptNote')?.value||''};try{const res=await apiFetch('/api/v11.9/appointments',{method:'POST',body:JSON.stringify(body)});V119_DATA=res.payload}catch(e){V119_DATA.appointments.push({id:`preview-a-${Date.now()}`,title,start_at:body.start_at,end_at:body.end_at||body.start_at,type:'appointment'});V119_DATA.appointments.sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));V119_DATA.summary.appointments_upcoming=V119_DATA.appointments.length;showToast('حالت Preview','قرار داخل همین HTML اضافه شد.')}['v119ApptTitle','v119ApptStart','v119ApptEnd','v119ApptProvider','v119ApptLocation','v119ApptNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('قرار ذخیره شد',title)}
 const v119OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v119OldFunctional)await v119OldFunctional(id);if(id==='health')await loadV119(true)};
-setTimeout(()=>loadV119(false).catch(()=>{}),1350);
+// Health is loaded when its view opens.
 </script>
 <script>
 // ============================================================
@@ -3542,7 +3544,7 @@ async function v1110AddCommitment(){const title=document.getElementById('v1110Co
 async function v1110DoneCommit(cid){try{V1110_DATA=await apiFetch(`/api/v11.10/commitments/${encodeURIComponent(cid)}`,{method:'PATCH',body:JSON.stringify({status:'done'})})}catch(e){const c=V1110_DATA.commitments.find(x=>x.id===cid);if(c)c.status='done';V1110_DATA=v1110BuildFallbackPayload(V1110_DATA.people,V1110_DATA.commitments)}renderV1110()}
 async function v1110CommitTask(cid){try{const res=await apiFetch(`/api/v11.10/commitments/${encodeURIComponent(cid)}/create-task`,{method:'POST',body:'{}'});V1110_DATA=res.payload;showToast("کار ساخته شد",res.task?.title||"تعهد به کار متصل شد.")}catch(e){const c=V1110_DATA.commitments.find(x=>x.id===cid);if(c)c.task_id=`preview-task-${Date.now()}`;renderV1110();showToast('حالت Preview','ثبت ارتباط انجام نشد؛ دوباره تلاش کنید.')}}
 const v1110OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v1110OldFunctional)await v1110OldFunctional(id);if(id==='relationships')await loadV1110(true)};
-setTimeout(()=>loadV1110(false).catch(()=>{}),1550);
+// Relationships are loaded when their view opens.
 </script>
 <script>
 /* ===== NOVA V11.11 Spiritual & Religious Integration ===== */
@@ -3583,7 +3585,7 @@ async function v1112CommitTask(cid){try{const r=await apiFetch(`/api/v11.12/comm
 async function v1112CommitEvent(cid){try{const r=await apiFetch(`/api/v11.12/commitments/${encodeURIComponent(cid)}/create-event`,{method:'POST',body:'{}'});V1112_DATA=r.payload;showToast('به تقویم اضافه شد',r.event?.title||'تعهد مالی')}catch(e){const c=V1112_DATA.finance.commitments.find(x=>x.id===cid);if(c)c.event_id=`preview-${Date.now()}`;showToast('Preview','رویداد در پیش‌نمایش شبیه‌سازی شد.')}v1112Render()}
 function v1112PatchDashboard(){const cards=[...document.querySelectorAll('#v101Areas .v101-area-card')],card=cards.find(c=>c.querySelector('h4')?.textContent.includes('مالی'));if(!card||!V1112_DATA)return;const s=V1112_DATA.summary||{},state=card.querySelector('.state'),sub=card.querySelector('p');if(state)state.textContent=s.commitments_overdue?`${v1112Fa(s.commitments_overdue)} تعهد عقب‌افتاده`:v1112Money(s.cash_flow);if(sub)sub.textContent=`${v1112Fa(s.commitments_due_14||0)} موعد تا ۱۴ روز • ${v1112Fa((s.budgets||[]).filter(b=>b.usage_percent>100).length)} بودجه عبورکرده`;card.onclick=()=>goPage('finance')}
 const v1112PrevFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v1112PrevFunctional)await v1112PrevFunctional(id);if(id==='finance')await v1112Load(true)};
-setTimeout(()=>v1112Load(false).catch(()=>{}),1750);
+// Finance is loaded when its view opens.
 </script>
 <script id="novaViewSync">
 (() => {

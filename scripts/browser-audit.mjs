@@ -26,8 +26,9 @@ try{
  errors.length=0;consoleErrors.length=0;network.length=0
  await send('Storage.clearDataForOrigin',{origin:base,storageTypes:'local_storage,service_workers,cache_storage'})
  await send('Page.navigate',{url:base+'/?page=items'});
- for(let attempt=0;attempt<80;attempt++){if(await evaluate('typeof goPage==="function" && document.querySelectorAll("#bank-bank tr[data-id]").length===3248'))break;await pause(250)}
- await check('Bank loads 3248 rows without iframe',async()=>{const state=await evaluate('({rows:document.querySelectorAll("#bank-bank tr[data-id]").length,iframe:!!document.querySelector("#items iframe"),active:!document.getElementById("items").classList.contains("hidden")})');assert.equal(state.rows,3248);assert.equal(state.iframe,false);return state})
+ for(let attempt=0;attempt<80;attempt++){if(await evaluate('typeof goPage==="function" && document.querySelectorAll("#bank-bank .category-section").length===65'))break;await pause(250)}
+ await evaluate('NovaBank.openAll();document.querySelectorAll("#bank-bank .category-section").forEach(section=>{while(!section.querySelector(".bank-load-more").hidden)NovaBank.loadMore(section.dataset.h)})')
+ await check('Bank exposes all 3248 rows after explicit expansion',async()=>{const state=await evaluate('({rows:document.querySelectorAll("#bank-bank tr[data-id]").length,iframe:!!document.querySelector("#items iframe"),active:!document.getElementById("items").classList.contains("hidden")})');assert.equal(state.rows,3248);assert.equal(state.iframe,false);return state})
  const pages=await evaluate('[...document.querySelectorAll(".nav-item[data-page]")].map(element=>element.dataset.page).filter((page,index,array)=>array.indexOf(page)===index)')
  for(const page of pages){
   await check('Tab '+page,async()=>{const previous=errors.length;await evaluate(`goPage(${JSON.stringify(page)})`);await pause(650);const state=await evaluate(`({active:!document.getElementById(${JSON.stringify(page)}).classList.contains('hidden'),text:document.getElementById(${JSON.stringify(page)}).innerText.length})`);assert.ok(state.active);assert.ok(state.text>0);assert.equal(errors.length,previous);return state})

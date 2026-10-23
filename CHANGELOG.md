@@ -2,6 +2,15 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.1.2] - 2026-10-23
+
+### Fixed
+- Applied startup performance changes to the current Molibden application, preserving the reviewed 65 categories, 10 domains, authentication and Persian calendar.
+- Load the full bank only when the items page opens. Deduplicate simultaneous initialization requests.
+- Render category rows on expansion, 50 at a time; search all items including unrendered rows, with topic and review filters preserved.
+- Defer hidden-view API preloads and hidden-view navigation counter requests; share the compact dashboard cache.
+- Serve cached public assets immediately and refresh them in the background; keep API responses outside the service worker cache.
+
 ## [1.1.1] - 2026-10-23
 
 ### Fixed
@@ -13,8 +22,8 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 - Displayed the version in the page header and exposed version and deployment commit through /api/health and /api/release.
 - Added QA checks for matching package, lockfile, UI, changelog and service worker versions.
 
-### Pending
-- Startup performance changes previously made on the obsolete NOVA snapshot have not been reapplied to Molibden yet.
+### At this release
+- Startup performance changes had not yet been reapplied to Molibden; completed in 1.1.2.
 
 ## [1.1.0]
 
