@@ -31,20 +31,20 @@
     if (!dialog.isConnected) document.body.append(dialog);
     let fields = '';
     if (pay) {
-      fields = `<p>${esc(row.title || row.description)} — ${money(row.amount)}</p>` + field('date', 'تاریخ پرداخت / دریافت', v1112Today(), 'date', 'required');
+      fields = `<p>${esc(row.title || row.description)} — ${money(row.amount)}</p>` + field('date', 'تاریخ پرداخت / دریافت', window.DateContext?.date || v1112Today(), 'date', 'required');
       if (kind !== 'transactions') fields += accountField(row.account) + '<label class="finance-check"><input type="checkbox" name="record_transaction" checked> ثبت تراکنش مرتبط و به‌روزرسانی مانده حساب</label><p class="finance-hint">اگر تراکنش را قبلاً ثبت کرده‌اید، تیک را بردارید تا مبلغ دوباره محاسبه نشود. این کار فقط ثبت سوابق است؛ انتقال بانکی انجام نمی‌شود. برای بدهی، تسویه کل مانده ثبت می‌شود.</p>';
     } else {
       const titleKey = ['accounts', 'budgets'].includes(kind) ? 'name' : kind === 'transactions' ? 'description' : 'title';
       fields = field(titleKey, kind === 'accounts' ? 'نام حساب' : 'عنوان / شرح', row[titleKey], 'text', 'required maxlength="200"');
       if (kind === 'accounts') fields += field('balance', 'مانده فعلی (ریال)', row.balance ?? 0, 'number', 'required step="any"') + field('masked', 'شماره یا شناسه نمایشی (اختیاری)', row.masked) + select('status', 'وضعیت', row.status || 'active', [['active', 'فعال'], ['closed', 'بسته']]);
-      else if (kind === 'budgets') fields += field('limit_amount', 'سقف بودجه (ریال)', row.limit_amount, 'number', 'required min="0.01" step="any"') + field('category', 'دسته هزینه', row.category, 'text', 'required') + field('period', 'ماه بودجه (میلادی، YYYY-MM)', row.period || v1112Today().slice(0, 7), 'month', 'required');
+      else if (kind === 'budgets') fields += field('limit_amount', 'سقف بودجه (ریال)', row.limit_amount, 'number', 'required min="0.01" step="any"') + field('category', 'دسته هزینه', row.category, 'text', 'required') + field('period', 'ماه بودجه (میلادی، YYYY-MM)', row.period || (window.DateContext?.date || v1112Today()).slice(0, 7), 'month', 'required');
       else {
         const fixed = settled(row) || row.settlement_id;
         fields += field('amount', 'مبلغ (ریال)', row.amount, 'number', `required min="0.01" step="any" ${fixed ? 'readonly' : ''}`);
         fields += accountField(row.account);
-        if (kind === 'commitments') fields += select('direction', 'جهت تعهد', row.direction || 'pay', [['pay', 'پرداخت من'], ['receive', 'دریافت من']]) + field('due_date', 'موعد تعهد', row.due_date, 'date');
-        if (kind === 'debts') fields += field('creditor', 'طلبکار / طرف حساب', row.creditor) + field('installment', 'مبلغ هر قسط (ریال، اختیاری)', row.installment ?? 0, 'number', 'min="0" step="any"') + field('next_due', 'موعد قسط بعدی', row.next_due, 'date');
-        if (kind === 'transactions') fields += select('type', 'نوع', row.type || 'expense', [['expense', 'هزینه'], ['income', 'درآمد']]) + field('date', 'تاریخ تراکنش', row.date || v1112Today(), 'date', 'required') + select('status', 'وضعیت', row.status || 'confirmed', [['confirmed', 'پرداخت / دریافت شد'], ['pending', 'در انتظار'], ['cancelled', 'لغوشده']]);
+        if (kind === 'commitments') fields += select('direction', 'جهت تعهد', row.direction || 'pay', [['pay', 'پرداخت من'], ['receive', 'دریافت من']]) + field('due_date', 'موعد تعهد', id ? row.due_date : window.DateContext?.date || v1112Today(), 'date');
+        if (kind === 'debts') fields += field('creditor', 'طلبکار / طرف حساب', row.creditor) + field('installment', 'مبلغ هر قسط (ریال، اختیاری)', row.installment ?? 0, 'number', 'min="0" step="any"') + field('next_due', 'موعد قسط بعدی', id ? row.next_due : window.DateContext?.date || v1112Today(), 'date');
+        if (kind === 'transactions') fields += select('type', 'نوع', row.type || 'expense', [['expense', 'هزینه'], ['income', 'درآمد']]) + field('date', 'تاریخ تراکنش', id ? row.date : window.DateContext?.date || v1112Today(), 'date', 'required') + select('status', 'وضعیت', row.status || 'confirmed', [['confirmed', 'پرداخت / دریافت شد'], ['pending', 'در انتظار'], ['cancelled', 'لغوشده']]);
         if (kind !== 'debts') fields += field('category', 'دسته', row.category || 'عمومی');
         if (fixed) fields += '<p class="finance-hint">این مورد تسویه شده است؛ مبلغ، حساب و مشخصات پرداخت قفل هستند. عنوان، دسته و یادداشت قابل ویرایش است.</p>';
       }
@@ -63,7 +63,8 @@
       if (pay && kind !== 'transactions') body.record_transaction = form.elements.record_transaction.checked;
       busy = true; form.querySelectorAll('button').forEach(b => b.disabled = true);
       try {
-        V1112_DATA = await apiFetch(`/api/finance-editor/${kind}${id ? '/' + encodeURIComponent(id) : ''}${pay ? '/settle' : ''}`, { method: pay || !id ? 'POST' : 'PATCH', body: JSON.stringify(body) });
+        const path = `/api/finance-editor/${kind}${id ? '/' + encodeURIComponent(id) : ''}${pay ? '/settle' : ''}`;
+        V1112_DATA = await apiFetch(window.DateContext ? DateContext.query(path) + (DateContext.scoped('finance') ? '' : '&all_dates=1') : path, { method: pay || !id ? 'POST' : 'PATCH', body: JSON.stringify(body) });
         v1112Render(); busy = false; dialog.close();
         showToast('ذخیره شد', pay ? 'وضعیت پرداخت ثبت شد.' : names[kind] + ' ذخیره شد.');
       } catch (error) { form.querySelector('[role=alert]').textContent = error.message || 'ذخیره انجام نشد؛ دوباره تلاش کنید.'; }

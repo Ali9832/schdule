@@ -2,6 +2,17 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.4.0] - 2026-10-23
+
+### Added
+- Shared Persian planning-date bar on every page, defaulting to today's Tehran date, with day navigation, a date picker and return-to-today.
+- Automatic Tehran midnight rollover when following today; manually selected dates remain unchanged. Reminders still use the real clock.
+- Day filters for task lists, daily views, meeting lists and finance transactions/deadlines; retain undated items and provide an all-days switch.
+- Date-aware dashboard queries and cache keys, calendar/timeline anchors and habit-matrix month selection.
+- Editable date proposals for new tasks, projects, finance records, meetings, religious events and health forms without changing dates of existing records.
+- Finance month summaries follow the selected month; selected-day transaction filtering occurs before pagination. Account balances remain current, not historical snapshots.
+- Regression coverage for date validation, midnight rollover, day filtering, defaults, existing-record dates and mobile layouts. Permanent lists and non-daily module summaries retain their existing scope.
+
 ## [1.3.0] - 2026-10-23
 
 ### Added

@@ -12,7 +12,7 @@
   const monthName=value=>new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'long',timeZone:'UTC'}).format(date(value));
   const dayName=value=>new Intl.DateTimeFormat('fa-IR-u-ca-persian',{weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'UTC'}).format(date(value));
   const num=toFaNum;
-  const state={anchor:today(),view:prefs.view,entries:[],from:'',to:'',request:0,busy:false,dialog:null,selected:null,editing:null,search:'',error:'',message:''};
+  const state={anchor:window.DateContext?.date||today(),view:prefs.view,entries:[],from:'',to:'',request:0,busy:false,dialog:null,selected:null,editing:null,search:'',error:'',message:''};
   const el=(tag,className,text)=>{const node=document.createElement(tag);if(className)node.className=className;if(text!==undefined)node.textContent=text;return node};
   const button=(text,action,className='')=>{const b=el('button',className,text);b.type='button';b.onclick=action;return b};
   const color=item=>item.color||prefs.colors?.[item.kind]||kinds[item.kind]?.[1]||'#448a76';
@@ -32,7 +32,7 @@
     catch(error){if(request===state.request){state.error=error.message||'دریافت تقویم انجام نشد.';render()}}
     finally{if(request===state.request)root.setAttribute('aria-busy','false')}
   }
-  function shift(n){const p=jalali(state.anchor);state.anchor=state.view==='day'?add(state.anchor,n):state.view==='week'?add(state.anchor,n*7):nextMonth(p.year,p.month,n*(state.view==='year'?12:state.view==='quarter'?3:1));load()}
+  function shift(n){const p=jalali(state.anchor);state.anchor=state.view==='day'?add(state.anchor,n):state.view==='week'?add(state.anchor,n*7):nextMonth(p.year,p.month,n*(state.view==='year'?12:state.view==='quarter'?3:1));window.DateContext?.set(state.anchor,'calendar');load()}
   function setView(view){state.view=view;savePrefs();load()}
   function dayButton(value,mini=false,muted=false){
     const items=dayItems(value),cell=button('',()=>openDay(value),`uc-day${mini?' mini':''}${muted?' outside':''}${value===today()?' is-today':''}`);
@@ -77,6 +77,7 @@
   }
   function conflicts(value){const timed=dayItems(value).filter(item=>!item.all_day&&!item.done);let count=0;for(let i=0;i<timed.length;i++)for(let j=i+1;j<timed.length;j++)if(`${timed[i].date}T${timed[i].start_time}`<`${timed[j].end_date}T${timed[j].end_time}`&&`${timed[j].date}T${timed[j].start_time}`<`${timed[i].end_date}T${timed[i].end_time}`)count++;return count}
   async function openDay(value,create=false){
+    state.anchor=value;window.DateContext?.set(value,'calendar');
     if(state.dialog?.open){state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';await ensureDay(value);renderDay();return}
     AppOverlays.closeAll();const dialog=el('dialog','uc-day-dialog');dialog.id='calendarDayDialog';dialog.setAttribute('aria-label','برنامهٔ روز');state.dialog=dialog;state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';document.body.append(dialog);dialog.addEventListener('close',()=>{if(state.dialog===dialog){state.dialog=null;state.selected=null;state.editing=null;state.draft=null}dialog.remove()});dialog.addEventListener('cancel',event=>{event.preventDefault();dialog.close()});renderDay();dialog.showModal();await ensureDay(value);if(state.dialog===dialog&&dialog.open)renderDay();
   }

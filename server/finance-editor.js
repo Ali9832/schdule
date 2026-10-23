@@ -1,3 +1,4 @@
+import { planningDate } from './planning-date.js'
 // User-scoped finance mutations. Settlement records are idempotent and explicit.
 export function registerFinanceEditor(app, { life, saveLife, payload, id, today, withUserLock = (user, action) => action() }) {
   const kinds = ['accounts', 'budgets', 'commitments', 'debts', 'transactions']
@@ -77,6 +78,7 @@ export function registerFinanceEditor(app, { life, saveLife, payload, id, today,
     return row
   }
   async function mutate(request, reply, mode) {
+    if (request.query?.date) planningDate(request.query.date)
     const { kind, id: rowId } = request.params
     if (!kinds.includes(kind)) throw bad('بخش مالی پیدا نشد.', 404)
     return lock(request.user.id, async () => {
@@ -89,7 +91,7 @@ export function registerFinanceEditor(app, { life, saveLife, payload, id, today,
       if (mode === 'settle') {
         if (!['commitments', 'debts', 'transactions'].includes(kind)) throw bad('این بخش پرداخت ندارد.')
         if (body.record_transaction !== undefined && typeof body.record_transaction !== 'boolean') throw bad('گزینه ثبت تراکنش نامعتبر است.')
-        if (['done', 'closed'].includes(current.status) || current.paid_at || (kind === 'transactions' && current.status === 'confirmed')) return payload(request.user.id)
+        if (['done', 'closed'].includes(current.status) || current.paid_at || (kind === 'transactions' && current.status === 'confirmed')) return payload(request.user.id, request.query?.date, request.query?.all_dates === '1')
         const paidDate = date(body.date || today(), true)
         if (kind === 'transactions') {
           if (current.status === 'cancelled') throw bad('تراکنش لغوشده قابل پرداخت نیست.')
@@ -115,7 +117,7 @@ export function registerFinanceEditor(app, { life, saveLife, payload, id, today,
       }
       await saveLife(request.user.id, data)
       if (mode === 'create') reply.code(201)
-      return payload(request.user.id)
+      return payload(request.user.id, request.query?.date, request.query?.all_dates === '1')
     })
   }
   app.post('/api/finance-editor/:kind', (request, reply) => mutate(request, reply, 'create'))

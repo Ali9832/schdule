@@ -22,6 +22,11 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
 }
 syntaxCheck('server/index.js')
 syntaxCheck('server/finance-editor.js')
+syntaxCheck('server/planning-date.js')
+syntaxCheck('public/assets/date-context.js')
+syntaxCheck('public/assets/date-context-ui.js')
+const planningDateCheck=spawnSync(process.execPath,['scripts/check-planning-date.mjs'],{cwd:root,encoding:'utf8'})
+planningDateCheck.status===0 ? pass('Planning date, Tehran midnight rollover and date filtering verified') : fail(`Planning date: ${(planningDateCheck.stderr||planningDateCheck.stdout).trim()}`)
 syntaxCheck('public/assets/finance-editor.js')
 const financeCheck=spawnSync(process.execPath,['scripts/check-finance-editor.mjs'],{cwd:root,encoding:'utf8'})
 financeCheck.status===0 ? pass('Finance creation, editing, settlement and accounting verified') : fail(`Finance: ${(financeCheck.stderr||financeCheck.stdout).trim()}`)
@@ -75,7 +80,7 @@ const routeKeys=routes.map(([m,p])=>`${m} ${p}`)
 const dupRoutes=routeKeys.filter((x,i,a)=>a.indexOf(x)!==i)
 ;[...new Set(dupRoutes)].length ? fail(`Duplicate routes: ${[...new Set(dupRoutes)].join(', ')}`) : pass(`Unique backend routes: ${routes.length}`)
 
-const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')+'\n'+read('public/assets/finance-editor.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
+const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')+'\n'+read('public/assets/finance-editor.js')+'\n'+read('public/assets/date-context-ui.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
 const split=(p)=>p.replace(/\$\{[^}]+\}/g,':x').replace(/\/$/,'').split('/')
 const routeMatches=(f,b)=>{const F=split(f),B=split(b); return F.length===B.length && F.every((v,i)=>B[i]?.startsWith(':') || v===B[i])}
 const unmatched=frontRefs.filter(f=>!routes.some(([,b])=>routeMatches(f,b)))

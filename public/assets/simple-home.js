@@ -13,7 +13,7 @@ function renderSimpleHome(data){
   }
   if(!actions.length){const empty=document.createElement('p');empty.className='home-empty';empty.textContent='کاری برای پیشنهاد نداریم. یک کار ثبت کن یا از فهرست کارها انتخاب کن.';list.append(empty)}
   const total=Number(data.now?.today_total||0),done=Number(data.now?.today_done||0);
-  set('homeProgressLabel',total?`${toFaNum(done)} از ${toFaNum(total)} کار امروز انجام شده`:'هنوز کاری برای امروز برنامه‌ریزی نشده');
+  set('homeProgressLabel',total?`${toFaNum(done)} از ${toFaNum(total)} کار این روز انجام شده`:'هنوز کاری برای این روز برنامه‌ریزی نشده');
   document.getElementById('homeProgress').value=total?Math.round(done/total*100):0;
   const next=data.meetings?.next,meeting=document.getElementById('homeNextMeeting');meeting.replaceChildren();
   const event=document.createElement('div');event.className='home-event';const title=document.createElement('strong'),time=document.createElement('span');title.textContent=next?.title||'جلسه‌ای پیش رو نیست';time.textContent=next?`${faDateLabel(String(next.start_at).slice(0,10))} · ${String(next.start_at).slice(11,16)}`:'برای برنامه‌ریزی، تقویم را باز کن.';event.append(title,time);meeting.append(event);
@@ -66,6 +66,6 @@ function renderCommandOverview(d){
 async function submitHomeTask(event){
   event.preventDefault();const input=document.getElementById('homeTaskInput'),title=input.value.trim(),button=event.currentTarget.querySelector('button'),status=document.getElementById('homeCaptureStatus');if(!title||button.disabled)return;
   button.disabled=true;status.textContent='در حال ثبت…';
-  try{await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:'یادداشت‌های ورودی',status:'todo',priority:'medium'})});input.value='';status.textContent='کار ثبت شد؛ در فهرست همهٔ کارها در دسترس است.';v112Invalidate('dashboard');await v112RefreshDashboard(true)}catch(error){status.textContent='ثبت انجام نشد. '+(error.message||'دوباره تلاش کن.')}finally{button.disabled=false;input.focus()}
+  try{await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:'یادداشت‌های ورودی',status:'todo',priority:'medium',due_date:window.DateContext?.date||todayIso()})});input.value='';status.textContent='کار برای تاریخ انتخاب‌شده ثبت شد.';v112Invalidate('dashboard');await v112RefreshDashboard(true)}catch(error){status.textContent='ثبت انجام نشد. '+(error.message||'دوباره تلاش کن.')}finally{button.disabled=false;input.focus()}
 }
 if(typeof V112_DASH!=='undefined'&&V112_DASH)renderSimpleHome(V112_DASH);

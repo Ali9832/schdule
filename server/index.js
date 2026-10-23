@@ -15,6 +15,7 @@ import { registerCalendar, normalizeCalendarState } from './calendar.js'
 import { registerCalendarAttachments } from './calendar-attachments.js'
 import { postgresOptions } from './postgres-config.js'
 import { registerFinanceEditor } from './finance-editor.js'
+import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 
 dotenv.config()
 
@@ -209,7 +210,7 @@ const memory = {
   }
 }
 
-const today = () => new Date().toISOString().slice(0, 10)
+const today = tehranToday
 const addDays = (days) => {
   const date = new Date()
   date.setDate(date.getDate() + days)
@@ -1407,6 +1408,7 @@ app.get('/api/v11/tasks/paged', async (request) => {
   const cursor = Math.max(0, Number(request.query?.cursor || 0) || 0)
 
   let rows = data.tasks.slice()
+  if (request.query?.date) rows = tasksForDay(rows, planningDate(request.query.date), request.query.include_undated !== '0')
   if (q) rows = rows.filter((t) => `${t.title || ''} ${t.description || ''} ${t.category || ''}`.toLowerCase().includes(q))
   if (status) rows = rows.filter((t) => t.status === status)
   if (areaId) rows = rows.filter((t) => String(t.area_id || '') === areaId)
@@ -1438,8 +1440,8 @@ app.get('/api/v11/health', async () => ({
 // ===== V11.2 Performance & Unified Data Loading =====
 // Lightweight view-specific endpoints. Primary screens no longer need /api/bootstrap.
 function v112DateIso(d=new Date()) { return d.toISOString().slice(0,10) }
-function v112AddDays(iso,n){ const d=new Date(`${iso}T00:00:00`); d.setDate(d.getDate()+n); return v112DateIso(d) }
-function v112WeekStart(iso=v112DateIso()) { const d=new Date(`${iso}T00:00:00`); const offset=(d.getDay()+1)%7; d.setDate(d.getDate()-offset); return v112DateIso(d) }
+function v112AddDays(iso,n){ const d=new Date(`${iso}T12:00:00Z`); d.setUTCDate(d.getUTCDate()+n); return v112DateIso(d) }
+function v112WeekStart(iso=tehranToday()) { const d=new Date(`${iso}T12:00:00Z`); const offset=(d.getUTCDay()+1)%7; d.setUTCDate(d.getUTCDate()-offset); return v112DateIso(d) }
 function v112PriorityRank(p){ return ({urgent:0,high:1,medium:2,low:3}[String(p||'').toLowerCase()] ?? 4) }
 function v112ActionItems(details={}){
   const rows=Array.isArray(details.action_items)?details.action_items:Array.isArray(details.actions)?details.actions:[]
@@ -1462,10 +1464,10 @@ function v112AreaSummaries(data){
     return {id:a.id,name:a.name,icon:a.icon||'◫',description:a.description||'',standard:a.standard||'',status:a.status||'active',tasks_open:tasks.length,waiting:tasks.filter((t)=>String(t.waiting_on||'').trim()).length,projects_active:projects.length,routines_active:routines.length,events_upcoming:events.length}
   })
 }
-async function v112DashboardData(userId){
+async function v112DashboardData(userId, selectedDate){
   const started=Date.now()
   const [data,life]=await Promise.all([getV11Canonical(userId),getLifeData(userId)])
-  const summary=v11Summary(data), now=new Date(), nowMs=now.getTime(), today=v112DateIso(now), weekStart=v112WeekStart(today), weekEnd=v112AddDays(weekStart,6)
+  const selectedDay=planningDate(selectedDate), summary=v11Summary(data), now=new Date(), nowMs=selectedDay===tehranToday()?now.getTime():new Date(`${selectedDay}T00:00:00+03:30`).getTime(), today=selectedDay, weekStart=v112WeekStart(today), weekEnd=v112AddDays(weekStart,6)
   const open=data.tasks.filter((t)=>t.status!=='done')
   const eligible=open.filter((t)=>!String(t.waiting_on||'').trim())
   const todayOpen=open.filter((t)=>t.due_date===today)
@@ -1477,7 +1479,7 @@ async function v112DashboardData(userId){
     const ad=a.due_date===today?0:a.due_date&&a.due_date<today?-1:1, bd=b.due_date===today?0:b.due_date&&b.due_date<today?-1:1
     return ad-bd || v112PriorityRank(a.priority)-v112PriorityRank(b.priority) || String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'))
   }
-  const nextActions=(todayOpen.length?todayOpen:eligible).slice().sort(rankTask).slice(0,3).map(v112TaskLite)
+  const nextActions=(todayOpen.length?todayOpen:eligible.filter(t=>!t.due_date)).slice().sort(rankTask).slice(0,3).map(v112TaskLite)
   const currentEvent=data.events.filter((e)=>new Date(e.start_at||0).getTime()<=nowMs&&new Date(e.end_at||e.start_at||0).getTime()>=nowMs).sort((a,b)=>new Date(a.start_at)-new Date(b.start_at))[0]||null
   const focus=data.execution?.current_focus||null
   const focusTask=focus?data.tasks.find((t)=>t.id===focus.task_id):null
@@ -1518,9 +1520,9 @@ async function v112DashboardData(userId){
   return payload
 }
 
-app.get('/api/v11.2/dashboard', async (request) => v112DashboardData(request.user.id))
+app.get('/api/v11.2/dashboard', async (request) => v112DashboardData(request.user.id, request.query?.date))
 app.get('/api/v11.2/today', async (request) => {
-  const d=await v112DashboardData(request.user.id)
+  const d=await v112DashboardData(request.user.id, request.query?.date)
   return {stage:d.stage,today:d.today,now:d.now,attention:d.attention,meetings:{today_count:d.meetings.today_count,next:d.meetings.next},routines:d.routines,review:{open_tasks:d.review.open_tasks},meta:d.meta}
 })
 app.get('/api/v11.2/areas', async (request) => {
@@ -2723,29 +2725,29 @@ function v1112NormalizeFinance(finance = {}) {
     commitments: Array.isArray(finance.commitments) ? finance.commitments : []
   }
 }
-function v1112Summary(finance = {}) {
-  const f = v1112NormalizeFinance(finance), month = v1112MonthKey()
+function v1112Summary(finance = {}, selectedDate) {
+  const day = planningDate(selectedDate), f = v1112NormalizeFinance(finance), month = v1112MonthKey(day)
   const monthTx = f.transactions.filter(x => String(x.date || '').slice(0, 7) === month && (!x.status || x.status === 'confirmed'))
   const income = monthTx.filter(x => x.type === 'income').reduce((a,b)=>a+v1112Num(b.amount),0)
   const expense = monthTx.filter(x => x.type === 'expense').reduce((a,b)=>a+v1112Num(b.amount),0)
   const liquid = f.accounts.filter(x => x.status !== 'closed').reduce((a,b)=>a+v1112Num(b.balance),0)
   const debtOutstanding = f.debts.filter(x => x.status !== 'done' && x.status !== 'closed').reduce((a,b)=>a+v1112Num(b.amount),0)
   const open = f.commitments.filter(x => x.status !== 'done' && x.status !== 'cancelled')
-  const overdue = open.filter(x => x.due_date && String(x.due_date).slice(0,10) < today())
-  const due14 = open.filter(x => { if(!x.due_date) return false; const d=(new Date(`${String(x.due_date).slice(0,10)}T12:00:00`)-new Date(`${today()}T12:00:00`))/86400000; return d>=0 && d<=14 })
+  const overdue = open.filter(x => x.due_date && String(x.due_date).slice(0,10) < day)
+  const due14 = open.filter(x => { if(!x.due_date) return false; const d=(new Date(`${String(x.due_date).slice(0,10)}T12:00:00Z`)-new Date(`${day}T12:00:00Z`))/86400000; return d>=0 && d<=14 })
   const budgetRows = f.budgets.filter(b => !b.period || b.period === month).map(b => {
     const spent = monthTx.filter(x => x.type === 'expense' && (!b.category || x.category === b.category)).reduce((a,t)=>a+v1112Num(t.amount),0)
     const limit = Math.max(0,v1112Num(b.limit_amount)); return {...b, spent_amount:spent, remaining_amount:limit-spent, usage_percent:limit?Math.round(spent/limit*100):0}
   })
   return {month,income,expense,cash_flow:income-expense,liquid_balance:liquid,debt_outstanding:debtOutstanding,commitments_open:open.length,commitments_overdue:overdue.length,commitments_due_14:due14.length,budgets:budgetRows}
 }
-async function v1112Payload(userId) {
-  const life=await getLifeData(userId), finance=v1112NormalizeFinance(life.finance), summary=v1112Summary(finance)
+async function v1112Payload(userId, selectedDate, allDates = false) {
+  const day=planningDate(selectedDate), life=await getLifeData(userId), finance=v1112NormalizeFinance(life.finance), summary=v1112Summary(finance, day)
   const commitments=[...finance.commitments].sort((a,b)=>String(a.due_date||'9999').localeCompare(String(b.due_date||'9999')))
-  const transactions=[...finance.transactions].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,120)
-  return {stage:'V11.12',finance:{...finance,transactions,commitments,budgets:summary.budgets},summary,generated_at:new Date().toISOString()}
+  const transactions=finance.transactions.filter(row=>!selectedDate||allDates||String(row.date||'').slice(0,10)===day).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))).slice(0,120)
+  return {stage:'V11.12',date:day,finance:{...finance,transactions,commitments,budgets:finance.budgets},summary,generated_at:new Date().toISOString()}
 }
-app.get('/api/v11.12/finance', async request => v1112Payload(request.user.id))
+app.get('/api/v11.12/finance', async request => v1112Payload(request.user.id, request.query?.date, request.query?.all_dates === '1'))
 registerFinanceEditor(app, {
   life: getLifeData, saveLife: persistLifeData, payload: v1112Payload, id, today,
   // Serialize finance-editor writes across serverless instances as well as locally.

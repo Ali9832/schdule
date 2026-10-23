@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="/assets/date-context.js"></script>
 <link rel="stylesheet" href="/assets/auth.css"/>
 <script src="/assets/auth.js"></script>
 <link href="/manifest.webmanifest" rel="manifest"/>
@@ -920,7 +921,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.3.0</small></div>
+<div class="breadcrumb">NOVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v1.4.0</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -2458,13 +2459,14 @@ function jsSafe(v){return String(v??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'"
 function pColor(p){return Number(p)>=80?'#4fbd8a':Number(p)>=50?'#efb747':'#df6671'}
 function fnum(n){return Number(n||0).toLocaleString('fa-IR')}
 function money(n){return `${fnum(Math.round(Number(n||0)))} تومان`}
-function todayIso(){return new Date().toISOString().slice(0,10)}
+function todayIso(){return window.DateContext?.today()||new Date().toISOString().slice(0,10)}
 function pct(done,total){return total?Math.round(done/total*100):0}
 
 async function loadBase(){
   try{
     const started=performance.now();
-    const [health,dash]=await Promise.all([apiFetch('/api/health'),v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000})]);
+    const [health,initialDash]=await Promise.all([apiFetch('/api/health'),v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000})]);
+    const dash=window.DateContext&&initialDash.today!==DateContext.date?await v112Get('dashboard','/api/v11.2/dashboard',{force:true}):initialDash;
     setApiBadge(true,`Backend متصل • ${health.storage==='memory'?'حالت محلی':'PostgreSQL'} • V11.2`);
     V112_DASH=dash;
     v112SeedCanonicalFromDashboard(dash);
@@ -2722,6 +2724,7 @@ function renderDailyTaskManager(){
   const body=document.getElementById('dailyTaskTableBody');if(!body||!BASE_DATA)return;
   const q=(document.getElementById('dailyTaskSearch')?.value||'').trim().toLowerCase();const cat=document.getElementById('dailyTaskCategory')?.value||'';const st=document.getElementById('dailyTaskStatus')?.value||'';const pr=document.getElementById('dailyTaskPriority')?.value||'';const ctx=document.getElementById('dailyTaskContext')?.value||'';const eng=document.getElementById('dailyTaskEnergy')?.value||'';
   let rows=(BASE_DATA.tasks||[]).filter(t=>{const m=taskMetaV102(t.id);return(!q||`${t.title} ${t.description||''} ${m.waiting_on||''}`.toLowerCase().includes(q))&&(!cat||(t.category||'شخصی')===cat)&&(!st||t.status===st)&&(!pr||t.priority===pr)&&(!ctx||m.context===ctx)&&(!eng||m.energy===eng)});
+  if(window.DateContext)rows=rows.filter(t=>DateContext.matches(t.due_date,'daily'));
   const total=rows.length,done=rows.filter(t=>t.status==='done').length,doing=rows.filter(t=>t.status==='in_progress').length,open=rows.filter(t=>t.status==='todo').length;
   [['dailyTaskTotal',total],['dailyTaskDone',done],['dailyTaskDoing',doing],['dailyTaskOpen',open]].forEach(([id,v])=>{const e=document.getElementById(id);if(e)e.textContent=toFaNum(v)});
   const projectOpts=(selected)=>'<option value="">—</option>'+(BASE_DATA.projects||[]).map(p=>`<option value="${escAttr(p.id)}" ${p.id===selected?'selected':''}>${escapeHtml(p.name)}</option>`).join('');
@@ -3075,10 +3078,11 @@ function v111TaskParams(cursor='0'){
 }
 async function reloadV111Tasks(preserveScroll=false){
   if(V111_PAGE.loading)return;V111_PAGE.loading=true;const root=document.getElementById('v11WorkspaceRoot');const oldScroll=root?.querySelector('.v111-virtual-scroll')?.scrollTop||0;
-  try{const data=await apiFetch(`/api/v11/tasks/paged?${v111TaskParams('0')}`);V111_PAGE={...V111_PAGE,...data,items:data.items||[],cursor:'0',loading:false};if(V11_DATA)V11_DATA.tasks=V111_PAGE.items;renderV111Workspace();if(preserveScroll){const s=document.querySelector('#v11WorkspaceRoot .v111-virtual-scroll');if(s)s.scrollTop=oldScroll}v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;console.warn('paged endpoint unavailable, using local canonical tasks',e);V111_PAGE.items=v11FilteredTasks();V111_PAGE.total=V111_PAGE.items.length;V111_PAGE.next_cursor=null;renderV111Workspace();v111HydrateMetrics()}
+  const criteria=v111TaskParams('0');
+  try{const data=await apiFetch(`/api/v11/tasks/paged?${criteria}`);if(criteria!==v111TaskParams('0')){V111_PAGE.loading=false;return reloadV111Tasks(preserveScroll)}V111_PAGE={...V111_PAGE,...data,items:data.items||[],cursor:'0',loading:false};if(V11_DATA)V11_DATA.tasks=V111_PAGE.items;renderV111Workspace();if(preserveScroll){const s=document.querySelector('#v11WorkspaceRoot .v111-virtual-scroll');if(s)s.scrollTop=oldScroll}v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;console.warn('paged endpoint unavailable, using local canonical tasks',e);V111_PAGE.items=v11FilteredTasks();V111_PAGE.total=V111_PAGE.items.length;V111_PAGE.next_cursor=null;renderV111Workspace();v111HydrateMetrics()}
 }
 function debouncedV111Reload(){clearTimeout(V111_FILTER_TIMER);V111_FILTER_TIMER=setTimeout(()=>reloadV111Tasks(),220)}
-async function v111NextPage(){if(!V111_PAGE.next_cursor)return;V111_PAGE.loading=true;try{const data=await apiFetch(`/api/v11/tasks/paged?${v111TaskParams(V111_PAGE.next_cursor)}`);V111_PAGE.items=[...V111_PAGE.items,...(data.items||[])];V111_PAGE.next_cursor=data.next_cursor;V111_PAGE.total=data.total;V111_PAGE.loading=false;renderV111Workspace();v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;showToast('صفحه بعدی',e.message||String(e))}}
+async function v111NextPage(){if(!V111_PAGE.next_cursor||V111_PAGE.loading)return;V111_PAGE.loading=true;const criteria=v111TaskParams('0');try{const data=await apiFetch(`/api/v11/tasks/paged?${v111TaskParams(V111_PAGE.next_cursor)}`);if(criteria!==v111TaskParams('0')){V111_PAGE.loading=false;return reloadV111Tasks()}V111_PAGE.items=[...V111_PAGE.items,...(data.items||[])];V111_PAGE.next_cursor=data.next_cursor;V111_PAGE.total=data.total;V111_PAGE.loading=false;renderV111Workspace();v111HydrateMetrics()}catch(e){V111_PAGE.loading=false;showToast('صفحه بعدی',e.message||String(e))}}
 function v111ResetVirtual(){V111_VIRTUAL.scrollTop=0}
 function v111VirtualSlice(rows){const start=Math.max(0,Math.floor(V111_VIRTUAL.scrollTop/V111_VIRTUAL.rowHeight)-V111_VIRTUAL.overscan);const visible=Math.ceil(V111_VIRTUAL.viewport/V111_VIRTUAL.rowHeight)+V111_VIRTUAL.overscan*2;const end=Math.min(rows.length,start+visible);return {start,end,rows:rows.slice(start,end),top:start*V111_VIRTUAL.rowHeight,bottom:Math.max(0,(rows.length-end)*V111_VIRTUAL.rowHeight)}}
 function v111OnScroll(el){V111_VIRTUAL.scrollTop=el.scrollTop;V111_VIRTUAL.viewport=el.clientHeight;renderV111VirtualBody()}
@@ -3137,6 +3141,7 @@ function v112Invalidate(key=''){
   for(const k of [...V112_CACHE.keys()])if(!key||k===key||k.startsWith(key+':'))V112_CACHE.delete(k);
 }
 async function v112Get(key,path,{ttl=10000,force=false}={}){
+  if(key==='dashboard'&&window.DateContext){key+=':'+DateContext.date;path=DateContext.query(path)}
   const now=Date.now(),cached=V112_CACHE.get(key);
   if(!force&&cached&&now-cached.at<ttl){V112_STATS.hits++;v112SetCacheLabel(true);return cached.data}
   if(V112_INFLIGHT.has(key))return V112_INFLIGHT.get(key);
@@ -3167,7 +3172,7 @@ function v112RenderDashboard(d){
 
   const dateEl=document.getElementById('v10DashboardDate');if(dateEl)dateEl.textContent=faDateLabel(d.today);v112UpdatePerf(V112_STATS.lastMs,d,false)
 }
-async function v112RefreshDashboard(force=false){const d=await v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000,force});V112_DASH=d;v112SeedCanonicalFromDashboard(d);v112RenderDashboard(d);return d}
+async function v112RefreshDashboard(force=false){const d=await v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000,force});if(window.DateContext&&d.today!==DateContext.date)return d;V112_DASH=d;v112SeedCanonicalFromDashboard(d);v112RenderDashboard(d);return d}
 async function v112EnsureLegacy(){
   if(V112_LEGACY_LOADED)return BASE_DATA;if(V112_LEGACY_PROMISE)return V112_LEGACY_PROMISE;
   const el=document.getElementById('v112LegacyState');if(el)el.textContent='Loading…';
@@ -3309,7 +3314,7 @@ const v115OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalP
 // ============================================================
 let V116_DATA=null,V116_VIEW='workspace',V116_EDIT_ID=null,V116_FORM_ACTIONS=[],V116_FORM_DECISIONS=[],V116_FORM_WAITING=[];
 function v116Uid(prefix='x'){return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2,7)}`}
-function v116IsoToday(){return new Date().toISOString().slice(0,10)}
+function v116IsoToday(){return window.DateContext?.date||todayIso()}
 function v116Fallback(){const today=v116IsoToday(),tom=new Date(Date.now()+86400000).toISOString().slice(0,10);const meeting={id:'demo-meeting',title:'جلسه تصمیم‌گیری نسخه بعدی NOVA',start_at:`${today}T10:30:00`,end_at:`${today}T11:30:00`,project_id:'',area_id:'',project_name:'NOVA',area_name:'کار و پروژه',duration_minutes:60,phase:'follow_up',details:{unit:'محصول',organizer:'مالک پروژه',location:'اتاق مدیریت',participants:['مدیریت','توسعه','عملیات'],agenda:"تعیین دامنهٔ برنامه نسخه بعدی و بستن تصمیم‌های باز",pre_read:"گزارش مرور هفتگی",summary:'دامنه مرحله بعد تثبیت شد و سه اقدام خروجی نیازمند پیگیری است.',decisions:[{id:'d1',text:"مرحله بعد فقط روی جریان جلسه و پیگیری متمرکز باشد.",status:'accepted',owner:'مالک پروژه'},{id:'d2',text:"تعهدهای جلسه مستقیماً به کار تبدیل شوند.",status:'open',owner:'توسعه'}],actions:[{id:'a1',text:"ساخت تصمیم فهرست",owner:'توسعه',due_date:today,priority:'high',status:'in_progress',task_id:null},{id:'a2',text:"بازبینی قدم‌های بعدیی عقب‌افتاده",owner:'عملیات',due_date:tom,priority:'medium',status:'open',task_id:null},{id:'a3',text:'ثبت خلاصه جلسه در پروژه',owner:'مدیریت',due_date:today,priority:'low',status:'done',task_id:'demo-task'}],waiting_items:[{id:'w1',text:'تایید فرمت گزارش جلسه',waiting_on:'مدیریت',due_date:tom,status:'open'}],next_meeting_at:`${tom}T10:00:00`,follow_up_note:'در جلسه بعدی فقط موارد باز و تصمیم‌های نیازمند بازبینی مرور شوند.',phase:'follow_up'}};return {stage:'V11.6',items:[meeting],summary:{today:1,upcoming:1,open_actions:2,overdue_actions:0,open_decisions:1,waiting:1},registers:{actions:meeting.details.actions.map(x=>({...x,meeting_id:meeting.id,meeting_title:meeting.title,project_name:'NOVA'})),decisions:meeting.details.decisions.map(x=>({...x,meeting_id:meeting.id,meeting_title:meeting.title,project_name:'NOVA'})),waiting:meeting.details.waiting_items.map(x=>({...x,meeting_id:meeting.id,meeting_title:meeting.title,project_name:'NOVA'}))},references:{projects:(V11_DATA?.projects||[]).map(p=>({id:p.id,name:p.name})),areas:(V11_DATA?.areas||[]).map(a=>({id:a.id,name:a.name}))}}}
 async function loadV116(force=false){if(V116_DATA&&!force){renderV116();return V116_DATA}try{V116_DATA=await apiFetch('/api/v11.6/meetings')}catch(e){V116_DATA=v116Fallback()}renderV116();return V116_DATA}
 function v116PhaseLabel(x){return ({prepare:'آماده‌سازی',meeting:'در جلسه',follow_up:'پیگیری',closed:'بسته‌شده'})[x]||'پیگیری'}
@@ -3686,5 +3691,7 @@ function setMobileMenu(open){
 <script src="/assets/calendar.js"></script>
 <link rel="stylesheet" href="/assets/finance-editor.css"/>
 <script src="/assets/finance-editor.js"></script>
+<link rel="stylesheet" href="/assets/date-context.css"/>
+<script src="/assets/date-context-ui.js"></script>
 </body>
 </html>
