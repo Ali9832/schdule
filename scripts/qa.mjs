@@ -26,6 +26,9 @@ const postgresConfigCheck=spawnSync(process.execPath,['scripts/check-postgres-co
 postgresConfigCheck.status===0 ? pass('Prisma connection options and PostgreSQL dates verified') : fail(`PostgreSQL config: ${(postgresConfigCheck.stderr||postgresConfigCheck.stdout).trim()}`)
 syntaxCheck('server/local-store.js')
 syntaxCheck('server/calendar.js')
+syntaxCheck('server/calendar-rules.js')
+syntaxCheck('server/calendar-attachments.js')
+syntaxCheck('public/assets/calendar-extras.js')
 syntaxCheck('public/assets/calendar.js')
 syntaxCheck('public/assets/auth.js')
 syntaxCheck('api/index.js')
@@ -60,7 +63,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')+'\n'+read('server/calendar.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])
@@ -68,13 +71,13 @@ const routeKeys=routes.map(([m,p])=>`${m} ${p}`)
 const dupRoutes=routeKeys.filter((x,i,a)=>a.indexOf(x)!==i)
 ;[...new Set(dupRoutes)].length ? fail(`Duplicate routes: ${[...new Set(dupRoutes)].join(', ')}`) : pass(`Unique backend routes: ${routes.length}`)
 
-const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
+const frontRefs=[...new Set([...(html+'\n'+read('public/assets/calendar.js')+'\n'+read('public/assets/calendar-extras.js')).matchAll(/["'`]((?:\/api\/)[^"'`\s?]*)/g)].map(m=>m[1]))]
 const split=(p)=>p.replace(/\$\{[^}]+\}/g,':x').replace(/\/$/,'').split('/')
 const routeMatches=(f,b)=>{const F=split(f),B=split(b); return F.length===B.length && F.every((v,i)=>B[i]?.startsWith(':') || v===B[i])}
 const unmatched=frontRefs.filter(f=>!routes.some(([,b])=>routeMatches(f,b)))
 unmatched.length ? fail(`Frontend API refs without backend route: ${unmatched.join(', ')}`) : pass(`Frontend API references mapped: ${frontRefs.length}/${frontRefs.length}`)
 
-const migrations=['011_canonical_entities.sql','012_outcome_area_control.sql','013_resource_learning_pipeline.sql','014_health_energy_system.sql','015_relationship_people_commitments.sql','016_spiritual_religious_integration.sql']
+const migrations=['011_canonical_entities.sql','012_outcome_area_control.sql','013_resource_learning_pipeline.sql','014_health_energy_system.sql','015_relationship_people_commitments.sql','016_spiritual_religious_integration.sql','017_calendar_attachments.sql']
 const missingM=migrations.filter(f=>!exists(`server/migrations/${f}`))
 missingM.length ? fail(`Missing migrations: ${missingM.join(', ')}`) : pass(`Migrations present: ${migrations.length}`)
 

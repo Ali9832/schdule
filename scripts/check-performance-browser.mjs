@@ -3,6 +3,7 @@ import fs from 'node:fs'
 const base=process.env.NOVA_BASE_URL||'http://127.0.0.1:3006'
 const port=process.env.NOVA_CDP_PORT||9228
 const bank=JSON.parse(fs.readFileSync('public/data/master-items.json','utf8'))
+const version=JSON.parse(fs.readFileSync('package.json','utf8')).version
 const targets=await(await fetch(`http://127.0.0.1:${port}/json/list`)).json()
 const socket=new WebSocket(targets.find(target=>target.type==='page').webSocketDebuggerUrl)
 await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject})
@@ -27,7 +28,7 @@ try{
  assert.equal(requests.filter(url=>url.includes('master-items.json')).length,0)
  assert.equal(await evaluate('document.querySelectorAll("#bank-bank tr[data-id]").length'),0)
  for(const route of ['/api/v11.3/planning','/api/v11.5/schedule','/api/v11.6/meetings','/api/v11.7/control','/api/v11.8/learning','/api/v11.9/health-system','/api/v11.10/relationships','/api/v11.12/finance'])assert.ok(!requests.some(url=>url.includes(route)),route)
- assert.equal(await evaluate('document.getElementById("app-version").textContent'),'v1.1.2')
+ assert.equal(await evaluate('document.getElementById("app-version").textContent'),'v'+version)
  console.log('PASS initial dashboard: no bank download or hidden-view API requests')
  await evaluate('goPage("items");NovaBank.ensureLoaded();NovaBank.ensureLoaded()')
  await until('document.querySelectorAll("#bank-bank .category-section").length===65')

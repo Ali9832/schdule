@@ -7,7 +7,7 @@ socket.onmessage=event=>{const message=JSON.parse(event.data);if(message.id){con
 const send=(method,params={})=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});socket.send(JSON.stringify({id,method,params}))})
 async function evaluate(expression){const result=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(result.exceptionDetails)throw Error(result.exceptionDetails.exception?.description||result.exceptionDetails.text);return result.result.value}
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms))
-async function until(expression){for(let i=0;i<80;i++){if(await evaluate(expression))return;await pause(100)}throw Error('Timed out: '+expression)}
+async function until(expression){for(let i=0;i<80;i++){if(await evaluate(expression))return;await pause(100)}const detail=await evaluate('({message:UnifiedCalendar.state.message,invalid:[...document.querySelectorAll("#calendarItemForm :invalid")].map(input=>({name:input.name,message:input.validationMessage})),error:document.querySelector(".uc-form-error")?.textContent})');throw Error('Timed out: '+expression+' '+JSON.stringify(detail))}
 let created,savedPreferences;const title='Calendar UI regression '+Date.now()
 try{
   await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setBypassServiceWorker',{bypass:true});await send('Page.reload',{ignoreCache:true});await pause(500);await until("typeof UnifiedCalendar!=='undefined'")

@@ -384,3 +384,16 @@ CREATE TABLE IF NOT EXISTS religious_event_details (
 CREATE INDEX IF NOT EXISTS spiritual_routine_details_user_idx ON spiritual_routine_details(user_id);
 CREATE INDEX IF NOT EXISTS religious_event_details_user_idx ON religious_event_details(user_id);
 CREATE INDEX IF NOT EXISTS planner_events_religious_idx ON planner_events(user_id, start_at) WHERE type='religious';
+
+CREATE TABLE IF NOT EXISTS calendar_attachments (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  source TEXT NOT NULL CHECK (source IN ('task','event','project','outcome')),
+  entity_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  size INTEGER NOT NULL CHECK (size > 0 AND size <= 2097152),
+  bytes BYTEA NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS calendar_attachments_owner_idx ON calendar_attachments(user_id,source,entity_id);

@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url'
 import OpenAI from 'openai'
 import { createLocalStore } from './local-store.js'
 import { registerCalendar, normalizeCalendarState } from './calendar.js'
+import { registerCalendarAttachments } from './calendar-attachments.js'
 import { postgresOptions } from './postgres-config.js'
 
 dotenv.config()
@@ -1618,7 +1619,29 @@ for(const p of data.projects){if(!p.due_date||p.lifecycle_status==='archived'||!
 for(const o of data.outcomes||[]){if(!o.due_date||o.status==='done'||!v115InRange(o.due_date,from,to))continue;entries.push({id:`outcome-deadline-${o.id}`,entity_id:o.id,source_type:'outcome',type:'outcome_deadline',title:`موعد هدف: ${o.title}`,start_at:`${o.due_date}T23:20:00`,end_at:`${o.due_date}T23:30:00`,all_day:true,area_id:o.area_id||null,area_name:areaMap.get(o.area_id)||''})}
 entries.sort((a,b)=>String(a.start_at).localeCompare(String(b.start_at)));const conflicts=v115FindConflicts(entries),todayCount=entries.filter(e=>v115EntryDate(e)===todayIso).length,meetings=entries.filter(e=>e.type==='meeting').length,deadlines=entries.filter(e=>['deadline','project_deadline','outcome_deadline'].includes(e.type)).length,focusBlocks=entries.filter(e=>e.type==='focus').length;const unscheduled=data.tasks.filter(t=>t.status!=='done'&&!t.due_date&&!String(t.waiting_on||'').trim()).slice(0,20).map(t=>({id:t.id,title:t.title,project_id:t.project_id||null,project_name:projectMap.get(t.project_id)||'',context:t.context||'',energy:t.energy||'',estimate_minutes:t.estimate_minutes||0}));return {stage:'V11.5',range:{from,to},entries,unscheduled,summary:{today_count:todayCount,range_count:entries.length,meetings,deadlines,focus_blocks:focusBlocks,conflicts},references:{projects:data.projects.map(p=>({id:p.id,name:p.name,lifecycle_status:p.lifecycle_status})),areas:data.areas.map(a=>({id:a.id,name:a.name}))},generated_at:new Date().toISOString()}}
 app.get('/api/v11.5/schedule',async(request)=>v115SchedulePayload(request.user.id,request.query||{}))
+registerCalendarAttachments(app,{canonical:getV11Canonical,store:{
+  async list(userId,source,entityId){
+    if(hasDatabase)return (await app.pg.query('SELECT id,name,type,size,created_at FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3 ORDER BY created_at',[userId,source,entityId])).rows
+    return Object.values(memory.calendar_attachments||{}).filter(row=>row.user_id===userId&&row.source===source&&row.entity_id===entityId)
+  },
+  async put(row){
+    if(hasDatabase){await app.pg.query('INSERT INTO calendar_attachments (id,user_id,source,entity_id,name,type,size,bytes,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)',[row.id,row.user_id,row.source,row.entity_id,row.name,row.type,row.size,row.bytes,row.created_at]);return}
+    memory.calendar_attachments||={};memory.calendar_attachments[row.id]={...row,bytes:row.bytes.toString('base64')}
+  },
+  async get(userId,source,entityId,attachmentId){
+    if(hasDatabase)return (await app.pg.query('SELECT * FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3 AND id=$4',[userId,source,entityId,attachmentId])).rows[0]
+    const row=memory.calendar_attachments?.[attachmentId];return row&&row.user_id===userId&&row.source===source&&row.entity_id===entityId?{...row,bytes:Buffer.from(row.bytes,'base64')}:null
+  },
+  async remove(userId,source,entityId,attachmentId){
+    if(hasDatabase){await app.pg.query('DELETE FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3 AND id=$4',[userId,source,entityId,attachmentId]);return}
+    const row=memory.calendar_attachments?.[attachmentId];if(row?.user_id===userId&&row.source===source&&row.entity_id===entityId)delete memory.calendar_attachments[attachmentId]
+  }
+}})
 registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
+  removeAttachments:async(userId,source,entityId)=>{
+    if(hasDatabase){await app.pg.query('DELETE FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3',[userId,source,entityId]);return}
+    for(const [key,row] of Object.entries(memory.calendar_attachments||{}))if(row.user_id===userId&&row.source===source&&row.entity_id===entityId)delete memory.calendar_attachments[key]
+  },
   createOutcome:async(userId,body)=>{
     if(!hasDatabase)return v117SaveMemoryOutcome(userId,null,body);
     return (await app.pg.query('INSERT INTO outcomes (id,user_id,title,status,due_date,note) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *',[id(),userId,body.title,body.status,body.due_date,body.note])).rows[0]

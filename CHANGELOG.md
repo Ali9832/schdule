@@ -2,6 +2,15 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [1.2.0] - 2026-10-23
+
+### Added
+- Independent due date/time, reminders, priority and daily/weekly/Persian-monthly/Persian-yearly recurrence for every unified calendar kind.
+- Recurrence interval, optional end date/count, per-occurrence completion and deletion, and explicit series-wide editing.
+- In-app reminders and opt-in browser notifications while the site is open; no closed-site push delivery is configured.
+- Private image/audio attachments stored separately in PostgreSQL (up to 5 per item, 2 MiB each), authenticated preview/download/removal, plus local snapshot support.
+- Idempotent calendar attachment schema migration and validation of file types, contents and size.
+
 ## [1.1.2] - 2026-10-23
 
 ### Fixed
