@@ -12,7 +12,18 @@
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='profile')await profile();};
   function bindGeneric(){const root=document.getElementById('genericModalBg');if(root.classList.contains('hidden'))return;const key=typeof BASE_EDIT!=='undefined'&&BASE_EDIT?`generic:${BASE_EDIT.kind}:${BASE_EDIT.type||''}:${BASE_EDIT.id}`:`generic:new:${currentAddType}:${DateContext.date}`;NoavaDrafts.bind(root,key);NoavaMoney.enhance(root);}
   for(const name of ['openGenericAdd','baseEditTask','baseEditModule']){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);if(result?.then)return result.then(value=>{bindGeneric();return value;});bindGeneric();return result;};}
+  const saveGeneric=window.saveGenericAdd;let savingGeneric=false;
+  window.saveGenericAdd=async function(...args){
+    if(savingGeneric)return;
+    const form=document.getElementById('genericAddForm');if(form&&!form.reportValidity())return;
+    savingGeneric=true;const buttons=[...document.querySelectorAll('#genericModalBg .modal-actions button')],disabled=buttons.map(b=>b.disabled);buttons.forEach(b=>b.disabled=true);
+    try{return await saveGeneric.apply(this,args);}finally{savingGeneric=false;buttons.forEach((b,i)=>b.disabled=disabled[i]);}
+  };
   const composers=[['v116Composer','/api/v11.6/meetings'],['v117Composer','/api/v11.7/outcomes'],['v118Composer','/api/v11.8/resources']];
+  const titleSaves={v116Title:['v116Composer','v116Save'],v117Title:['v117Composer','v117SaveOutcome'],v118Title:['v118Composer','v118Save']};
+  const savingComposers=new Set();
+  for(const [rootId,name]of Object.values(titleSaves)){const original=window[name];if(typeof original!=='function')continue;window[name]=async function(...args){if(savingComposers.has(rootId))return;savingComposers.add(rootId);const button=document.querySelector('#'+rootId+' button.save'),disabled=button?.disabled;if(button)button.disabled=true;try{return await original.apply(this,args);}finally{savingComposers.delete(rootId);if(button)button.disabled=disabled;}};}
+  document.addEventListener('keydown',event=>{if(event.defaultPrevented||event.key!=='Enter'||event.isComposing||event.keyCode===229||event.repeat||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey)return;const target=event.target,entry=titleSaves[target.id];if(!entry||target.tagName!=='INPUT'||!target.closest('#'+entry[0])?.classList.contains('open'))return;event.preventDefault();window[entry[1]]();});
   for(const [name,id]of [['v116OpenNew','v116Composer'],['v116Edit','v116Composer'],['v117OpenOutcome','v117Composer'],['v118OpenComposer','v118Composer']]){
     const original=window[name];if(typeof original!=='function')continue;
     window[name]=function(...args){const result=original.apply(this,args),root=document.getElementById(id);if(!root)return result;const entity=name==='v116OpenNew'?'new':args[0]||'new';const options=id==='v116Composer'?{extra:()=>({actions:V116_FORM_ACTIONS,decisions:V116_FORM_DECISIONS,waiting:V116_FORM_WAITING}),restoreExtra:value=>{V116_FORM_ACTIONS=value.actions||[];V116_FORM_DECISIONS=value.decisions||[];V116_FORM_WAITING=value.waiting||[];v116RenderBuilders();}}:{};NoavaDrafts.bind(root,`composer:${id}:${entity}`,options);return result;};

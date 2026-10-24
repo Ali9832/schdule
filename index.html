@@ -934,7 +934,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <main class="main">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.0.2</small></div>
+<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.0.3</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -1956,10 +1956,10 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v11-inspector-actions"><button class="v11-primary" id="v11InspectorEditBtn">ویرایش</button><button class="v11-secondary" onclick="closeV11Inspector()">بستن</button></div>
 </div>
 <div class="modal-bg hidden" id="genericModalBg">
-<div class="modal generic-modal">
+<form class="modal generic-modal" id="genericAddForm" onsubmit="event.preventDefault();saveGenericAdd()">
 <h3 id="genericModalTitle">افزودن مورد</h3>
 <div class="modal-type" id="genericModalType"></div>
-<div class="field"><label>عنوان</label><input id="genericTitleInput" placeholder="عنوان مورد را وارد کنید..."/></div>
+<div class="field"><label>عنوان</label><input id="genericTitleInput" required placeholder="عنوان مورد را وارد کنید..."/></div>
 <div class="modal-grid" style="margin-top:10px">
 <div class="field"><label>دسته / نوع</label><select id="genericCategory"><option>عمومی</option><option>فوری</option><option>مهم</option><option>پیگیری</option><option>برنامه‌ریزی</option></select></div>
 <div class="field"><label>اولویت</label><select id="genericPriority"><option>P0</option><option>P1</option><option selected="">P2</option><option>P3</option></select></div>
@@ -1968,8 +1968,8 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="field hidden" id="genericAmountWrap"><label>مبلغ (تومان)</label><input id="genericAmount" min="0" placeholder="مثلاً 2500000" step="1000" type="text" inputmode="decimal" data-money-toman dir="ltr"/></div>
 </div>
 <div class="field" style="margin-top:10px"><label>توضیحات</label><textarea id="genericNotes" placeholder="یادداشت یا توضیحات تکمیلی..."></textarea></div>
-<div class="modal-actions"><button class="primary" onclick="saveGenericAdd()">ذخیره</button><button class="secondary" onclick="closeGenericAdd()">انصراف</button></div>
-</div>
+<div class="modal-actions"><button class="primary" type="submit">ذخیره</button><button class="secondary" type="button" onclick="closeGenericAdd()">انصراف</button></div>
+</form>
 </div>
 <div class="modal-bg hidden" id="modalBg">
 <div class="modal">
@@ -3723,6 +3723,6 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/project-workspace.css"/>
 <script src="/assets/project-workspace.js"></script>
 <script src="/assets/academic.js"></script>
-<script src="/assets/noava-workspace.js?v=2.0.1"></script>
+<script src="/assets/noava-workspace.js?v=2.0.3"></script>
 </body>
 </html>

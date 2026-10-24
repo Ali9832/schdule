@@ -2,6 +2,21 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.0.3] - 2026-10-24
+
+Upgrade: **2.0.2 → 2.0.3**, based on `464fbc62718019468714388bc822fb3b23506311`. Release commit: annotated tag `v2.0.3` (`git rev-parse v2.0.3^{commit}`).
+
+### Fixed
+- The general add/edit dialog is now a native HTML form with a required title and an explicit submit button. Enter in a single-line title/input submits through the same save path as clicking Save; textarea Enter keeps its newline and Cancel does not submit.
+- Prevent concurrent/duplicate saves, including repeated Enter during slow create or edit requests. Validation and failed-save recovery retain the entered text and draft.
+- Title fields in the meeting, outcome and resource composers support Enter. Custom shortcuts exclude IME composition, auto-repeat and modified Enter; composer saves share a pending guard with button saves.
+- Existing native forms (calendar, finance, inspector and project reports) retain their standard keyboard submission behavior.
+- The changed JS asset URL and service-worker/package/UI versions are synchronized to 2.0.3. No backend API or stored-data changes.
+
+### Validation
+- Browser uses real keyboard events to create and edit a task, verifies one mutation on repeated Enter, rejects an empty title, checks textarea newline and failed-save recovery, and tests composer Enter/IME/modifier handling.
+- Build/full QA, general NOAVA browser workflows and shell layout regression run before release.
+
 ## [2.0.2] - 2026-10-24
 
 Upgrade: **2.0.1 → 2.0.2**, based on `2b686a7b4dd6e9c6eddc7383cef7a56ab5aca19b`. Release commit: annotated tag `v2.0.2`.
