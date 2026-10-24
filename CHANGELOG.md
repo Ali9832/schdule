@@ -2,6 +2,21 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.2.0] - 2026-10-25
+
+Upgrade: **2.1.3 → 2.2.0**, based on `cd090ba8b8c735aef9bef70a5dc2f043cce3f752`. Release commit: annotated tag `v2.2.0`.
+
+### Clearer date/time controls and academic planning
+- Display all enhanced numeric date/time fields left to right: year/month/day and hour/minute. Picker columns follow the same order; Persian captions and surrounding forms remain RTL.
+- Give time-picker buttons a visible “ساعت” label and sufficient width, including the calendar new-program form. Preserve numeric typing, wheel/spinner controls, validation and canonical storage values.
+- Move the academic date navigator into the weekly schedule panel, next to its visible date range. Replace one-day arrows with labeled previous/next-week actions; retain direct date selection and Today.
+- Group course/type filters and a dedicated new-program type selector with its add button. Collapse course management when courses exist, preserving course editing and drafts. Retain linked projects, calendar entries and upcoming deadlines.
+- Reuse the existing date bar during renders and let the academic view own its date-change reload, avoiding duplicate bars and duplicate reload requests.
+
+### Validation
+- Browser checks cover weekly navigation, date jump/Today, repeated rendering, filters, new-program defaults, visible time-picker buttons, LTR input/picker geometry and desktop/mobile overflow.
+- Date/time coverage, calendar-form, planning-date and NOAVA feature regressions passed. Build and all 66 QA checks passed. Existing Gregorian budget-month semantics are preserved; no data migration is needed.
+
 ## [2.1.3] - 2026-10-25
 
 Upgrade: **2.1.2 → 2.1.3**, based on `a7289e3677a6ac9a08a187f6feda4fb9795e3cfc`. Release commit: annotated tag `v2.1.3`.

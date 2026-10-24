@@ -39,7 +39,7 @@
   }
   function enhance(input){
     if(input.dataset.persianType||!['date','datetime-local','time','month'].includes(input.type))return;
-    const kind=input.type,initial=input.value;input.dataset.persianType=kind;input.type='text';input.dir='rtl';input.lang='fa';input.autocomplete='off';
+    const kind=input.type,initial=input.value;input.dataset.persianType=kind;input.type='text';input.dir='ltr';input.lang='fa';input.autocomplete='off';
     input.removeAttribute('min');input.removeAttribute('max');input.removeAttribute('step');
     input.placeholder=kind==='time'?'ساعت:دقیقه (۲۴ ساعته)':kind==='date'?'۱۴۰۵/۰۱/۰۱':'۱۴۰۵/۰۱/۰۱  ۱۴:۳۰';
     input.setAttribute('aria-description',kind==='time'?'ساعت به صورت ۲۴ ساعته':'تاریخ شمسی، سال/ماه/روز'+(kind==='datetime-local'?' و ساعت ۲۴ ساعته':''));
@@ -50,7 +50,7 @@
     input.inputMode='numeric';input.addEventListener('blur',()=>{const value=input.value,message=input.validity.customError?input.validationMessage:'';if(value){input.value=value;if(message)input.setCustomValidity(message);}});input.addEventListener('keydown',event=>{if(event.isComposing||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();stepInput(input,event.key==='ArrowUp'?1:-1);}});input.addEventListener('wheel',event=>{if(document.activeElement!==input||input.disabled||input.readOnly||event.ctrlKey||event.metaKey||!event.deltaY)return;event.preventDefault();stepInput(input,event.deltaY<0?1:-1);},{passive:false});
     input.setAttribute('aria-description',(input.getAttribute('aria-description')||'')+'؛ تایپ عددی یا انتخاب بخش عدد با موس و تغییر با اسکرول و کلید بالا/پایین.');
     const wrapper=document.createElement('span');wrapper.className='persian-date-field'+(kind==='time'?' persian-time-field':'');input.before(wrapper);wrapper.append(input);
-    const button=document.createElement('button');button.type='button';button.className='persian-calendar-button';button.textContent=kind==='time'?'◷':'▦';button.setAttribute('aria-label',kind==='time'?'انتخاب ساعت':'انتخاب تاریخ شمسی');if(kind==='month')button.setAttribute('aria-label','انتخاب ماه میلادی بودجه');button.onclick=()=>kind==='time'?openTime(input):kind==='month'?openMonth(input):openCalendar(input);wrapper.append(button);
+    const button=document.createElement('button');button.type='button';button.className='persian-calendar-button';button.textContent=kind==='time'?'◷ ساعت':'▦';button.setAttribute('aria-label',kind==='time'?'انتخاب ساعت':'انتخاب تاریخ شمسی');if(kind==='month')button.setAttribute('aria-label','انتخاب ماه میلادی بودجه');button.onclick=()=>kind==='time'?openTime(input):kind==='month'?openMonth(input):openCalendar(input);wrapper.append(button);
   }
   for(const eventName of ['input','change'])document.addEventListener(eventName,event=>{const input=event.target;if(!(input instanceof HTMLInputElement)||!input.dataset.persianType)return;const raw=native.get.call(input).trim();const valid=!raw||!!input.value;input.setCustomValidity(valid?'':(input.dataset.persianType==='month'?'ماه میلادی معتبر به شکل سال/ماه وارد کنید.':'تاریخ شمسی یا ساعت ۲۴ ساعته معتبر وارد کنید.'));if(!valid){event.stopImmediatePropagation();if(eventName==='change')input.reportValidity()}},true);
   let dialog;

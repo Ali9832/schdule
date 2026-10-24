@@ -6,19 +6,19 @@
   let revision = 0, refreshing = Promise.resolve(), financeRequest = 0;
   function bars() {
     document.querySelectorAll('.page').forEach(page => {
-      let bar = page.querySelector(':scope > .planning-date-bar');
+      let bar = page.querySelector('.planning-date-bar');
       if (!bar) {
         bar = document.createElement('section'); bar.className = 'planning-date-bar'; bar.setAttribute('aria-label', 'تاریخ مبنای این صفحه');
         const heading = document.createElement('div'), title = document.createElement('strong'), actual = document.createElement('small');
         title.className = 'planning-date-label'; actual.className = 'planning-real-date'; heading.append(title, actual);
         const controls = document.createElement('div'); controls.className = 'planning-date-controls';
         const button = (text, name, click) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.setAttribute('aria-label', name); b.onclick = click; controls.append(b); return b; };
-        button('→', 'روز قبل', () => ctx.set(ctx.shift(ctx.date, -1)));
-        const dateLabel = document.createElement('label'); dateLabel.textContent = 'تاریخ مبنا';
+        button(page.id === 'academic' ? 'هفتهٔ قبل →' : '→', page.id === 'academic' ? 'هفتهٔ قبل' : 'روز قبل', () => ctx.set(ctx.shift(ctx.date, page.id === 'academic' ? -7 : -1), page.id === 'academic' ? 'academic' : ''));
+        const dateLabel = document.createElement('label'); dateLabel.textContent = page.id === 'academic' ? 'رفتن به تاریخ' : 'تاریخ مبنا';
         const input = document.createElement('input'); input.type = 'date'; input.className = 'planning-date-input'; input.setAttribute('aria-label', 'انتخاب تاریخ مبنای صفحه'); input.value = ctx.date;
         input.onchange = () => { if (input.value) ctx.set(input.value); };
         dateLabel.append(input); controls.append(dateLabel);
-        button('←', 'روز بعد', () => ctx.set(ctx.shift(ctx.date, 1)));
+        button(page.id === 'academic' ? '← هفتهٔ بعد' : '←', page.id === 'academic' ? 'هفتهٔ بعد' : 'روز بعد', () => ctx.set(ctx.shift(ctx.date, page.id === 'academic' ? 7 : 1), page.id === 'academic' ? 'academic' : ''));
         button('امروز', 'بازگشت به امروز تهران', () => ctx.set(ctx.today()));
         bar.append(heading, controls);
         if (scopedPages.has(page.id)) {
@@ -39,6 +39,7 @@
         : ['calendar', 'schedule', 'habits'].includes(page.id) ? 'بازهٔ تقویم / ماه روتین‌ها و تاریخ پیشنهادی ثبت جدید با این روز هماهنگ است.'
         : scopedPages.has(page.id) ? 'موارد بدون موعد هم نمایش داده می‌شوند؛ با برداشتن تیک، فهرست همهٔ روزها را ببینید.'
         : 'تاریخ پیشنهادی ثبت جدید؛ فهرست‌های دائمی این بخش بدون حذف یا مخفی‌سازی باقی می‌مانند.';
+      if(page.id === 'academic')bar.querySelector('.planning-date-hint').textContent = 'با انتخاب تاریخ، برنامهٔ هفتهٔ همان روز را ببینید؛ برنامهٔ جدید برای روز انتخاب‌شده پیشنهاد می‌شود.';
     });
   }
   function prepare(page) {
@@ -129,6 +130,7 @@
   }
   window.addEventListener('nova:date-changed', event => {
     bars();
+    if(currentPage() === 'academic')return; // Academic owns its weekly reload.
     if (event.detail.source === 'calendar' || event.detail.source === 'schedule') return;
     refreshing = refresh();
   });
