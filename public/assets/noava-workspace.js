@@ -33,27 +33,37 @@
   syncAccount();window.addEventListener('storage',syncAccount);setTimeout(syncAccount,1200);
   // One daily review, with a manual entry point for deferred items.
   let review=null,reviewing=false;
+  const reviewSeen=key=>{try{return sessionStorage.getItem(key)==='1';}catch{return false;}};
+  const markReviewSeen=key=>{try{sessionStorage.setItem(key,'1');}catch{}};
   async function overdue(manual=false){
     if(review?.open||reviewing)return;reviewing=true;
     try{
       const today=DateContext.today(),user=JSON.parse(localStorage.getItem('nova_user')||'null')?.id||'local-demo',seen='noava.overdue:'+user+':'+today;
-      if(!manual&&sessionStorage.getItem(seen))return;
+      if(!manual&&reviewSeen(seen))return;
       const result=await apiFetch('/api/calendar/overdue');if(!result.entries.length){if(manual)showToast('کارهای عقب‌افتاده','مورد بازی در بازهٔ دو سال اخیر وجود ندارد.');return;}
-      if(!manual&&(document.querySelector('dialog[open]')||!document.getElementById('genericModalBg').classList.contains('hidden')||document.querySelector('#v11Inspector.open')))return;
-      review=node('dialog',null,'overdue-dialog');review.id='overdueReview';review.setAttribute('aria-label','مرور کارهای عقب‌افتاده');review.append(node('h2','این برنامه‌ها از روزهای قبل باقی مانده‌اند'),node('p','موارد انجام‌شده را تیک بزنید یا حذف کنید؛ فقط موارد انتخاب‌شده با تأیید شما به امروز منتقل می‌شوند. بازهٔ بررسی: دو سال اخیر.'));
-      const list=node('div'),error=node('p','','record-edit-error');error.setAttribute('role','alert');const selected=new Map();let busy=false;
-      const controls=()=>[...review.querySelectorAll('button,input')];
+      if(!manual&&(document.querySelector('dialog[open]')||!document.getElementById('genericModalBg').classList.contains('hidden')||document.querySelector('#v11Inspector.open')||document.activeElement?.matches('input,textarea,select,[contenteditable=true]')))return;
+      const dialog=node('dialog',null,'overdue-dialog');review=dialog;dialog.id='overdueReview';dialog.setAttribute('aria-label','مرور کارهای عقب‌افتاده');
+      const heading=node('header',null,'overdue-heading'),title=node('h2','این برنامه‌ها از روزهای قبل باقی مانده‌اند');
+      const dismiss=()=>{if(busy)return;markReviewSeen(seen);dialog.close();};
+      const close=button('×',dismiss);close.className='overdue-close';close.setAttribute('aria-label','بستن مرور عقب‌افتاده‌ها');heading.append(title,close);
+      dialog.append(heading,node('p','موارد انجام‌شده را تیک بزنید یا حذف کنید؛ فقط موارد انتخاب‌شده با تأیید شما به امروز منتقل می‌شوند. بازهٔ بررسی: دو سال اخیر.'));
+      const list=node('div',null,'overdue-list'),error=node('p','','record-edit-error');list.setAttribute('aria-label','برنامه‌های عقب‌افتاده');list.tabIndex=0;error.setAttribute('role','alert');const selected=new Map();let busy=false;
+      const controls=()=>[...dialog.querySelectorAll('button,input')];
       async function action(row,item,type){if(busy)return;if(type==='delete'&&!confirm('این مورد حذف شود؟'))return;busy=true;controls().forEach(n=>n.disabled=true);error.textContent='';try{
         const endpoint=`/api/calendar/${item.source}/${encodeURIComponent(item.id)}`;
         if(type==='done')await apiFetch(endpoint,{method:'PATCH',body:JSON.stringify({done:true,...(item.occurrence_date?{occurrence_date:item.occurrence_date}:{})})});
         else if(item.source==='task'&&!item.occurrence_date)await apiFetch('/api/tasks/'+encodeURIComponent(item.id),{method:'DELETE'});
         else await apiFetch(endpoint+(item.occurrence_date?'?occurrence_date='+item.occurrence_date:''),{method:'DELETE'});
-        selected.delete(item.key);row.remove();if(!list.children.length)review.close();
+        selected.delete(item.key);row.remove();if(!list.children.length){markReviewSeen(seen);dialog.close();}
       }catch(failure){error.textContent=failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}}
       for(const item of result.entries){const row=node('article',null,'overdue-row'),label=node('label'),choose=node('input');choose.type='checkbox';choose.checked=true;choose.setAttribute('aria-label','انتقال به امروز: '+item.title);selected.set(item.key,item);choose.onchange=()=>choose.checked?selected.set(item.key,item):selected.delete(item.key);const caption=node('span',item.title);caption.append(node('small',faDateLabel(item.date)));label.append(choose,caption);row.append(label,button('✓ انجام شد',()=>action(row,item,'done')),button('حذف',()=>action(row,item,'delete')));list.append(row);}
-      const move=button('تأیید و انتقال انتخاب‌شده‌ها به امروز',async()=>{if(busy||!selected.size)return;busy=true;controls().forEach(n=>n.disabled=true);error.textContent='';try{for(const [key,item]of selected){await apiFetch(`/api/calendar/${item.source}/${encodeURIComponent(item.id)}/carry-forward`,{method:'POST',body:JSON.stringify({occurrence_date:item.occurrence_date})});selected.delete(key);[...list.children].find(row=>row.dataset.key===key)?.remove();}sessionStorage.setItem(seen,'1');review.close();showToast('برنامه به‌روز شد','موارد انتخاب‌شده به امروز منتقل شدند.');NovaFastUI.scheduleVisibleRefresh();}catch(failure){error.textContent='برخی موارد منتقل نشدند: '+failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}});
+      const move=button('تأیید و انتقال انتخاب‌شده‌ها به امروز',async()=>{if(busy||!selected.size)return;busy=true;controls().forEach(n=>n.disabled=true);error.textContent='';try{for(const [key,item]of selected){await apiFetch(`/api/calendar/${item.source}/${encodeURIComponent(item.id)}/carry-forward`,{method:'POST',body:JSON.stringify({occurrence_date:item.occurrence_date})});selected.delete(key);[...list.children].find(row=>row.dataset.key===key)?.remove();}markReviewSeen(seen);dialog.close();showToast('برنامه به‌روز شد','موارد انتخاب‌شده به امروز منتقل شدند.');NovaFastUI.scheduleVisibleRefresh();}catch(failure){error.textContent='برخی موارد منتقل نشدند: '+failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}});
       [...list.children].forEach((row,i)=>row.dataset.key=result.entries[i].key);
-      const later=button('بعداً بررسی می‌کنم',()=>{sessionStorage.setItem(seen,'1');review.close();});review.append(list,error,move,later);review.addEventListener('cancel',event=>{event.preventDefault();if(!busy)later.click();});review.addEventListener('close',()=>review.remove());document.body.append(review);review.showModal();
+      const later=button('بعداً بررسی می‌کنم',dismiss),footer=node('footer',null,'overdue-footer');footer.append(move,later);dialog.append(list,error,footer);
+      dialog.addEventListener('cancel',event=>{event.preventDefault();dismiss();});dialog.addEventListener('close',()=>{dialog.remove();if(review===dialog)review=null;});
+      let outside=false;const onBackdrop=event=>{const r=dialog.getBoundingClientRect();return event.target===dialog&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom);};
+      dialog.addEventListener('pointerdown',event=>{outside=onBackdrop(event);});dialog.addEventListener('click',event=>{if(outside&&onBackdrop(event))dismiss();outside=false;});
+      document.body.append(dialog);dialog.showModal();close.focus({preventScroll:true});
     }catch(error){if(manual)showToast('بررسی انجام نشد',error.message);}
     finally{reviewing=false;}
   }

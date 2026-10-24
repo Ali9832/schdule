@@ -2,6 +2,22 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.0.1] - 2026-10-24
+
+Upgrade: **2.0.0 → 2.0.1**, based on `5a660440b136cdb333ea53deba4d81f2eb8bcc94`. Release commit: annotated tag `v2.0.1` (`git rev-parse v2.0.1^{commit}`).
+
+### Fixed
+- Reproduced a blocking overdue-review layout with 100 rows: the only dismissal button was over 13,000px below the viewport. Added an always-visible close header and footer, with scrolling limited to the list, including narrow/short screens.
+- Support real backdrop clicks and Escape, preserve inside clicks, and prevent dismissal while a write is pending.
+- Capture the dialog instance in close handlers so a delayed close event cannot remove a newly reopened dialog.
+- Automatic review does not interrupt a focused input. Session-storage errors cannot prevent dismissal.
+- Version the changed JS/CSS asset URLs so an older service-worker cache cannot pair the new document with the old dialog code. Cache namespace synchronized to `noava-v2.0.1`.
+
+### Validation and limits
+- Dedicated browser regression checks 100 rows on desktop, mobile and landscape; visible controls, list scrolling, real close/backdrop clicks, inside clicks, rapid reopen, focus protection and zero data writes.
+- Full build/QA and NOAVA browser regression run before release. No production account data was changed during diagnosis.
+- This fixes a reproduced UI blocker. The user's unspecified production error has not been identified conclusively; authenticated production workflows require the failing screen/action to reproduce.
+
 ## [2.0.0] - 2026-10-24
 
 Upgrade: **1.6.0 → 2.0.0**. Previous commit: `0a974cae181857f7431ee5bd7bd827ce5dd4010b`. The release commit is referenced by annotated tag [`v2.0.0`](https://github.com/Ali9832/schdule/releases/tag/v2.0.0); resolve locally with `git rev-parse v2.0.0^{commit}`. Author: `molibdengit`.
