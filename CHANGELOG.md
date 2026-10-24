@@ -2,6 +2,21 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.1.3] - 2026-10-25
+
+Upgrade: **2.1.2 → 2.1.3**, based on `a7289e3677a6ac9a08a187f6feda4fb9795e3cfc`. Release commit: annotated tag `v2.1.3`.
+
+### Date and time coverage
+- Audit the shared date/time controls across the active site, including hidden legacy composers and dynamically opened editors. Date-only, time-only and combined fields retain Persian numeric typing, focused wheel/arrow adjustment and their appropriate pickers.
+- Add the missing month-only control for finance budgets: manual Persian/Latin digits, year/month spinner picker and focused wheel/arrow adjustment. Budget periods explicitly remain Gregorian YYYY-MM, preserving existing financial filtering and stored data.
+- Enhance fields whose native date/time/month type is assigned after insertion, as well as newly inserted forms.
+- Normalize enhanced fields during FormData serialization, keeping ISO dates, 24-hour times and Gregorian budget periods. Preserve repeated field names and disabled-fieldset behavior.
+
+### Validation and limits
+- Browser audit covers 51 existing date/time fields plus dynamic date/time/datetime/month controls, late type assignment, manual input, month rollover, read-only/unfocused wheel protection and canonical serialization.
+- Calendar-form, finance, project-workspace and planning-date browser regressions passed. Build and all 66 QA checks passed.
+- Descriptive timing such as “morning / after prayer / night” and numeric durations remain descriptive text or durations; they are not clock inputs. Historical budget periods remain Gregorian. Production deployment verification is separate from local tests.
+
 ## [2.1.2] - 2026-10-25
 
 Upgrade: **2.1.1 → 2.1.2**, based on `6a0aa21948fc57c16929e993ef75f19b720eec1b`. Release commit: annotated tag `v2.1.2`.
