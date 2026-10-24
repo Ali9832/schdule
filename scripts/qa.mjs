@@ -21,6 +21,9 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('server/calendar-carry-forward.js')
+const carryForwardCheck=spawnSync(process.execPath,['scripts/check-calendar-carry-forward.mjs'],{cwd:root,encoding:'utf8'})
+carryForwardCheck.status===0 ? pass('Atomic bulk carry-forward, retries, ownership and bounded queries verified') : fail(`Bulk carry-forward: ${(carryForwardCheck.stderr||carryForwardCheck.stdout).trim()}`)
 syntaxCheck('public/assets/keyboard-submit.js')
 for(const file of ['server/finance-units.js','public/assets/money-input.js','public/assets/drafts.js','public/assets/academic.js','public/assets/noava-workspace.js'])syntaxCheck(file)
 const noavaCheck=spawnSync(process.execPath,['scripts/check-noava.mjs'],{cwd:root,encoding:'utf8'})
@@ -87,7 +90,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')+'\n'+read('server/project-workspace.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')+'\n'+read('server/project-workspace.js')+'\n'+read('server/calendar-carry-forward.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])

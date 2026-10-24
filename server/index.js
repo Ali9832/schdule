@@ -18,6 +18,7 @@ import { registerFinanceEditor } from './finance-editor.js'
 import { normalizeFinanceAmounts } from './finance-units.js'
 import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 import { registerProjectWorkspace } from './project-workspace.js'
+import { registerCalendarCarryForward, memoryCarryForward, postgresCarryForward } from './calendar-carry-forward.js'
 
 dotenv.config()
 
@@ -1639,6 +1640,7 @@ registerCalendarAttachments(app,{canonical:getV11Canonical,store:{
     const row=memory.calendar_attachments?.[attachmentId];if(row?.user_id===userId&&row.source===source&&row.entity_id===entityId)delete memory.calendar_attachments[attachmentId]
   }
 }})
+registerCalendarCarryForward(app,(userId,items)=>hasDatabase ? postgresCarryForward(app.pg)(userId,items) : memoryCarryForward(()=>memory)(userId,items))
 registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
   removeAttachments:async(userId,source,entityId)=>{
     if(hasDatabase){await app.pg.query('DELETE FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3',[userId,source,entityId]);return}

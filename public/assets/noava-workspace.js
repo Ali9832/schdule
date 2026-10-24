@@ -64,7 +64,15 @@
         selected.delete(item.key);row.remove();if(!list.children.length){markReviewSeen(seen);dialog.close();}
       }catch(failure){error.textContent=failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}}
       for(const item of result.entries){const row=node('article',null,'overdue-row'),label=node('label'),choose=node('input');choose.type='checkbox';choose.checked=true;choose.setAttribute('aria-label','انتقال به امروز: '+item.title);selected.set(item.key,item);choose.onchange=()=>choose.checked?selected.set(item.key,item):selected.delete(item.key);const caption=node('span',item.title);caption.append(node('small',faDateLabel(item.date)));label.append(choose,caption);row.append(label,button('✓ انجام شد',()=>action(row,item,'done')),button('حذف',()=>action(row,item,'delete')));list.append(row);}
-      const move=button('تأیید و انتقال انتخاب‌شده‌ها به امروز',async()=>{if(busy||!selected.size)return;busy=true;controls().forEach(n=>n.disabled=true);error.textContent='';try{for(const [key,item]of selected){await apiFetch(`/api/calendar/${item.source}/${encodeURIComponent(item.id)}/carry-forward`,{method:'POST',body:JSON.stringify({occurrence_date:item.occurrence_date})});selected.delete(key);[...list.children].find(row=>row.dataset.key===key)?.remove();}markReviewSeen(seen);dialog.close();showToast('برنامه به‌روز شد','موارد انتخاب‌شده به امروز منتقل شدند.');NovaFastUI.scheduleVisibleRefresh();}catch(failure){error.textContent='برخی موارد منتقل نشدند: '+failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}});
+      const move=button('تأیید و انتقال انتخاب‌شده‌ها به امروز',async()=>{
+        if(busy||!selected.size)return;busy=true;const label=move.textContent,items=[...selected.values()].map(item=>({source:item.source,id:item.id,occurrence_date:item.occurrence_date||null}));
+        controls().forEach(n=>n.disabled=true);dialog.setAttribute('aria-busy','true');move.textContent=`در حال انتقال گروهی ${toFaNum(items.length)} مورد…`;error.textContent='';
+        try{
+          const result=await apiFetch('/api/calendar/carry-forward',{method:'POST',body:JSON.stringify({items})});
+          selected.clear();markReviewSeen(seen);dialog.close();showToast('برنامه به‌روز شد',`${toFaNum(result.moved_count+result.unchanged_count)} مورد برای ${faDateLabel(result.date)} تنظیم شد.`);NovaFastUI.scheduleVisibleRefresh();
+        }catch(failure){error.textContent='انتقال گروهی تأیید نشد؛ برای تلاش دوباره موارد انتخاب‌شده حفظ شدند. '+failure.message;}
+        finally{busy=false;dialog.removeAttribute('aria-busy');move.textContent=label;controls().forEach(n=>n.disabled=false);}
+      });
       [...list.children].forEach((row,i)=>row.dataset.key=result.entries[i].key);
       const later=button('بعداً بررسی می‌کنم',dismiss),footer=node('footer',null,'overdue-footer');footer.append(move,later);dialog.append(list,error,footer);
       dialog.addEventListener('cancel',event=>{event.preventDefault();dismiss();});dialog.addEventListener('close',()=>{dialog.remove();if(review===dialog)review=null;});

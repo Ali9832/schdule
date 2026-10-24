@@ -2,6 +2,23 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.1.2] - 2026-10-25
+
+Upgrade: **2.1.1 → 2.1.2**, based on `6a0aa21948fc57c16929e993ef75f19b720eec1b`. Release commit: annotated tag `v2.1.2`.
+
+### Performance and consistency
+- Replace the overdue-review browser loop of one awaited POST per item with one `POST /api/calendar/carry-forward` for the complete selection. Keep all rows together while saving and close the review after confirmed batch success, with a count-based busy label.
+- Validate the entire batch before writes. PostgreSQL uses one transaction, scoped/locked selected records, one set-based read/write per source and a single calendar-metadata patch. A task-only adapter test issues the same 8 statements for 1 and 500 tasks, replacing per-item canonical reloads and network round trips.
+- Transfer tasks, projects, goals and events; preserve event duration/time, task fields, structured notes and separate-deadline offsets. Recurring series keep their original start/rule and move only selected occurrences.
+- Reject missing/foreign/completed/future items without a partial transfer. Use canonical task/project/goal completion state so stale calendar flags do not reject a reopened record. Deduplicate identical entries and treat already-transferred items as unchanged on retry, including a response lost after commit.
+- Keep selections and rows on failure; prevent repeated confirmation while pending. Unselected items are unchanged. Patch calendar metadata only, preserving other life-data sections. Local demo planning/commit also runs without partial mutation.
+- The older single-item endpoint remains available. This replaces the sequential/partial group-transfer behavior documented for 2.0.0; no migration is needed. Package/UI/cache and changed asset URL synchronized to 2.1.2.
+
+### Validation
+- Backend tests cover all four sources, validation atomicity, transaction rollback, request schema, ownership, duplicate entries, idempotent retry, per-occurrence state and bounded query counts. PostgreSQL adapter uses a transactional query double, not a production write test.
+- Browser uses 30 isolated local tasks: one request transfers the 25 selected tasks together, leaves five unchanged, retains selection after a whole-batch error, prevents double-click duplication and safely retries a response lost after commit.
+- Build and all 66 QA checks passed, together with overdue-dialog, keyboard, calendar-form and page-layout browser regression checks. Production health/asset verification is separate from local functional tests.
+
 ## [2.1.1] - 2026-10-24
 
 Upgrade: **2.1.0 → 2.1.1**, based on `a31ca0a484aa8f116099daef84ca524065c281cf`. Release commit: annotated tag `v2.1.1`.
