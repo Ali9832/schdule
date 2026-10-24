@@ -20,10 +20,6 @@
     try{return await saveGeneric.apply(this,args);}finally{savingGeneric=false;buttons.forEach((b,i)=>b.disabled=disabled[i]);}
   };
   const composers=[['v116Composer','/api/v11.6/meetings'],['v117Composer','/api/v11.7/outcomes'],['v118Composer','/api/v11.8/resources']];
-  const titleSaves={v116Title:['v116Composer','v116Save'],v117Title:['v117Composer','v117SaveOutcome'],v118Title:['v118Composer','v118Save']};
-  const savingComposers=new Set();
-  for(const [rootId,name]of Object.values(titleSaves)){const original=window[name];if(typeof original!=='function')continue;window[name]=async function(...args){if(savingComposers.has(rootId))return;savingComposers.add(rootId);const button=document.querySelector('#'+rootId+' button.save'),disabled=button?.disabled;if(button)button.disabled=true;try{return await original.apply(this,args);}finally{savingComposers.delete(rootId);if(button)button.disabled=disabled;}};}
-  document.addEventListener('keydown',event=>{if(event.defaultPrevented||event.key!=='Enter'||event.isComposing||event.keyCode===229||event.repeat||event.ctrlKey||event.metaKey||event.altKey||event.shiftKey)return;const target=event.target,entry=titleSaves[target.id];if(!entry||target.tagName!=='INPUT'||!target.closest('#'+entry[0])?.classList.contains('open'))return;event.preventDefault();window[entry[1]]();});
   for(const [name,id]of [['v116OpenNew','v116Composer'],['v116Edit','v116Composer'],['v117OpenOutcome','v117Composer'],['v118OpenComposer','v118Composer']]){
     const original=window[name];if(typeof original!=='function')continue;
     window[name]=function(...args){const result=original.apply(this,args),root=document.getElementById(id);if(!root)return result;const entity=name==='v116OpenNew'?'new':args[0]||'new';const options=id==='v116Composer'?{extra:()=>({actions:V116_FORM_ACTIONS,decisions:V116_FORM_DECISIONS,waiting:V116_FORM_WAITING}),restoreExtra:value=>{V116_FORM_ACTIONS=value.actions||[];V116_FORM_DECISIONS=value.decisions||[];V116_FORM_WAITING=value.waiting||[];v116RenderBuilders();}}:{};NoavaDrafts.bind(root,`composer:${id}:${entity}`,options);return result;};

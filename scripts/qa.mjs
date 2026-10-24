@@ -21,6 +21,7 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('public/assets/keyboard-submit.js')
 for(const file of ['server/finance-units.js','public/assets/money-input.js','public/assets/drafts.js','public/assets/academic.js','public/assets/noava-workspace.js'])syntaxCheck(file)
 const noavaCheck=spawnSync(process.execPath,['scripts/check-noava.mjs'],{cwd:root,encoding:'utf8'})
 noavaCheck.status===0 ? pass('TOMAN migration and localized monetary inputs verified') : fail(`NOAVA: ${(noavaCheck.stderr||noavaCheck.stdout).trim()}`)

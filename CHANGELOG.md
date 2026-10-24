@@ -2,6 +2,22 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.1.1] - 2026-10-24
+
+Upgrade: **2.1.0 → 2.1.1**, based on `a31ca0a484aa8f116099daef84ca524065c281cf`. Release commit: annotated tag `v2.1.1`.
+
+### Fixed
+- Replace scattered title-only Enter listeners and reliance on implicit browser submission with one capture-phase keyboard router. Enter/Numpad Enter in an editable single-line field explicitly calls the form's normal `requestSubmit` path.
+- Cover general create/edit, finance, calendar, academic, inspector, project report/meeting and quick-capture forms. Existing meeting, goal, resource, schedule, spiritual/religious, people/commitments and health entry controls invoke their existing save button path and share pending guards with mouse saves.
+- Consume handled Enter before stale global command-palette or inline quick-capture handlers can swallow or duplicate it. Retain required-field validation and failed-save recovery.
+- Leave textareas, search controls, read-only/disabled fields, autocomplete selection, IME composition, modified Enter and date/time picker inputs to their own behavior. Ignore repeated keydown while a save is pending.
+- Version new/changed scripts and synchronize package, visible version and service-worker cache to 2.1.1. No server API or data migration changes.
+
+### Validation
+- Real local task create/edit and dashboard quick capture save exactly once, including Enter keydown without a separate character event and held-key repeat. Existing textarea-newline, empty-title, failure recovery and composition tests pass.
+- Keyboard dispatch probes cover general, finance, calendar, academic, task inspector, project report/meeting and 11 legacy entry points, including Numpad Enter and a stale command-palette shortcut. Probes intercept submit handlers without writing records; persistence checks use isolated local fixtures.
+- Build and all 64 QA checks passed, together with keyboard persistence/dispatch, date-control, scheduling and page-layout browser regression checks. The previous Enter implementation did not provide uniform coverage across these entry points.
+
 ## [2.1.0] - 2026-10-24
 
 Upgrade: **2.0.3 → 2.1.0**, based on `746c0a6fd5935473894e62f8dd66e576b4c1b372`. Release commit: annotated tag `v2.1.0` (`git rev-parse v2.1.0^{commit}`). Compatible UI features; API routes, ISO date/time payloads and stored data remain compatible.
