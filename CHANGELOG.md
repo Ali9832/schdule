@@ -2,6 +2,27 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.1.0] - 2026-10-24
+
+Upgrade: **2.0.3 → 2.1.0**, based on `746c0a6fd5935473894e62f8dd66e576b4c1b372`. Release commit: annotated tag `v2.1.0` (`git rev-parse v2.1.0^{commit}`). Compatible UI features; API routes, ISO date/time payloads and stored data remain compatible.
+
+### Improved scheduling form
+- Show one primary program date. Start/end times appear only for timed programs; the last day appears only when a user explicitly selects a multi-day event. Non-event records keep a single date.
+- Group recurrence with reminders. Explain the interval using the chosen unit (days/weeks/months/years), and show a plain-language summary beginning at the first occurrence.
+- Choose one repetition ending mode: no end, a specific date, or a total count. Hidden controls are disabled and excluded from the recurrence payload. Earlier records with both conditions retain both via an explicit legacy mode, instead of silently losing a condition.
+- Move a separate delivery deadline behind an opt-in setting. Distinguish program date, delivery deadline and recurrence ending; reminders clearly identify their reference time. Course/project links, attachments and notification settings are grouped separately.
+- Preserve existing multi-day ranges, recurrence interval/end conditions, deadlines, priorities and drafts when editing. Hidden elements remain hidden despite grid/flex styling. Remove an old closed day-dialog node before immediately reopening it to avoid duplicate dialog IDs.
+
+### Unified date/time input
+- Persian date and 24-hour time fields accept manual Persian/Arabic/Latin digits, including compact `14050803` and `1330`, and normalize on blur while preserving ISO/HH:mm values for APIs.
+- Focused inputs support mouse-wheel and Up/Down changes to the selected numeric segment. Unfocused, disabled/read-only fields and Ctrl/Meta wheel do not change values. Date month/year changes clamp the day to the destination month's length.
+- Date and time pickers include editable numeric year/month/day or hour/minute controls with scroll and increase/decrease buttons. Existing calendar-grid selection remains available; invalid dates are rejected and parent forms remain open while choosing.
+- Version the changed assets and synchronize package/UI/service-worker caches to `2.1.0`.
+
+### Validation
+- Dedicated browser coverage: visible date reduction, timed/multi-day toggles, compact Persian typing, real wheel/arrow interaction, manual and wheel picker controls, month-end clamping, recurring class persistence, opt-in deadline removal and old dual-condition/multi-day records.
+- Regression checks passed for image/audio attachment previews, per-occurrence completion/reminders, planning dates, financial editing, project reports/meetings, keyboard submission and page hierarchy. Build and all 63 QA checks passed. Local demo fixtures only; no production account data modified by tests.
+
 ## [2.0.3] - 2026-10-24
 
 Upgrade: **2.0.2 → 2.0.3**, based on `464fbc62718019468714388bc822fb3b23506311`. Release commit: annotated tag `v2.0.3` (`git rev-parse v2.0.3^{commit}`).

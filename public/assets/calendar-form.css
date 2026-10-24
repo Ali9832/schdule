@@ -1,0 +1,11 @@
+.uc-editor [hidden]{display:none!important}
+.uc-editor .uc-form-intro{font-size:12px;line-height:1.9;color:#6b8277;margin:0 0 18px}
+.uc-editor .uc-check-label{display:flex;align-items:center;gap:9px;min-height:42px;font-size:12px;cursor:pointer}
+.uc-editor .uc-check-label input{width:18px;min-height:18px;flex-shrink:0;accent-color:#21785d}
+.uc-schedule-options{border:1px solid #d8e6dd;border-radius:12px;background:var(--surface,#fff);padding:16px;margin:18px 0}
+.uc-schedule-options h4{margin:0 0 14px;font-size:14px}.uc-repeat-options{margin-top:14px;padding-top:14px;border-top:1px solid #e2eae5}
+.uc-repeat-summary{font-size:12px;line-height:1.9;padding:10px 12px;margin:12px 0 0;border-radius:8px;background:#eaf5ee;color:#306b51}
+.uc-extra-settings{border:1px solid #d9e5de;border-radius:10px;padding:12px 14px;margin:12px 0;background:var(--surface,#fff)}
+.uc-extra-settings summary{font-size:12px;font-weight:650;cursor:pointer;padding:3px 0;line-height:1.9}.uc-extra-settings[open]>summary{margin-bottom:12px}.uc-extra-settings>p{font-size:11px;line-height:1.9;color:#7b8e83}
+body.theme-dark .uc-schedule-options,body.theme-dark .uc-extra-settings{background:#243c2f;border-color:#3c5846}body.theme-dark .uc-repeat-summary{background:#2c4939;color:#d0e8d7}
+@media(max-width:700px){.uc-schedule-options{padding:12px}.uc-extra-settings{padding:10px}.uc-editor .uc-check-label{min-height:44px}}
