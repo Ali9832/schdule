@@ -2,6 +2,20 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.0.2] - 2026-10-24
+
+Upgrade: **2.0.1 → 2.0.2**, based on `2b686a7b4dd6e9c6eddc7383cef7a56ab5aca19b`. Release commit: annotated tag `v2.0.2`.
+
+### Fixed
+- Root cause of the user's screenshot: a duplicate opening `div.top-actions` left the topbar unclosed, nesting the day strip and every page inside its flex row. Removed the extra opening tag; all pages are direct children of `main` again. At 1920px the dashboard restores its 1600px width instead of being squeezed to roughly 517px beside the header.
+- This markup regression was introduced in 2.0.0. The unrelated overdue-dialog fix in 2.0.1 did not address the reported layout failure.
+- Synchronized visible/package/cache version to 2.0.2; no account data or APIs changed.
+
+### Validation
+- New mandatory shell-structure QA rejects the exact duplicate-container regression in source and built HTML.
+- Browser geometry checks all page parents, absence of pages inside the topbar, dashboard width and header separation at 390, 1280, 1920 and 3200px (including the wide viewport associated with browser zoom-out).
+- Visually inspected a 1920px screenshot of the corrected layout. Build, full QA, NOAVA workflows and overdue-dialog browser regression run before release.
+
 ## [2.0.1] - 2026-10-24
 
 Upgrade: **2.0.0 → 2.0.1**, based on `5a660440b136cdb333ea53deba4d81f2eb8bcc94`. Release commit: annotated tag `v2.0.1` (`git rev-parse v2.0.1^{commit}`).

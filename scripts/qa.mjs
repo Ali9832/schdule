@@ -66,6 +66,8 @@ syntaxCheck('server.js')
 
 const html = read('index.html')
 const distHtml = read('dist/index.html')
+const shellCheck=spawnSync(process.execPath,['scripts/check-shell.mjs'],{cwd:root,encoding:'utf8'})
+shellCheck.status===0 ? pass('Header structure closes before page sections') : fail(`Application shell: ${(shellCheck.stderr||shellCheck.stdout).trim()}`)
 sha(html.replace(/\r\n/g,'\n'))===sha(distHtml.replace(/\r\n/g,'\n')) ? pass('index.html and dist/index.html are synchronized') : fail('index.html and dist/index.html differ')
 syntaxCheck('public/assets/master-bank.js')
 const bankCheck=spawnSync(process.execPath,['scripts/check-bank.mjs'],{cwd:root,encoding:'utf8'})
