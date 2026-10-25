@@ -37,6 +37,20 @@
     if(type==='routine')return [field('title','عنوان روتین'),field('target_weekly','هدف هفتگی (۱ تا ۷)','number')];
     return [field('title','عنوان'),field('start_at','شروع','datetime-local'),field('end_at','پایان','datetime-local'),...(type==='meeting'||String(e.notes||'').startsWith('NOVA_')?[]:[field('notes','یادداشت','textarea')])];
   }
+  function projectDetails(body,entity,links){
+    const box=document.createElement('section');box.className='pw-box pw-details-box';
+    const heading=document.createElement('div');heading.className='pw-row-heading';const title=document.createElement('h3');title.textContent='جزئیات پروژه';
+    const edit=document.createElement('button');edit.type='button';edit.textContent='✎ ویرایش جزئیات';edit.dataset.editProjectDetails='';
+    const content=document.createElement('div');content.className='pw-details-content';heading.append(title,edit);box.append(heading,content);body.prepend(box);
+    box.render=()=>{
+      edit.disabled=false;content.replaceChildren();const grid=document.createElement('div');grid.className='v11-inspector-grid pw-details-grid';
+      const fields=fieldsFor('project',entity).map(f=>[f.label,f.options?.find(([value])=>value===(entity[f.key]||''))?.[1]??entity[f.key]??'—']);fields.push(['پیشرفت (محاسبه‌شده)',`${entity.progress||0}٪`],['قدم بعدی',entity.next_action||'—']);
+      for(const [caption,value]of fields){const cell=document.createElement('div');cell.className='v11-inspector-field';const label=document.createElement('span'),text=document.createElement('b');label.textContent=caption;text.textContent=String(value||'—');cell.append(label,text);grid.append(cell);}content.append(grid);
+      const related=document.createElement('div');related.innerHTML=v11InspectorHtml('project',entity,links);content.append(related.lastElementChild);window.PersianUI?.scan(content);
+      document.getElementById('v11InspectorType').textContent='پروژه · جزئیات';
+    };
+    edit.onclick=()=>{if(!edit.disabled)window.v11EditCurrent('project',entity);};box.render();return box;
+  }
   window.openV11Inspector=async function(type,id){
     closeAll();
     const request=++inspectorRequest,owner=generation,shell=document.getElementById('v11Inspector'),body=document.getElementById('v11InspectorBody'),edit=document.getElementById('v11InspectorEditBtn');
@@ -44,12 +58,15 @@
     try{let data;try{data=await apiFetch(`/api/v11/inspector/${encodeURIComponent(type)}/${encodeURIComponent(id)}`)}catch(error){data=v11LocalInspectorData(type,id);if(!data)throw error}
       if(request!==inspectorRequest||owner!==generation)return;
       const entity=data.entity;document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);document.getElementById('v11InspectorType').textContent=(names[type]||'مورد')+' · جزئیات';body.innerHTML=v11InspectorHtml(type,entity,data.linked||[]);body.scrollTop=0;edit.disabled=false;edit.onclick=()=>window.v11EditCurrent(type,entity);
-      if(type==='project')window.ProjectWorkspace?.mount(body,entity);
+      if(type==='project'){body.replaceChildren();projectDetails(body,entity,data.linked||[]);edit.hidden=true;window.ProjectWorkspace?.mount(body,entity);}
     }catch(error){if(request===inspectorRequest&&owner===generation){body.replaceChildren();const message=document.createElement('p');message.className='record-edit-error';message.textContent=error.message||'دریافت اطلاعات انجام نشد.';body.append(message)}}
   };
   window.v11EditCurrent=function(type,entity){
+    if(type==='project'&&document.querySelector('.pw-details-box form[data-entity-type=project]'))return;
     const shell=document.getElementById('v11Inspector'),body=document.getElementById('v11InspectorBody'),owner=generation,page=activePage(),request=++inspectorRequest;
     shell.inert=false;shell.classList.add('open');shell.setAttribute('aria-hidden','false');document.getElementById('v11InspectorEditBtn').hidden=true;document.getElementById('v11InspectorType').textContent='ویرایش '+(names[type]||'مورد');
+    const details=type==='project'?body.querySelector('.pw-details-box'):null,target=details?.querySelector('.pw-details-content')||body;
+    if(details)details.querySelector('[data-edit-project-details]').disabled=true;
     const form=document.createElement('form');form.className='record-edit-form';form.dataset.entityType=type;const controls=new Map();
     for(const f of fieldsFor(type,entity)){
       const label=document.createElement('label');label.textContent=f.label;const input=document.createElement(f.type==='textarea'?'textarea':f.type==='select'?'select':'input');
@@ -58,24 +75,25 @@
       label.append(input);form.append(label);controls.set(f.key,input);
     }
     const error=document.createElement('p');error.className='record-edit-error';error.setAttribute('role','status');error.setAttribute('aria-live','polite');
-    const actions=document.createElement('div');actions.className='record-edit-actions';const save=document.createElement('button'),cancel=document.createElement('button');save.type='submit';save.textContent='ذخیره تغییرات';cancel.type='button';cancel.textContent='انصراف';actions.append(save,cancel);form.append(error,actions);body.replaceChildren(form);body.scrollTop=0;window.PersianUI?.scan(form);controls.values().next().value?.focus();
+    const actions=document.createElement('div');actions.className='record-edit-actions';const save=document.createElement('button'),cancel=document.createElement('button');save.type='submit';save.textContent='ذخیره تغییرات';cancel.type='button';cancel.textContent='لغو ویرایش';actions.append(save,cancel);form.append(error,actions);target.replaceChildren(form);if(!details)body.scrollTop=0;window.PersianUI?.scan(form);controls.values().next().value?.focus();
     const draft=window.NoavaDrafts?.bind(form,`inspector:${type}:${entity.id}`);
-    cancel.onclick=()=>{draft?.clear();openV11Inspector(type,entity.id)};
+    cancel.onclick=()=>{if(cancel.disabled)return;draft?.clear();if(details)details.render();else openV11Inspector(type,entity.id)};
     form.onsubmit=async event=>{
       event.preventDefault();if(save.disabled||owner!==generation||request!==inspectorRequest)return;if(!form.reportValidity())return;
       const patch={};for(const [key,input] of controls){const value=input.value;patch[key]=input.type==='number'?Number(value||0):key.endsWith('_id')||input.dataset.persianType?value||null:value.trim()}
       if(patch.start_at&&patch.end_at&&patch.end_at<=patch.start_at){error.textContent='پایان باید بعد از شروع باشد.';return}
       const route={project:'v11/projects',task:'v11/tasks',area:'v11/areas',resource:'v11/resources',outcome:'v11.7/outcomes',routine:entity.routine_type==='spiritual'?'v11.11/spiritual-routines':'habits',event:'events',meeting:'events'}[type];if(!route){error.textContent='ویرایش این مورد در دسترس نیست.';return}
-      save.disabled=true;error.textContent='در حال ذخیره…';
-      try{await apiFetch(`/api/${route}/${encodeURIComponent(type==='meeting'?entity.event_id||entity.id:entity.id)}`,{method:'PATCH',body:JSON.stringify(patch)});
+      save.disabled=cancel.disabled=true;error.textContent='در حال ذخیره…';
+      try{const saved=await apiFetch(`/api/${route}/${encodeURIComponent(type==='meeting'?entity.event_id||entity.id:entity.id)}`,{method:'PATCH',body:JSON.stringify(patch)});
         draft?.clear();
         if(owner!==generation||request!==inspectorRequest)return;
         showToast('ذخیره شد','تغییرات ثبت شد.');
+        if(details){Object.assign(entity,saved);document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);details.render();window.NovaFastUI?.scheduleVisibleRefresh();return;}
         if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();
         else await window.handleFunctionalPageOpen?.(page);
         if(owner!==generation||request!==inspectorRequest)return;
         await openV11Inspector(type,entity.id);
-      }catch(failure){if(owner===generation&&request===inspectorRequest)error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=false}
+      }catch(failure){if(owner===generation&&request===inspectorRequest)error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=cancel.disabled=false}
     };
   };
   hideInspector();

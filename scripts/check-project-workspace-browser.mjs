@@ -18,6 +18,26 @@ try{
  await evaluate(`goPage('projects');openV11Inspector('project',${JSON.stringify(projects[0].id)})`)
  await until('!!document.querySelector("#v11InspectorBody .project-workspace") && !document.querySelector(".pw-report-form button[type=submit]").disabled')
  assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .project-workspace > .pw-box").length'),2)
+ assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .pw-box").length'),3)
+ // Project details edit in their own box; report and meeting forms stay mounted.
+ await evaluate(`window.__reportForm=document.querySelector('.pw-report-form');__reportForm.elements.text.value='Keep report while editing details';__reportForm.elements.text.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-edit-project-details]').click()`)
+ assert.equal(await evaluate('document.querySelector(".pw-details-content select[name=lifecycle_status]").tagName'),'SELECT')
+ assert.equal(await evaluate('document.querySelector(".pw-details-content select[name=area_id]").tagName'),'SELECT')
+ await evaluate(`document.querySelector('.pw-details-content [name=name]').value='Cancelled name';document.querySelector('.pw-details-content button[type=button]').click()`)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form")===window.__reportForm'),true)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form").elements.text.value'),'Keep report while editing details')
+ assert.equal((await evaluate(`apiFetch('/api/v11/inspector/project/${projects[0].id}')`)).entity.name,projects[0].name)
+ await evaluate(`(()=>{document.querySelector('[data-edit-project-details]').click();const f=document.querySelector('.pw-details-content form');f.elements.name.value='Updated project details';f.elements.lifecycle_status.value='incubating';f.elements.outcome.value='Expected result';f.requestSubmit()})()`)
+ await until('!document.querySelector(".pw-details-content form")')
+ assert.equal(await evaluate('document.querySelector(".pw-report-form")===window.__reportForm'),true)
+ assert.equal(await evaluate('document.querySelector(".pw-report-form").elements.text.value'),'Keep report while editing details')
+ let details=(await evaluate(`apiFetch('/api/v11/inspector/project/${projects[0].id}')`)).entity
+ assert.equal(details.name,'Updated project details');assert.equal(details.lifecycle_status,'incubating');assert.equal(details.outcome,'Expected result')
+ // An unsuccessful details save keeps the editor and all other sections intact.
+ await evaluate(`(()=>{window.__detailsRequest=apiFetch;window.apiFetch=async(path,options)=>{if(path.includes('/api/v11/projects/')&&options?.method==='PATCH')throw Error('Offline details test');return __detailsRequest(path,options)};document.querySelector('[data-edit-project-details]').click();const f=document.querySelector('.pw-details-content form');f.elements.name.value='Unsaved details';f.requestSubmit()})()`)
+ await until('document.querySelector(".pw-details-content [role=status]")?.textContent==="Offline details test"')
+ assert.equal(await evaluate('document.querySelector(".pw-report-form")===window.__reportForm'),true)
+ await evaluate(`window.apiFetch=window.__detailsRequest;document.querySelector('.pw-details-content button[type=button]').click()`)
  assert.equal(await evaluate('document.querySelector(".pw-report-form").elements.report_date.value===DateContext.date'),true)
  const text='Progress notes <img src=x onerror="window.__reportXSS=true">'
  await reportSubmit(text)
@@ -63,6 +83,7 @@ try{
  console.log('Project browser passed: inspector boxes, report create/edit/persistence/drafts/errors/XSS safety, linked calendar meeting, held status, project isolation, Reports navigation and mobile layout.')
 }finally{
  await evaluate('if(window.__projectRequest)window.apiFetch=window.__projectRequest')
+ await evaluate('if(window.__detailsRequest)window.apiFetch=window.__detailsRequest')
  for(const project of projects)await evaluate(`(async()=>{const data=await apiFetch('/api/projects/${project.id}/workspace').catch(()=>null);for(const m of data?.meetings||[])await apiFetch('/api/events/'+m.id,{method:'DELETE'}).catch(()=>{});await apiFetch('/api/projects/${project.id}',{method:'DELETE'}).catch(()=>{})})()`)
  await send('Emulation.clearDeviceMetricsOverride');socket.close()
 }

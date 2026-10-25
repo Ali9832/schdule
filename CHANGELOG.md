@@ -2,6 +2,20 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.4.0] - 2026-10-25
+
+Upgrade: **2.3.0 → 2.4.0**, based on `3a4ebc6a19b24d3aac4acd285803146be5351d48`. Release commit: annotated tag `v2.4.0`.
+
+### Project inspector sections
+- Organize the project inspector into three matching boxes: details, meetings and reports. Keep related links inside the details box.
+- Add an in-place Edit / Save / Cancel flow for project details; lifecycle and area use dropdowns, descriptions use text fields and dates keep the shared picker. Show calculated progress separately from editable fields.
+- Save the canonical project response back into the details box and title without rebuilding meeting/report forms. Cancel discards only the details draft; failed saves retain the editor and show the error. Preserve existing report edits and meeting actions.
+- Add an explicit cancel action to the new-meeting form. Prevent repeated details editors and cancellation during a pending save.
+
+### Validation
+- Project browser tests check all three boxes, lifecycle/area dropdowns, persisted detail changes, cancel without persistence, failed-save recovery and preserving the same report form/draft during detail save/cancel. Existing report, meeting/calendar, isolation and mobile tests passed.
+- Keyboard regression, build and all 66 QA checks passed. No API/storage changes or migration.
+
 ## [2.3.0] - 2026-10-25
 
 Upgrade: **2.2.0 → 2.3.0**, based on `2b1a29d45778f00bf69ea55181ba52d3295ecbaa`. Release commit: annotated tag `v2.3.0`.

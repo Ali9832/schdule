@@ -37,7 +37,7 @@
     const summary = field(meetingForm, 'summary', 'موضوع / خلاصه جلسه', 'textarea'); summary.maxLength = 2000;
     const meetingError = node('p', '', 'record-edit-error'); meetingError.setAttribute('role', 'alert');
     const meetingSave = node('button', 'ثبت جلسه'); meetingSave.type = 'submit';
-    meetingForm.append(meetingError, meetingSave);
+    const meetingActions=node('div',null,'pw-form-actions');meetingActions.append(meetingSave,button('لغو',()=>{if(savingMeeting)return;meetingDraft?.clear();meetingForm.hidden=true;meetingTitle.value='';summary.value='';meetingError.textContent='';}));meetingForm.append(meetingError,meetingActions);
     const meetingList = node('div', 'در حال دریافت…', 'pw-meeting-list');
     meetingBox.append(meetingHeading, meetingForm, meetingList);
     reportBox.append(node('h3', 'گزارش و آخرین توضیحات پروژه'));
