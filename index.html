@@ -932,9 +932,10 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </aside>
 <button type="button" class="mobile-menu-backdrop" onclick="setMobileMenu(false)" aria-label="بستن منو" tabindex="-1"></button>
 <main class="main">
+<header class="noava-page-header" id="pageHeader" aria-label="سربرگ و کنترل‌های صفحه">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.2.0</small></div>
+<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.3.0</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -951,6 +952,8 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="today-stat attention"><span>نیازمند توجه</span><strong id="todayAttention">—</strong></div>
 <div class="today-quick"><button onclick="goPage('today')">نمای امروز</button><button class="accent" onclick="openGenericAdd('daily','افزودن کار امروز')">＋ کار جدید</button></div>
 </div>
+<div id="pageDateControls" class="page-date-controls"></div>
+</header>
 <!-- DASHBOARD -->
 <section class="page hidden" id="calendar"><div id="unifiedCalendar"></div></section>
 <section class="page hidden" id="academic"><div id="academicBody"></div></section>
@@ -3717,13 +3720,14 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/finance-editor.css"/>
 <script src="/assets/finance-editor.js"></script>
 <link rel="stylesheet" href="/assets/date-context.css"/>
-<script src="/assets/date-context-ui.js?v=2.2.0"></script>
+<link rel="stylesheet" href="/assets/page-header.css?v=2.3.0"/>
+<script src="/assets/date-context-ui.js?v=2.3.0"></script>
 <script src="/assets/fast-mutations.js"></script>
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
 <script src="/assets/today-tasks.js"></script>
 <link rel="stylesheet" href="/assets/project-workspace.css"/>
 <script src="/assets/project-workspace.js"></script>
-<script src="/assets/academic.js?v=2.2.0"></script>
+<script src="/assets/academic.js?v=2.3.0"></script>
 <script src="/assets/noava-workspace.js?v=2.1.2"></script>
 <script src="/assets/keyboard-submit.js?v=2.1.1"></script>
 </body>

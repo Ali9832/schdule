@@ -4,11 +4,13 @@
   const currentPage = () => document.querySelector('.page:not(.hidden)')?.id;
   const label = value => new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'));
   let revision = 0, refreshing = Promise.resolve(), financeRequest = 0;
+  const pageBar = page => document.querySelector(`.planning-date-bar[data-planning-page="${page}"]`);
   function bars() {
     document.querySelectorAll('.page').forEach(page => {
-      let bar = page.querySelector('.planning-date-bar');
+      let bar = pageBar(page.id);
       if (!bar) {
         bar = document.createElement('section'); bar.className = 'planning-date-bar'; bar.setAttribute('aria-label', 'تاریخ مبنای این صفحه');
+        bar.dataset.planningPage = page.id;
         const heading = document.createElement('div'), title = document.createElement('strong'), actual = document.createElement('small');
         title.className = 'planning-date-label'; actual.className = 'planning-real-date'; heading.append(title, actual);
         const controls = document.createElement('div'); controls.className = 'planning-date-controls';
@@ -27,9 +29,10 @@
           checkbox.onchange = () => ctx.setScope(page.id, checkbox.checked);
           filter.append(checkbox, document.createTextNode('نمایش فقط موارد این روز')); bar.append(filter);
         }
-        const hint = document.createElement('small'); hint.className = 'planning-date-hint'; bar.append(hint); page.prepend(bar);
+        const hint = document.createElement('small'); hint.className = 'planning-date-hint'; bar.append(hint); document.getElementById('pageDateControls').append(bar);
         PersianUI.scan(bar);
       }
+      bar.hidden = page.id !== currentPage();
       bar.querySelector('.planning-date-label').textContent = (ctx.date === ctx.today() ? 'امروز، ' : 'روز انتخاب‌شده، ') + label(ctx.date);
       bar.querySelector('.planning-real-date').textContent = ctx.date === ctx.today() ? 'به وقت تهران' : 'امروز: ' + label(ctx.today());
       const input = bar.querySelector('.planning-date-input'); if (document.activeElement !== input) input.value = ctx.date;
@@ -119,7 +122,7 @@
   };
   async function refresh() {
     const request = ++revision, page = currentPage(); bars(); prepare(page);
-    const bar = document.getElementById(page)?.querySelector('.planning-date-bar');
+    const bar = pageBar(page);
     bar?.setAttribute('aria-busy', 'true');
     try {
       v112Invalidate('dashboard');
@@ -175,6 +178,6 @@
     catch (error) { showToast('ذخیره نشد', error.message); }
     finally { genericSaving = false; buttons.forEach(button => button.disabled = false); if(submit)submit.textContent = originalLabel; }
   };
-  window.DateContextUI = { refresh, bars, prepare, get refreshing() { return refreshing; } };
+  window.DateContextUI = { refresh, bars, prepare, pageBar, get refreshing() { return refreshing; } };
   bars(); prepare(currentPage());
 })();

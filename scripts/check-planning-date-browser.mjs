@@ -74,7 +74,7 @@ try {
   assert.equal(invalidStatus, 400)
   await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true })
   await evaluate('goPage("finance")')
-  assert.equal(await evaluate('document.querySelector("#finance .planning-date-bar").getBoundingClientRect().width<=390'), true)
+  assert.equal(await evaluate('document.querySelector("[data-planning-page=finance]").getBoundingClientRect().width<=390'), true)
   assert.equal(errors.length, 0, JSON.stringify(errors))
   console.log('Planning browser passed: date bar on every page, date/task scopes, undated preservation, new task persistence, old-date preservation, finance month/day filters and proposals, meetings, calendar sync, habit month, API validation and mobile layout.')
 } finally {

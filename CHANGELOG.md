@@ -2,6 +2,20 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.3.0] - 2026-10-25
+
+Upgrade: **2.2.0 → 2.3.0**, based on `2b1a29d45778f00bf69ea55181ba52d3295ecbaa`. Release commit: annotated tag `v2.3.0`.
+
+### Unified page header
+- Combine the breadcrumb/version, search, profile/theme/command actions, today's summary and contextual planning-date controls inside one shared header card, rather than three disconnected strips.
+- Keep one planning-control instance per page in the shared header; show only the active page's controls. Preserve date scopes and selected date, previous/next-day actions, Today and the academic previous/next-week behavior.
+- Move academic navigation from the weekly panel into the same shared header used by every page; keep its week range, filters and add controls in the schedule panel. This supersedes the navigation placement introduced in 2.2.0.
+- Add responsive layout and dark-theme styling without nesting page content inside the header. Retain existing action handlers and daily summary updates.
+
+### Validation
+- Browser checks visit every page at 1920, 3200, 1280 and 390px, checking one visible matching date bar, shared tools/summary containment, page hierarchy and horizontal overflow. Inspect desktop/mobile screenshots.
+- Academic navigation, planning-date scopes/defaults and NOAVA feature regressions passed; build and all 66 QA checks passed. No storage/API changes or data migration.
+
 ## [2.2.0] - 2026-10-25
 
 Upgrade: **2.1.3 → 2.2.0**, based on `cd090ba8b8c735aef9bef70a5dc2f043cce3f752`. Release commit: annotated tag `v2.2.0`.

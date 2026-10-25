@@ -16,8 +16,7 @@
     finally{if(generation===request)root.setAttribute('aria-busy','false');}
   }
   function render(from){
-    // Keep the existing date control and its handlers when rebuilding this view.
-    DateContextUI.bars();const dateBar=document.querySelector('#academic .planning-date-bar');
+    DateContextUI.bars();
     root.replaceChildren();
     const header=node('header',null,'noava-section-heading');header.append(node('h1','حوزهٔ تحصیلی'),node('p','درس‌ها، برنامهٔ هفتگی و موعدهای درسی؛ متصل به کارها، پروژه‌ها و تقویم.'));root.append(header);
     const subjects=node('details',null,'noava-panel academic-subjects');subjects.open=!!editing||!courses.length;subjects.append(node('summary','مدیریت درس‌ها · '+toFaNum(courses.length)+' درس'));
@@ -34,7 +33,7 @@
     const filter=node('label','نمایش نوع برنامه'),select=node('select');select.id='academicKindFilter';select.add(new Option('همهٔ برنامه‌ها',''));for(const [value,label]of Object.entries(names))select.add(new Option(label,value));select.value=kind;select.onchange=()=>{kind=select.value;render(from);};filter.append(select);filters.append(subjectFilter,filter);
     const actions=node('div',null,'academic-add');const addLabel=node('label','برنامهٔ جدید'),addType=node('select');addType.id='academicNewKind';for(const [value,label]of Object.entries(names))addType.add(new Option(label,value));addType.value=newKind;addType.onchange=()=>{newKind=addType.value;};addLabel.append(addType);actions.append(addLabel,button('＋ افزودن برنامه',()=>openNew(newKind)));tools.append(filters,actions);
     const academic=entries.filter(item=>(item.course_id||Object.hasOwn(names,item.kind))&&(!course||item.course_id===course)&&(!kind||item.kind===kind));
-    const week=node('section',null,'noava-panel academic-week-panel');week.append(node('h2','برنامهٔ هفتگی'),node('p',`${faDateLabel(from)} تا ${faDateLabel(DateContext.shift(from,6))}`,'academic-week-range'),dateBar,tools);const days=node('div',null,'academic-week');
+    const week=node('section',null,'noava-panel academic-week-panel');week.append(node('h2','برنامهٔ هفتگی'),node('p',`${faDateLabel(from)} تا ${faDateLabel(DateContext.shift(from,6))}`,'academic-week-range'),tools);const days=node('div',null,'academic-week');
     for(let offset=0;offset<7;offset++){const date=DateContext.shift(from,offset),column=node('section');column.append(button(faDateLabel(date),()=>UnifiedCalendar.openDay(date)));const rows=academic.filter(item=>item.date<=date&&item.end_date>=date).sort((a,b)=>Number(a.done)-Number(b.done)||a.start_time.localeCompare(b.start_time));for(const item of rows)column.append(itemRow(item));if(!rows.length)column.append(node('small','برنامه‌ای ثبت نشده'));days.append(column);}week.append(days);root.append(week);
     const upcoming=node('section',null,'noava-panel');upcoming.append(node('h2','موعدها و برنامه‌های پیش رو (شش ماه)'));const rows=academic.filter(item=>item.date>=DateContext.date&&item.kind!=='class').sort((a,b)=>Number(a.done)-Number(b.done)||a.date.localeCompare(b.date));for(const item of rows)upcoming.append(itemRow(item));if(!rows.length)upcoming.append(node('p','هنوز موعدی ثبت نشده است.'));root.append(upcoming);
   }
