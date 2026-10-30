@@ -22,7 +22,7 @@ try{
  await until(`!!window.IntegratedTools&&!!window.DateContext&&typeof V112_DASH!=='undefined'&&!!V112_DASH`)
  await ev(`sessionStorage.setItem('noava.overdue:local-demo:'+DateContext.today(),'1');AppOverlays.closeAll()`)
  assert.equal(await ev(`document.querySelectorAll('.page#areas,.page#resources,.page#health,.page#religious').length`),0)
- const hosts={projectAreasTools:'projects',academicLearningTools:'academic',habitHealthTools:'habits',calendarAppointmentTools:'calendar',calendarOccasionTools:'calendar'}
+ const hosts={projectAreasTools:'projects',academicLearningTools:'academic',habitHealthTools:'habits',habitCheckupTools:'habits'};assert.equal(await ev(`document.querySelectorAll('#calendarAppointmentTools,#calendarOccasionTools').length`),0)
  for(const[id,host]of Object.entries(hosts))assert.equal(await ev(`document.getElementById('${id}').closest('.page').id`),host)
 
  await open('areas','projects','projectAreasTools')
@@ -63,32 +63,28 @@ try{
  await until(`V119_DATA.metrics.some(m=>m.name===${JSON.stringify(label)})`)
  assert.ok((await api('/api/v11.9/health-system')).metrics.some(m=>m.name===label))
 
- await open('appointments','calendar','calendarAppointmentTools')
+ await open('appointments','habits','habitHealthTools');await ev(`document.getElementById('habitCheckupTools').open=true`)
  const day=await ev(`DateContext.shift(DateContext.today(),3)`)
  await ev(`document.getElementById('v119ApptTitle').value=${JSON.stringify(label+' appointment')};document.getElementById('v119ApptStart').value='${day}T10:00';document.getElementById('v119ApptEnd').value='${day}T11:00';v119AddAppointment()`)
  await until(`V119_DATA.appointments.some(a=>a.title===${JSON.stringify(label+' appointment')})`)
- await open('religious','calendar','calendarOccasionTools')
- await ev(`v1111ToggleReligiousComposer(true);document.getElementById('v1111RelTitle').value=${JSON.stringify(label+' occasion')};document.getElementById('v1111RelDate').value='${day}';document.getElementById('v1111RelPreparation').value='Prepare integrated occasion';v1111SaveReligious()`)
- await until(`V1111_DATA.religious.events.some(e=>e.title===${JSON.stringify(label+' occasion')})`)
- const event=(await api('/api/v11.11/integration')).religious.events.find(e=>e.title===label+' occasion');assert.ok(event)
- await ev(`v1111CreatePrepTask('${event.id}')`)
- await until(`V1111_DATA.religious.preparation_tasks?.some(t=>t.title.includes(${JSON.stringify(label+' occasion')}))`)
+ // Existing event records and preparation APIs remain available without the removed panel.
+ await ev(`(async()=>{V1111_DATA=await apiFetch('/api/v11.11/religious-events',{method:'POST',body:JSON.stringify({title:${JSON.stringify(label+' occasion')},date:'${day}',time:'09:00'})});const event=V1111_DATA.religious.events.find(e=>e.title===${JSON.stringify(label+' occasion')});V1111_DATA=(await apiFetch('/api/v11.11/religious-events/'+event.id+'/create-task',{method:'POST',body:JSON.stringify({})})).payload;})()`)
  const calendar=await api(`/api/calendar?from=${day}&to=${day}`)
  assert.ok(calendar.entries.some(e=>e.title===label+' appointment'))
  assert.ok(calendar.entries.some(e=>e.title===label+' occasion'))
  assert.ok((await api('/api/tasks')).some(t=>t.title.includes(label+' occasion')))
 
- // Both forms remain usable together, and changing the host day preserves a manually edited appointment date.
+ // Checkup controls remain usable, and changing the host day preserves a manually edited appointment date.
  await ev(`document.getElementById('v119ApptStart').value='${day}T12:00';DateContext.set(DateContext.shift(DateContext.today(),1))`)
  await pause(400)
  assert.equal(await ev(`document.getElementById('v119ApptStart').value`),day+'T12:00')
  for(const width of [1440,390]){
    await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:width===390})
-   for(const[route,host,id]of [['areas','projects','projectAreasTools'],['resources','academic','academicLearningTools'],['health','habits','habitHealthTools'],['religious','calendar','calendarOccasionTools']]){
+   for(const[route,host,id]of [['areas','projects','projectAreasTools'],['resources','academic','academicLearningTools'],['health','habits','habitHealthTools'],['appointments','habits','habitHealthTools']]){
      await open(route,host,id);await pause(120)
      assert.equal(await ev(`document.documentElement.scrollWidth<=innerWidth+1`),true,route+' overflow at '+width)
    }
  }
  assert.deepEqual(errors,[])
- console.log('PASS integrated hosts and redirects; area create/edit and task filter; resource/project/task links; failed-save draft and load retry; health checkin/metric; appointment and occasion visible in calendar; preparation task; date preservation; desktop/mobile; no runtime exceptions.')
+ console.log('PASS integrated hosts and redirects; area create/edit and task filter; resource/project/task links; failed-save draft and load retry; health checkin/metric; compact checkup host; preserved events visible in calendar; preparation task; date preservation; desktop/mobile; no runtime exceptions.')
 }finally{await ev(`if(window.testApi)window.apiFetch=window.testApi;if(window.testAsk)AppDialogs.ask=window.testAsk;AppOverlays.closeAll()`).catch(()=>{});ws.close()}

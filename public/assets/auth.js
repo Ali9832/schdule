@@ -8,6 +8,7 @@
   function show(error=''){
     required=true
     whenReady(()=>{
+      const font=document.getElementById('noavaFontStyles');if(font)font.media='all';
       document.querySelector('.app').inert=true
       let screen=document.getElementById('accountScreen');if(!screen){screen=node('section','account-screen');screen.id='accountScreen';screen.dir='rtl';screen.setAttribute('aria-label','ورود به حساب');document.body.append(screen)}
       screen.replaceChildren();const card=node('div','account-card'),brand=node('div','account-brand','NOAVA — آوای نو'),heading=node('h1','',mode==='register'?'حساب خودت را بساز':'به فضای خودت وارد شو'),hint=node('p','','تقویم، برنامه‌ها و اطلاعاتت را در حساب شخصی خود نگه دار.');card.append(brand,heading,hint)
@@ -40,12 +41,12 @@
     const headers=new Headers(options.headers||(input instanceof Request?input.headers:undefined));const token=readToken();if(token)headers.set('Authorization','Bearer '+token)
     const response=await originalFetch(input,{...options,headers});if(response.status===401){localStorage.removeItem('nova_session');show('نشست شما پایان یافته است؛ دوباره وارد شوید.')}return response
   }
-  originalFetch('/api/health').then(async response=>{
+  window.NovaHealth=originalFetch('/api/health').then(async response=>{
     if(!response.ok)throw Error('سرویس موقتاً در دسترس نیست. اتصال سرور و تنظیمات استقرار را بررسی کنید.')
-    const health=await response.json();if(health.storage!=='postgresql'){release();return}
-    if(!readToken()){show();return}
+    const health=await response.json();if(health.storage!=='postgresql'){release();return health}
+    if(!readToken()){show();return health}
     const result=await originalFetch('/api/auth/me',{headers:{Authorization:'Bearer '+readToken()}})
-    if(!result.ok){localStorage.removeItem('nova_session');show();return}
-    sessionUser=(await result.json()).user;localStorage.setItem('nova_user',JSON.stringify(sessionUser));accountSettings();release()
-  }).catch(error=>{show(error.message);whenReady(()=>{const form=document.querySelector('.account-form');if(form){const retry=node('button','account-switch','تلاش دوباره');retry.type='button';retry.onclick=()=>location.reload();form.append(retry)}})})
+    if(!result.ok){localStorage.removeItem('nova_session');show();return health}
+    sessionUser=(await result.json()).user;localStorage.setItem('nova_user',JSON.stringify(sessionUser));accountSettings();release();return health
+  }).catch(error=>{show(error.message);whenReady(()=>{const form=document.querySelector('.account-form');if(form){const retry=node('button','account-switch','تلاش دوباره');retry.type='button';retry.onclick=()=>location.reload();form.append(retry)}});return null})
 })();

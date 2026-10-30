@@ -1,5 +1,6 @@
 .planning-date-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:12px 14px;margin:14px 0 18px;border:1px solid var(--line,#d8e7e0);background:var(--card,#fff);color:var(--text,#294c41);border-radius:12px;direction:rtl;min-width:0}
 .planning-date-bar[hidden],.planning-date-controls[hidden],.planning-date-editor[hidden]{display:none!important}
+.planning-date-placeholder{height:66px;box-sizing:border-box}
 .planning-date-controls{display:grid;grid-template-columns:38px minmax(145px,auto) 38px auto;align-items:center;gap:6px;max-width:100%;min-width:0}
 .planning-date-controls>button{min-width:0;min-height:40px;padding:7px 10px;border:1px solid #d8e7e0;border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
 .planning-date-controls>.planning-date-label{font-weight:650;line-height:1.7;background:#f3f8f6}

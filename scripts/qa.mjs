@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import crypto from 'node:crypto'
 import { spawnSync } from 'node:child_process'
 
 const root = process.cwd()
@@ -10,7 +9,6 @@ const pass = (m) => passes.push(m)
 const fail = (m) => failures.push(m)
 const read = (p) => fs.readFileSync(path.join(root,p),'utf8')
 const exists = (p) => fs.existsSync(path.join(root,p))
-const sha = (s) => crypto.createHash('sha256').update(s).digest('hex')
 
 function syntaxCheck(file){
   const r=spawnSync(process.execPath,['--check',file],{cwd:root,encoding:'utf8'})
@@ -25,6 +23,18 @@ syntaxCheck('server/calendar-carry-forward.js')
 const carryForwardCheck=spawnSync(process.execPath,['scripts/check-calendar-carry-forward.mjs'],{cwd:root,encoding:'utf8'})
 carryForwardCheck.status===0 ? pass('Atomic bulk carry-forward, retries, ownership and bounded queries verified') : fail(`Bulk carry-forward: ${(carryForwardCheck.stderr||carryForwardCheck.stdout).trim()}`)
 syntaxCheck('public/assets/keyboard-submit.js')
+syntaxCheck('server/reading.js')
+syntaxCheck('server/statistics.js')
+syntaxCheck('server/user-refresh-gate.js')
+syntaxCheck('public/assets/ui-ready.js')
+const refreshGateCheck=spawnSync(process.execPath,['scripts/check-user-refresh-gate.mjs'],{cwd:root,encoding:'utf8'})
+refreshGateCheck.status===0 ? pass('Canonical synchronization coalescing, account scope, invalidation and retry verified') : fail(`Canonical synchronization: ${(refreshGateCheck.stderr||refreshGateCheck.stdout).trim()}`)
+syntaxCheck('public/assets/statistics.js')
+const statisticsCheck=spawnSync(process.execPath,['scripts/check-statistics.mjs'],{cwd:root,encoding:'utf8'})
+statisticsCheck.status===0 ? pass('Statistics date ranges, selection, velocity, completion evidence and user isolation verified') : fail(`Statistics: ${(statisticsCheck.stderr||statisticsCheck.stdout).trim()}`)
+syntaxCheck('public/assets/reading.js')
+const readingCheck=spawnSync(process.execPath,['scripts/check-reading.mjs'],{cwd:root,encoding:'utf8'})
+readingCheck.status===0 ? pass('Reading sessions, retries, timers, timezone and user isolation verified') : fail(`Reading: ${(readingCheck.stderr||readingCheck.stdout).trim()}`)
 for(const file of ['server/finance-units.js','public/assets/money-input.js','public/assets/drafts.js','public/assets/academic.js','public/assets/noava-workspace.js'])syntaxCheck(file)
 const noavaCheck=spawnSync(process.execPath,['scripts/check-noava.mjs'],{cwd:root,encoding:'utf8'})
 noavaCheck.status===0 ? pass('TOMAN migration and localized monetary inputs verified') : fail(`NOAVA: ${(noavaCheck.stderr||noavaCheck.stdout).trim()}`)
@@ -73,7 +83,8 @@ const html = read('index.html')
 const distHtml = read('dist/index.html')
 const shellCheck=spawnSync(process.execPath,['scripts/check-shell.mjs'],{cwd:root,encoding:'utf8'})
 shellCheck.status===0 ? pass('Header structure closes before page sections') : fail(`Application shell: ${(shellCheck.stderr||shellCheck.stdout).trim()}`)
-sha(html.replace(/\r\n/g,'\n'))===sha(distHtml.replace(/\r\n/g,'\n')) ? pass('index.html and dist/index.html are synchronized') : fail('index.html and dist/index.html differ')
+const buildAssetsCheck=spawnSync(process.execPath,['scripts/check-build-assets.mjs'],{cwd:root,encoding:'utf8'})
+buildAssetsCheck.status===0 ? pass('Optimized HTML and JS/CSS fingerprints match their sources; markup and inline syntax preserved') : fail(`Build integrity: ${(buildAssetsCheck.stderr||buildAssetsCheck.stdout).trim()}`)
 syntaxCheck('public/assets/master-bank.js')
 const bankCheck=spawnSync(process.execPath,['scripts/check-bank.mjs'],{cwd:root,encoding:'utf8'})
 bankCheck.status===0 ? pass('Master bank data, filtering, escaping and local edits verified') : fail(`Master bank: ${(bankCheck.stderr||bankCheck.stdout).trim()}`)
@@ -90,7 +101,7 @@ const counts=new Map(); ids.forEach(x=>counts.set(x,(counts.get(x)||0)+1))
 const dupIds=[...counts.entries()].filter(([,n])=>n>1)
 dupIds.length ? fail(`Duplicate HTML ids: ${dupIds.map(([x,n])=>`${x}×${n}`).join(', ')}`) : pass(`Unique HTML ids: ${ids.length}`)
 
-const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')+'\n'+read('server/project-workspace.js')+'\n'+read('server/calendar-carry-forward.js')
+const server=read('server/index.js')+'\n'+read('server/calendar.js')+'\n'+read('server/calendar-attachments.js')+'\n'+read('server/finance-editor.js')+'\n'+read('server/project-workspace.js')+'\n'+read('server/calendar-carry-forward.js')+'\n'+read('server/reading.js')+'\n'+read('server/statistics.js')
 const routeRe=/\b(?:fastify|app)\.(get|post|put|patch|delete)\(\s*[`'"]([^`'"]+)/gi
 const routes=[]; let rm
 while((rm=routeRe.exec(server))) routes.push([rm[1].toUpperCase(),rm[2]])

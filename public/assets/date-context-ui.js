@@ -11,6 +11,8 @@
     return ['calendar','schedule','academic','dashboard','today','finance'].includes(page) || (scopedPages.has(page) && ctx.scoped(page)) ? ctx.date : ctx.today();
   }
   function mountBar(page,bar) {
+    const placeholder=page.querySelector(':scope > .planning-date-placeholder');
+    if(placeholder){placeholder.replaceWith(bar);return;}
     const week=page.id==='academic'&&page.querySelector('.academic-week-panel');
     if(week){if(bar.parentElement!==week)week.querySelector('h2').after(bar);return;}
     if(bar.parentElement===page)return;
@@ -55,7 +57,7 @@
     if (page === 'calendar' && window.UnifiedCalendar) UnifiedCalendar.state.anchor = ctx.date;
     if (page === 'schedule' && typeof V115_ANCHOR !== 'undefined') V115_ANCHOR = new Date(ctx.date + 'T12:00:00');
     // Untouched proposals may follow the day; manually changed dates and drafts do not.
-    const proposals = { habits: ['v119Date'], calendar: ['v119ApptStart', 'v119ApptEnd', 'v1111RelDate'], relationships: ['v1110CommitDue'] };
+    const proposals = { habits: ['v119Date','v119ApptStart','v119ApptEnd'], relationships: ['v1110CommitDue'] };
     for (const id of proposals[page] || []) {
       const input = document.getElementById(id); if (!input) continue;
       if (!input.value || input.value === input.dataset.planningProposal) {

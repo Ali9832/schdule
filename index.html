@@ -9,9 +9,10 @@
 <script src="/assets/auth.js"></script>
 <link href="/manifest.webmanifest" rel="manifest"/>
 <meta content="#171b33" name="theme-color"/>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 <!-- نوا • فضای شخصی Production Release -->
 <title>NOAVA — آوای نو</title>
-<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" media="print" onload="this.media='all'"/>
+<link id="noavaFontStyles" rel="stylesheet" href="/assets/fonts.css" media="print"/>
 <style>
 :root{
   --navy:#171b33;
@@ -886,6 +887,9 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
  .app.sidebar-collapsed .sidebar .brand .sidebar-toggle::before{transform:rotate(135deg)}
 }
 </style>
+<link rel="stylesheet" href="/assets/noava.css?v=2.2.0"/>
+<link rel="stylesheet" href="/assets/date-context.css"/>
+<link rel="stylesheet" href="/assets/page-header.css?v=2.3.0"/>
 </head>
 <body>
 <div class="app">
@@ -914,6 +918,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <details class="nav-group" data-nav-group="areas"><summary title="سیستم و حوزه‌ها"><span class="nav-icon" aria-hidden="true">◫</span><span class="nav-group-title">سیستم و حوزه‌ها</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="items"><span class="nav-icon">☑</span>بانک آیتم‌ها</button>
 <button class="nav-item" data-page="academic"><span class="nav-icon">🎓</span>تحصیل / یادگیری</button>
+<button class="nav-item" data-page="reading"><span class="nav-icon">▤</span>کتاب‌خوانی</button>
 
 <button class="nav-item" data-page="relationships"><span class="nav-icon">👥</span>روابط / افراد</button>
 <button class="nav-item" data-page="finance"><span class="nav-icon">◈</span>مالی</button>
@@ -925,6 +930,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </div></details>
 <details class="nav-group" data-nav-group="review"><summary title="مرور و سیستم"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-group-title">مرور و سیستم</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span>مرور و گزارش‌ها</button>
+<button class="nav-item" data-page="statistics"><span class="nav-icon">▥</span>آمار و روند</button>
 <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>تنظیمات</button>
 </div></details>
 <div class="sidebar-bottom">
@@ -932,6 +938,15 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <button type="button" class="profile profile-settings" onclick="goPage('profile');if(matchMedia('(max-width:900px)').matches)setMobileMenu(false)" title="صفحهٔ کاربری" aria-label="باز کردن صفحهٔ کاربری"><span class="avatar" aria-hidden="true">م</span><span class="profile-details"><strong>حساب من</strong><small>فضای شخصی</small></span></button>
 </div>
 </aside>
+<script>
+(() => {
+  try {
+    const saved=JSON.parse(localStorage.getItem('nova.sidebar-groups.v1')||'{}')||{};
+    document.querySelectorAll('#mainSidebar .nav-group').forEach(group=>{group.open=saved[group.dataset.navGroup]===true||!!group.querySelector('.nav-item.active');});
+    if(!matchMedia('(max-width:900px)').matches&&localStorage.getItem('nova.sidebarCollapsed')==='1')document.querySelector('.app').classList.add('sidebar-collapsed');
+  } catch {}
+})();
+</script>
 <button type="button" class="mobile-menu-backdrop" onclick="setMobileMenu(false)" aria-label="بستن منو" tabindex="-1"></button>
 <main class="main">
 <header class="noava-page-header" id="pageHeader" aria-label="سربرگ و کنترل‌های صفحه">
@@ -957,28 +972,9 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 
 </header>
 <!-- DASHBOARD -->
-<section class="page hidden" id="calendar"><div id="unifiedCalendar"></div><details class="integrated-tools " id="calendarAppointmentTools"><summary>قرارها و پیگیری‌های سلامت</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content"><section class="v119-panel">
-<div class="v119-panel-head"><div><h2>قرارها و پیگیری‌های سلامت</h2><span>قرارهای ثبت‌شده در تقویم شما</span></div><button class="v119-btn v119-ghost" onclick="goPage('schedule')">بازکردن تقویم</button></div>
-<div class="v119-list" id="v119Appointments"></div>
-<div class="v119-form">
-<label class="wide">عنوان<input id="v119ApptTitle" placeholder="مثلاً چکاپ / فیزیوتراپی / آزمایش"/></label>
-<label>شروع<input id="v119ApptStart" type="datetime-local"/></label>
-<label>پایان<input id="v119ApptEnd" type="datetime-local"/></label>
-<label>پزشک / ارائه‌دهنده<input id="v119ApptProvider" placeholder="اختیاری"/></label>
-<label>محل<input id="v119ApptLocation" placeholder="اختیاری"/></label>
-<label class="wide">یادداشت<textarea id="v119ApptNote" placeholder="آمادگی، مدارک، سؤال‌ها..."></textarea></label>
-<div class="v119-form-actions"><button class="v119-btn v119-primary" onclick="v119AddAppointment()">＋ افزودن به تقویم</button></div>
-</div>
-</section></div></details><details class="integrated-tools v1111-page" id="calendarOccasionTools"><summary>مناسبت‌ها و کارهای آمادگی</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
-<div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleReligiousComposer(true)">＋ مناسبت</button></div>
-<div class="v1111-summary" id="v1111ReligiousSummary"></div>
-<div class="v1111-composer hidden" id="v1111ReligiousComposer">
-<div class="v1111-composer-head"><div><b>افزودن مناسبت به تقویم</b><small>تاریخ را خودت ثبت می‌کنی؛ NOAVA تاریخ مذهبی را حدس نمی‌زند.</small></div><button onclick="v1111ToggleReligiousComposer(false)">×</button></div>
-<div class="v1111-form-grid"><label>عنوان<input id="v1111RelTitle" placeholder="عنوان مناسبت"/></label><label>تاریخ<input id="v1111RelDate" type="date"/></label><label>ساعت<input id="v1111RelTime" type="time" value="09:00"/></label><label>یادآوری آمادگی<select id="v1111RelReminder"><option value="0">همان روز</option><option selected="" value="1">۱ روز قبل</option><option value="3">۳ روز قبل</option><option value="7">۷ روز قبل</option></select></label><label class="wide">یادداشت مناسبت<input id="v1111RelObservance" placeholder="اعمال/یادداشت شخصی یا منبع"/></label><label class="wide">آمادگی لازم<input id="v1111RelPreparation" placeholder="چه چیزی باید قبل از این مناسبت آماده شود؟"/></label></div>
-<div class="v1111-form-actions"><button class="v1111-secondary-dark" onclick="v1111ToggleReligiousComposer(false)">انصراف</button><button class="v1111-primary-dark" onclick="v1111SaveReligious()">ثبت در تقویم</button></div>
-</div>
-<div class="v1111-grid"><div class="v1111-panel span2"><div class="v1111-panel-head"><div><h2>مناسبت‌های پیش‌رو</h2><span>مناسبت‌های ثبت‌شده در تقویم</span></div><span class="v1111-chip">در تقویم</span></div><div class="v1111-event-list" id="v1111ReligiousEvents"></div></div><div class="v1111-panel"><div class="v1111-panel-head"><div><h2>آمادگی‌ها</h2><span>کارهای لینک‌شده به مناسبت‌ها</span></div></div><div class="v1111-prep-list" id="v1111PreparationTasks"></div></div></div>
-</div></details></section>
+<section class="page hidden" id="reading" aria-label="کتاب‌خوانی"><div id="readingBody"></div></section>
+<section class="page hidden" id="statistics" aria-label="آمار و روند"><div id="statisticsBody"></div></section>
+<section class="page hidden" id="calendar"><div id="unifiedCalendar"></div></section>
 <section class="page hidden" id="academic"><div id="academicBody"></div><details class="integrated-tools " id="academicLearningTools"><summary>منابع و برنامه‌های یادگیری</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
 <div class="v118-hero-actions"><button class="ghost" onclick="v118SetView('attention')">⚠ نیازمند توجه</button><button class="primary" onclick="v118OpenComposer()">＋ ثبت اولیه سریع</button></div>
 <div class="v118-flow"><span>ثبت اولیه</span><i>←</i><span>برای بعد</span><i>←</i><span>برنامهٔ یادگیری</span><i>←</i><span>یادداشت‌ها / جمع‌بندی</span><i>←</i><span>قدم بعدی / هدف</span><i>←</i><span>بایگانی</span></div>
@@ -1027,6 +1023,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v117-dash-card"><span>حوزه نیازمند توجه</span><strong id="v117AreaKpi">—</strong></div>
 <button class="v117-open" onclick="goPage('goals')">کنترل اهداف ←</button>
 </div>
+<div class="planning-date-bar planning-date-placeholder" aria-hidden="true"></div>
 <div class="v101-now-shell">
 <div class="v101-section-head"><div><span class="v101-eyebrow">اکنون و امروز</span><h2>الان چه چیزی باید جلو برود؟</h2></div></div>
 <div class="v101-now-grid">
@@ -1569,7 +1566,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <table class="habit-matrix" id="habitMatrixTable"></table>
 </div>
 </div>
-<details class="integrated-tools " id="habitHealthTools"><summary>ثبت روزانه و شاخص‌های سلامت</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+<details class="integrated-tools " id="habitHealthTools"><summary>پایش سلامت و چکاپ</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
 
 <div class="v119-rule">ⓘ این بخش ابزار خودپایش و برنامه‌ریزی شخصی است؛ وضعیت‌ها فقط نسبت به هدف تعیین‌شدههای خودت نمایش داده می‌شوند و جایگزین ارزیابی پزشکی نیستند.</div>
 <div class="v119-summary" id="v119Summary"></div>
@@ -1610,7 +1607,19 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </section>
 
 </div>
-</div></details></section>
+<details id="habitCheckupTools" class="habit-checkup-tools"><summary>چکاپ و قرارهای سلامت</summary><section class="v119-panel">
+<div class="v119-panel-head"><div><h2>قرارها و پیگیری‌های سلامت</h2><span>قرارهای ثبت‌شده در تقویم شما</span></div><button class="v119-btn v119-ghost" onclick="goPage('schedule')">بازکردن تقویم</button></div>
+<div class="v119-list" id="v119Appointments"></div>
+<div class="v119-form">
+<label class="wide">عنوان<input id="v119ApptTitle" placeholder="مثلاً چکاپ / فیزیوتراپی / آزمایش"/></label>
+<label>شروع<input id="v119ApptStart" type="datetime-local"/></label>
+<label>پایان<input id="v119ApptEnd" type="datetime-local"/></label>
+<label>پزشک / ارائه‌دهنده<input id="v119ApptProvider" placeholder="اختیاری"/></label>
+<label>محل<input id="v119ApptLocation" placeholder="اختیاری"/></label>
+<label class="wide">یادداشت<textarea id="v119ApptNote" placeholder="آمادگی، مدارک، سؤال‌ها..."></textarea></label>
+<div class="v119-form-actions"><button class="v119-btn v119-primary" onclick="v119AddAppointment()">＋ افزودن به تقویم</button></div>
+</div>
+</section></details></div></details></section>
 <!-- SPIRITUAL — V11.11 canonical روتین view -->
 <section class="page hidden v1111-page" id="spiritual">
 <div class="v1111-hero spiritual"><div><h1>روتین‌های معنوی</h1><small id="spiritualRecordDate"></small><p>روتین‌های معنوی، هدف هفتگی و یادداشت‌های خود را مدیریت کنید.</p></div><div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleSpiritualComposer(true)">＋ روتین معنوی</button><button class="v1111-secondary" onclick="goPage('habits')">ماتریس همه روتین‌ها</button></div></div>
@@ -1856,7 +1865,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.6.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.7.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -2007,6 +2016,8 @@ function goPage(id){
   document.getElementById('crumb').textContent=labels[id]||'NOAVA';
 
   if(id==='calendar')document.getElementById('crumb').textContent='تقویم جامع';
+  if(id==='reading')document.getElementById('crumb').textContent='کتاب‌خوانی';
+  if(id==='statistics')document.getElementById('crumb').textContent='آمار و روند';
   if(typeof handleFunctionalPageOpen==='function') handleFunctionalPageOpen(id);
 }
 document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>goPage(b.dataset.page)));
@@ -2445,7 +2456,8 @@ function pct(done,total){return total?Math.round(done/total*100):0}
 async function loadBase(){
   try{
     const started=performance.now();
-    const [health,initialDash]=await Promise.all([apiFetch('/api/health'),v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000})]);
+    const [health,initialDash]=await Promise.all([window.NovaHealth||apiFetch('/api/health'),v112Get('dashboard','/api/v11.2/dashboard',{ttl:12000})]);
+    if(!health)throw new Error('سرویس در دسترس نیست.')
     const dash=window.DateContext&&initialDash.today!==DateContext.date?await v112Get('dashboard','/api/v11.2/dashboard',{force:true}):initialDash;
     setApiBadge(true,`Backend متصل • ${health.storage==='memory'?'حالت محلی':'PostgreSQL'} • V11.2`);
     V112_DASH=dash;
@@ -2568,10 +2580,11 @@ async function loadHabitMatrix(){
   }
 }
 window.loadHabitMonthFromApi=loadHabitMatrix;
-function renderHabitDailySuccessBase(data){const root=document.getElementById('habitDailyChart');if(!root)return;let h='<table class="habit-daily-align"><tbody><tr>';h+='<td class="habit-name-spacer"><div class="habit-daily-note">نمودار هر ستون دقیقاً بالای ستون همان روز در ماتریس قرار می‌گیرد.</div></td>';for(let i=0;i<(data.dailyPercent||[]).length;i++){const p=Number(data.dailyPercent[i]||0);h+=`<td class="day-cell" title="روز ${toFaNum(i+1)}: ${toFaNum(p)}٪"><div class="habit-day-bar-wrap"><div class="habit-day-bar ${p?'':'zero'}" style="height:${Math.max(2,p)}%;background:${pColor(p)}"><b>${toFaNum(p)}٪</b></div></div></td>`}h+='<td class="summary-space"></td><td class="summary-space"></td><td class="count-space"></td><td class="count-space"></td></tr><tr>';h+='<td class="habit-name-spacer label-cell">عادت / روتین</td>';for(let d=1;d<=data.days;d++)h+=`<td class="label-cell">${toFaNum(d)}</td>`;h+='<td class="summary-space label-cell">هدف</td><td class="summary-space label-cell">درصد</td><td class="count-space label-cell">تعداد</td><td class="count-space label-cell">ویرایش</td></tr></tbody></table>';root.innerHTML=h}
+function habitColumnGroup(data){const days=Number(data.days)||31;document.querySelector('.habit-combined-scroll')?.style.setProperty('--habit-days',String(days));return '<colgroup><col class="habit-col-name">'+Array.from({length:days},()=>'<col class="habit-col-day">').join('')+'<col class="habit-col-goal"><col class="habit-col-percent"><col class="habit-col-count"><col class="habit-col-edit"></colgroup>'}
+function renderHabitDailySuccessBase(data){const root=document.getElementById('habitDailyChart');if(!root)return;let h='<table class="habit-daily-align">'+habitColumnGroup(data)+'<tbody><tr>';h+='<td class="habit-name-spacer"><div class="habit-daily-note">نمودار هر ستون دقیقاً بالای ستون همان روز در ماتریس قرار می‌گیرد.</div></td>';for(let i=0;i<(data.dailyPercent||[]).length;i++){const p=Number(data.dailyPercent[i]||0);h+=`<td class="day-cell" title="روز ${toFaNum(i+1)}: ${toFaNum(p)}٪"><div class="habit-day-bar-wrap"><div class="habit-day-bar ${p?'':'zero'}" style="height:${Math.max(2,p)}%;background:${pColor(p)}"><b>${toFaNum(p)}٪</b></div></div></td>`}h+='<td class="summary-space"></td><td class="summary-space"></td><td class="count-space"></td><td class="count-space"></td></tr><tr>';h+='<td class="habit-name-spacer label-cell">عادت / روتین</td>';for(let d=1;d<=data.days;d++)h+=`<td class="label-cell">${toFaNum(d)}</td>`;h+='<td class="summary-space label-cell">هدف</td><td class="summary-space label-cell">درصد</td><td class="count-space label-cell">تعداد</td><td class="count-space label-cell">ویرایش</td></tr></tbody></table>';root.innerHTML=h}
 function syncHabitScrollsBase(){/* V9.3: نمودار و ماتریس یک اسکرول مشترک دارند */}
 function weekSegmentsBase(days){const out=[];for(let s=1,w=1;s<=days;s+=7,w++)out.push({week:w,count:Math.min(7,days-s+1)});return out}
-function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h='<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td class="habit-day-toggle-cell"><label class="habit-day-toggle"><input class="habit-check" type="checkbox" aria-label="${escAttr(row.title)}، روز ${toFaNum(i+1)}، ماه ${toFaNum(data.month)} سال ${toFaNum(data.year)}" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></label></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h}
+function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h=habitColumnGroup(data)+'<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td class="habit-day-toggle-cell"><label class="habit-day-toggle"><input class="habit-check" type="checkbox" aria-label="${escAttr(row.title)}، روز ${toFaNum(i+1)}، ماه ${toFaNum(data.month)} سال ${toFaNum(data.year)}" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></label></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h}
 async function baseToggleHabitDay(id,day,done){
   const m=Number(document.getElementById('habitMonthSelect').value),y=Number(document.getElementById('habitYearSelect').value);
   const data=BASE_HABIT_MATRIX;
@@ -3109,7 +3122,7 @@ function v112SeedCanonicalFromDashboard(d){if(!d)return;V11_DATA={areas:(d.areas
 function v112TaskAction(t,i){return `<button onclick="openV11Inspector('task','${jsSafe(t.id)}')"><i>${toFaNum(i+1)}</i><span>${escapeHtml(t.title)}</span><b>${t.due_date===V112_DASH?.today?'امروز':taskPriorityFa(t.priority)}</b></button>`}
 function v112RenderDashboard(d){
 
-  if(!d)return;V112_DASH=d;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  if(!d)return;V112_DASH=d;const font=document.getElementById('noavaFontStyles');if(font)font.media='all';const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('v11Coverage',`${toFaNum(d.summary?.next_action_coverage||0)}٪`);set('v11Stale',toFaNum(d.summary?.stale_projects||0));set('v11AreasCount',toFaNum(d.summary?.areas||0));set('v11ResourceCount',toFaNum(d.summary?.resources_backlog||0));set('v102WaitingInline',toFaNum(d.attention?.waiting_count||0));
   const next=d.now?.next_actions||[],nextRoot=document.getElementById('v101NextActions');if(nextRoot)nextRoot.innerHTML=next.map(v112TaskAction).join('')||'<div class="empty">فعلاً اقدام فوری ثبت نشده است.</div>';
   const current=d.now?.focus_task||d.now?.current_event||next[0]||null,cb=document.getElementById('v101CurrentBlock'),cm=document.getElementById('v101CurrentBlockMeta');if(cb)cb.textContent=current?.title||'بلوک تمرکز تعریف نشده';if(cm)cm.textContent=d.now?.focus_task?"تمرکز در حال اجراست":d.now?.current_event?`${String(d.now.current_event.start_at||'').slice(11,16)} تا ${String(d.now.current_event.end_at||'').slice(11,16)}`:current?'پیشنهاد شروع از اولین اقدام بعدی':'برای شروع، یک اقدام بعدی ثبت کن.';
@@ -3449,7 +3462,7 @@ async function v119SaveCheckin(){const body={date:document.getElementById('v119D
 async function v119QuickLog(id,name){const m=V119_DATA?.metrics.find(x=>x.id===id),v=await AppDialogs.ask(`مقدار ${name}`,m?.latest_value??'');if(v===null||v==='')return;try{V119_DATA=await apiFetch('/api/v11.9/logs',{method:'POST',body:JSON.stringify({metric_id:id,log_date:v119Today(),value_numeric:Number(v)})})}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV119()}
 async function v119AddMetric(){const name=document.getElementById('v119CustomName')?.value.trim();if(!name)return showToast('نام شاخص لازم است','یک نام برای شاخص بنویس.');const body={name,unit:document.getElementById('v119CustomUnit')?.value||'',target_min:document.getElementById('v119CustomMin')?.value||null,target_max:document.getElementById('v119CustomMax')?.value||null,good_direction:document.getElementById('v119CustomDir')?.value||'range',category:'custom',value_type:'number',icon:'＋'};try{V119_DATA=await apiFetch('/api/v11.9/metrics',{method:'POST',body:JSON.stringify(body)})}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}['v119CustomName','v119CustomUnit','v119CustomMin','v119CustomMax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('شاخص اضافه شد',name)}
 async function v119AddAppointment(){const title=document.getElementById('v119ApptTitle')?.value.trim(),start=document.getElementById('v119ApptStart')?.value;if(!title||!start)return showToast('اطلاعات ناقص','عنوان و زمان شروع را وارد کن.');const body={title,start_at:new Date(start).toISOString(),end_at:document.getElementById('v119ApptEnd')?.value?new Date(document.getElementById('v119ApptEnd').value).toISOString():null,provider:document.getElementById('v119ApptProvider')?.value||'',location:document.getElementById('v119ApptLocation')?.value||'',note:document.getElementById('v119ApptNote')?.value||''};try{const res=await apiFetch('/api/v11.9/appointments',{method:'POST',body:JSON.stringify(body)});V119_DATA=res.payload}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}['v119ApptTitle','v119ApptStart','v119ApptEnd','v119ApptProvider','v119ApptLocation','v119ApptNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('قرار ذخیره شد',title)}
-// Health controls are loaded by integrated-tools.js inside habits and calendar.
+// Health controls are loaded by integrated-tools.js inside habits.
 // Health is loaded when its view opens.
 </script>
 <script>
@@ -3620,7 +3633,7 @@ function setMobileMenu(open){
  try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{}
  const groups=[...document.querySelectorAll('.sidebar .nav-group')];
  groups.forEach(group=>{
-  group.open=saved[group.dataset.navGroup]===true;
+  group.open=saved[group.dataset.navGroup]===true||!!group.querySelector('.nav-item.active');
   group.addEventListener('toggle',()=>{
    try{localStorage.setItem(key,JSON.stringify(Object.fromEntries(groups.map(g=>[g.dataset.navGroup,g.open]))))}catch{}
   });
@@ -3636,37 +3649,40 @@ function setMobileMenu(open){
 })();
 </script>
 <link rel="stylesheet" href="/assets/persian-ui.css?v=2.2.0"/>
-<script src="/assets/persian-ui.js?v=2.2.0"></script>
-<script src="/assets/drafts.js"></script>
-<script src="/assets/money-input.js"></script>
-<link rel="stylesheet" href="/assets/noava.css?v=2.2.0"/>
+<script defer src="/assets/persian-ui.js?v=2.2.0"></script>
+<script defer src="/assets/drafts.js"></script>
+<script defer src="/assets/money-input.js"></script>
 <link rel="stylesheet" href="/assets/editing.css"/>
-<script src="/assets/editing.js?v=2.6.0"></script>
+<script defer src="/assets/editing.js?v=2.7.0"></script>
 <link rel="stylesheet" href="/assets/task-list.css"/>
-<script src="/assets/task-list.js"></script>
+<script defer src="/assets/task-list.js"></script>
 
 
 <link rel="stylesheet" href="/assets/calendar.css"/>
 <link rel="stylesheet" href="/assets/calendar-form.css?v=2.1.0"/>
-<script src="/assets/calendar-extras.js?v=2.1.0"></script>
-<script src="/assets/calendar.js?v=2.1.0"></script>
+<script defer src="/assets/calendar-extras.js?v=2.1.0"></script>
+<script defer src="/assets/calendar.js?v=2.1.0&rev=course-picker"></script>
 <link rel="stylesheet" href="/assets/finance-editor.css"/>
-<script src="/assets/finance-editor.js"></script>
-<link rel="stylesheet" href="/assets/date-context.css"/>
-<link rel="stylesheet" href="/assets/page-header.css?v=2.3.0"/>
-<script src="/assets/date-context-ui.js?v=2.3.0"></script>
-<script src="/assets/fast-mutations.js"></script>
+<script defer src="/assets/finance-editor.js"></script>
+<link rel="stylesheet" href="/assets/habit-layout.css?rev=compact-matrix"/>
+<link rel="stylesheet" href="/assets/reading.css?rev=page-log"/>
+<link rel="stylesheet" href="/assets/statistics.css"/>
+<script defer src="/assets/date-context-ui.js?v=2.3.0&rev=checkup-fields"></script>
+<script defer src="/assets/fast-mutations.js"></script>
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
-<script src="/assets/today-tasks.js"></script>
-<link rel="stylesheet" href="/assets/project-workspace.css?v=2.6.0"/>
-<script src="/assets/project-workspace.js?v=2.6.0"></script>
-<script src="/assets/academic.js?v=2.3.0"></script>
-<script src="/assets/noava-workspace.js?v=2.1.2"></script>
-<script src="/assets/keyboard-submit.js?v=2.1.1"></script>
+<script defer src="/assets/today-tasks.js"></script>
+<link rel="stylesheet" href="/assets/project-workspace.css?v=2.7.0"/>
+<script defer src="/assets/project-workspace.js?v=2.7.0"></script>
+<script defer src="/assets/academic.js?v=2.3.0"></script>
+<script defer src="/assets/noava-workspace.js?v=2.1.2"></script>
+<script defer src="/assets/keyboard-submit.js?v=2.1.1"></script>
 <link rel="stylesheet" href="/assets/integrated-tools.css"/>
-<script src="/assets/integrated-tools.js"></script>
-<script src="/assets/nav-counts.js"></script>
+<script defer src="/assets/integrated-tools.js?rev=compact-health"></script>
+<script defer src="/assets/nav-counts.js"></script>
 <link rel="stylesheet" href="/assets/saved-filters.css"/>
-<script src="/assets/saved-filters.js"></script>
+<script defer src="/assets/saved-filters.js"></script>
+<script defer src="/assets/reading.js?rev=page-log"></script>
+<script defer src="/assets/statistics.js"></script>
+<script defer src="/assets/ui-ready.js"></script>
 </body>
 </html>

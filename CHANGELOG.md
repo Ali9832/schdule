@@ -2,6 +2,23 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.7.0] - 2026-10-31
+
+Upgrade: **2.6.0 → 2.7.0**. Adds reading and statistics, streamlines calendar/routine tools, and improves delivery performance. Database changes are additive; existing records are preserved and no local/test data is imported.
+
+Validation: build and all 75 QA checks passed. Isolated browser checks passed for book pages/time ranges and notification actions, course/exam links, routine hit targets and layout, statistics filters, integrated health tools, bank pagination/editing, headers and authentication. Local memory-mode tests do not verify the online PostgreSQL connection or account data.
+
+- Remove the extra health/religious calendar panels, move checkups into compact routine health tools, add course creation inside calendar forms, improve habit-table column sizing and sticky titles, and extend reading logs with page progress, manual duration/time ranges and book-specific notification actions.
+
+- Optimize built HTML/JS/CSS without changing authored markup, load enhancement scripts in parallel with ordered deferred execution, self-host one licensed variable font, reuse the initial health request, reduce repeated badge/history requests, and coalesce per-account canonical database synchronization with mutation invalidation. Keep performance measurements separate from live database verification.
+- Fix HTML being downloaded as a missing favicon, support precompressed static delivery, load critical shell styles before first paint, restore navigation state early and reserve dashboard date-control space to reduce layout shifts. Document measured before/after results in `docs/PERFORMANCE_REVIEW_FA.md`.
+
+- Add Statistics and Trends with date ranges, multiple category/record selection, real creation and completion trends, current overdue counts, routine check-ins and reading charts. Track future task/project completion times and deadlines without fabricating dates for existing completed records.
+
+- Add a user-scoped reading library with book status, daily goals, manual study logs, a persistent timer, daily browser reminders while the site is open, and real study totals. Store reading data separately from existing records; no sample books are seeded.
+
+- Document the audit of all 16 command-center boxes, their data sources, stale/demo-data risks and proposed consolidation in `docs/DASHBOARD_BOX_REVIEW_FA.md`. No application or database changes in this audit.
+
 ## [2.6.0] - 2026-10-30
 
 Upgrade: **2.5.0 → 2.6.0**. Includes the reviewed local navigation, header/date and saved-filter changes. No database migration or record deletion.

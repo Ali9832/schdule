@@ -18,12 +18,16 @@ import { registerFinanceEditor } from './finance-editor.js'
 import { normalizeFinanceAmounts } from './finance-units.js'
 import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 import { registerProjectWorkspace } from './project-workspace.js'
+import { registerReading } from './reading.js'
+import { registerStatistics, completionMetadata } from './statistics.js'
+import { createUserRefreshGate } from './user-refresh-gate.js'
 import { registerCalendarCarryForward, memoryCarryForward, postgresCarryForward } from './calendar-carry-forward.js'
 
 dotenv.config()
 
 const app = Fastify({ logger: true })
 const lifeDatabaseScope = new AsyncLocalStorage()
+const canonicalRefresh = createUserRefreshGate()
 app.setErrorHandler((error, request, reply) => {
   if (error.validation) {
     return reply.code(400).send({ error: 'ورودی نامعتبر است.', details: error.validation.map((item) => ({ field: item.instancePath || item.params?.missingProperty || item.params?.additionalProperty || '', message: item.message })) })
@@ -110,11 +114,12 @@ if (hasDatabase) {
 }
 
 if (!process.env.VERCEL && fs.existsSync(distDir)) {
-  await app.register(fastifyStatic, { root: distDir, prefix: '/', wildcard: false })
+  await app.register(fastifyStatic, { root: distDir, prefix: '/', wildcard: true, preCompressed:true })
 }
 
 app.setNotFoundHandler((request, reply) => {
-  if (request.method === 'GET' && fs.existsSync(clientIndex) && !request.url.startsWith('/api/')) {
+  const pathname=request.url.split('?')[0]
+  if (request.method === 'GET' && fs.existsSync(clientIndex) && !request.url.startsWith('/api/')&&!/\.[^/]+$/.test(pathname)) {
     return reply.type('text/html').send(fs.createReadStream(clientIndex))
   }
   return reply.code(404).send({ error: 'مسیر پیدا نشد.' })
@@ -222,8 +227,9 @@ const addDays = (days) => {
 const dateOffset = (days) => addDays(days)
 const id = () => crypto.randomUUID()
 // Persist before sending responses, including lazy initialization during reads.
-app.addHook('onSend', async () => {
+app.addHook('onSend', async (request,reply) => {
   if (!hasDatabase) localStore?.save(memory)
+  if(hasDatabase&&request.user?.id&&!['GET','HEAD','OPTIONS'].includes(request.method)&&reply.statusCode<400)canonicalRefresh.invalidate(request.user.id)
 })
 const priorityLabels = { high: 'بالا', medium: 'متوسط', low: 'کم' }
 
@@ -848,7 +854,7 @@ async function createTask(userId, payload) {
   const task = normalizeTask(payload)
   if (!task.title) throw new Error('عنوان تسک الزامی است.')
   if (task.project_id && !(await listProjects(userId)).some((project) => project.id === task.project_id)) throw new Error('پروژه مرتبط پیدا نشد.')
-  const created = { ...task, id: id(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
+  const created = { ...task, ...completionMetadata(null,task), id: id(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   if (!hasDatabase) memory.tasks.push(created)
   else {
     await app.pg.query('INSERT INTO tasks (id,user_id,title,description,due_date,priority,status,estimate_minutes,category,tags,project_id,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13)', [created.id, userId, created.title, created.description, created.due_date, created.priority, created.status, created.estimate_minutes, created.category, JSON.stringify(created.tags || []), created.project_id, created.created_at, created.updated_at])
@@ -860,7 +866,7 @@ async function createTask(userId, payload) {
 async function createProject(userId, payload) {
   const project = normalizeProject(payload)
   if (!project.name) throw new Error('نام پروژه الزامی است.')
-  const created = { ...project, id: id(), created_at: new Date().toISOString() }
+  const created = { ...project, ...completionMetadata(null,project), id: id(), created_at: new Date().toISOString() }
   if (!hasDatabase) memory.projects.push(created)
   else await app.pg.query('INSERT INTO projects (id,user_id,name,description,due_date,color,icon,status,created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)', [created.id, userId, created.name, created.description, created.due_date, created.color, created.icon, created.status, created.created_at])
   await addActivity(userId, 'project', `پروژه «${created.name}» ساخته شد.`)
@@ -872,6 +878,7 @@ async function updateTask(userId, taskId, payload) {
   const current = currentTasks.find((task) => task.id === taskId)
   if (!current) return null
   const next = { ...normalizeTask({ ...current, ...payload }), id: taskId, created_at: current.created_at, updated_at: new Date().toISOString() }
+  Object.assign(next,completionMetadata(current,next))
   if (!next.title) throw new Error('عنوان تسک الزامی است.')
   if (next.project_id && !(await listProjects(userId)).some((project) => project.id === next.project_id)) throw new Error('پروژه مرتبط پیدا نشد.')
   if (!hasDatabase) {
@@ -887,6 +894,7 @@ async function updateProject(userId, projectId, payload) {
   const current = projects.find((project) => project.id === projectId)
   if (!current) return null
   const next = { ...normalizeProject({ ...current, ...payload }), id: projectId, created_at: current.created_at }
+  Object.assign(next,completionMetadata(current,next))
   if (!hasDatabase) {
     const index = memory.projects.findIndex((project) => project.id === projectId)
     memory.projects[index] = next
@@ -1235,6 +1243,10 @@ function parseMeetingNotesV11(notes='') {
 }
 
 async function ensureV11CanonicalData(userId) {
+  if(!hasDatabase){ensureMemoryV11();return}
+  return canonicalRefresh.run(userId,()=>syncV11CanonicalData(userId))
+}
+async function syncV11CanonicalData(userId) {
   if (!hasDatabase) { ensureMemoryV11(); return }
   const [tasks, projects, events, life] = await Promise.all([listTasks(userId), listProjects(userId), listEvents(userId), getLifeData(userId)])
   const areaNames = new Map(V11_AREA_DEFAULTS)
@@ -2864,6 +2876,44 @@ app.post('/api/assistant', async (request, reply) => {
     return reply.code(502).send({ error: 'دستیار موقتاً در دسترس نیست.' })
   }
 })
+
+const readingEmpty = () => ({ books: [], sessions: [], timer: null })
+async function readReading(userId) {
+  if (!hasDatabase) return structuredClone(memory.reading?.[userId] || readingEmpty())
+  const { rows } = await app.pg.query('SELECT data FROM reading_state WHERE user_id=$1', [userId])
+  return rows[0]?.data || readingEmpty()
+}
+const readingQueues = new Map()
+registerReading(app, {
+  read: readReading,
+  change: async (userId, action) => {
+    const previous = readingQueues.get(userId) || Promise.resolve()
+    const task = previous.catch(() => {}).then(async () => {
+      if (!hasDatabase) {
+        const state = structuredClone(memory.reading?.[userId] || readingEmpty()), result = action(state)
+        memory.reading ||= {}; memory.reading[userId] = state
+        return result
+      }
+      const client = await app.pg.connect()
+      try {
+        await client.query('BEGIN')
+        await client.query('INSERT INTO reading_state (user_id) VALUES ($1) ON CONFLICT DO NOTHING', [userId])
+        const { rows } = await client.query('SELECT data FROM reading_state WHERE user_id=$1 FOR UPDATE', [userId])
+        const state = rows[0].data, result = action(state)
+        await client.query('UPDATE reading_state SET data=$2::jsonb,updated_at=NOW() WHERE user_id=$1', [userId, JSON.stringify(state)])
+        await client.query('COMMIT'); return result
+      } catch (error) { await client.query('ROLLBACK'); throw error }
+      finally { client.release() }
+    })
+    readingQueues.set(userId, task)
+    try { return await task } finally { if (readingQueues.get(userId) === task) readingQueues.delete(userId) }
+  }
+})
+
+registerStatistics(app,{load:async userId=>{
+  const [canonical,reading]=await Promise.all([getV11Canonical(userId),readReading(userId)])
+  return {...canonical,reading}
+}})
 
 if (!process.env.VERCEL) {
   await initDatabase()

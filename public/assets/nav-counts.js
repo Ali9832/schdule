@@ -10,7 +10,7 @@
         set('v11TaskBadge',data.summary?.tasks_open);set('waitingNavBadge',data.attention?.waiting_count);
         set('projectNavBadge',data.summary?.projects_active);set('meetingNavBadge',data.meetings?.week_count);set('habitNavBadge',data.routines?.active);
       }),
-      apiFetch('/api/v11.11/integration').then(data=>set('spiritualNavBadge',data.spiritual?.summary?.active))
+      v112Get('spiritual-nav','/api/v11.11/integration',{ttl:60000}).then(data=>set('spiritualNavBadge',data.spiritual?.summary?.active))
     ]).finally(()=>{running=null;if(again){again=false;schedule();}});
     return running;
   }

@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { optimizedBuild } from './scripts/lib/optimized-build.mjs'
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(),optimizedBuild()],
   server: {
     port: 3001,
     strictPort: true,

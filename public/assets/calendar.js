@@ -78,7 +78,8 @@
   function conflicts(value){const timed=dayItems(value).filter(item=>!item.all_day&&!item.done);let count=0;for(let i=0;i<timed.length;i++)for(let j=i+1;j<timed.length;j++)if(`${timed[i].date}T${timed[i].start_time}`<`${timed[j].end_date}T${timed[j].end_time}`&&`${timed[j].date}T${timed[j].start_time}`<`${timed[i].end_date}T${timed[i].end_time}`)count++;return count}
   async function openDay(value,create=false,seed={}){
     state.initial=create?seed:{};
-    const references=state.referencesAt&&Date.now()-state.referencesAt<60000?Promise.resolve():Promise.all([apiFetch('/api/projects'),apiFetch('/api/modules/academic/items')]).then(([projects,courses])=>{state.projects=projects;state.courses=courses.items;state.referencesAt=Date.now();}).catch(()=>{state.projects||=[];state.courses||=[];});
+    state.referencesLoading=!(state.referencesAt&&Date.now()-state.referencesAt<60000);
+    const references=!state.referencesLoading?Promise.resolve():Promise.all([apiFetch('/api/projects'),apiFetch('/api/modules/academic/items')]).then(([projects,courses])=>{state.projects=projects;state.courses=courses.items;state.referencesAt=Date.now();state.referencesError='';}).catch(error=>{state.projects||=[];state.courses||=[];state.referencesError=error.message||'دریافت درس‌ها انجام نشد.';}).finally(()=>{state.referencesLoading=false;});
     state.anchor=value;window.DateContext?.set(value,'calendar');
     if(state.dialog?.open){state.selected=value;state.editing=create?'new':null;state.draft=null;state.message='';renderDay();await Promise.all([ensureDay(value),references]);renderDay();return}
     state.dialog?.remove();
@@ -132,6 +133,17 @@
     const extra=CalendarExtras.fields(form,grid,inputs,values,field);
     const links=el('details','uc-extra-settings');links.open=!!(values.course_id||values.project_id);links.append(el('summary','','درس یا پروژهٔ مرتبط (اختیاری)'));const linksGrid=el('div','uc-form-grid');linksGrid.append(field('course_id','درس مرتبط','select',values.course_id||'',[['','بدون درس'],...(state.courses||[]).map(c=>[c.id,c.title])]));
     if(!item||['task','event'].includes(item.source))linksGrid.append(field('project_id','پروژه مرتبط','select',values.project_id||'',[['','بدون پروژه'],...(state.projects||[]).map(p=>[p.id,p.name])]));links.append(linksGrid);form.append(links);
+    inputs.course_id.disabled=!!state.referencesLoading;
+    const courseStatus=el('p','uc-form-hint',state.referencesLoading?'در حال دریافت فهرست درس‌ها…':state.referencesError?'دریافت درس‌ها انجام نشد.':!state.courses?.length?'هنوز درسی ثبت نشده؛ می‌توانید همین‌جا درس را اضافه کنید.':'درس‌ها از فهرست «تحصیل و یادگیری» خوانده می‌شوند.');links.append(courseStatus);
+    if(state.referencesError)links.append(button('دریافت دوبارهٔ درس‌ها',async()=>{try{const result=await apiFetch('/api/modules/academic/items');if(!form.isConnected)return;state.courses=result.items;const current=inputs.course_id.value;inputs.course_id.replaceChildren(new Option('بدون درس',''),...state.courses.map(c=>new Option(c.title,c.id)));inputs.course_id.value=current;state.referencesError='';courseStatus.textContent=state.courses.length?'درس‌ها دریافت شدند.':'هنوز درسی ثبت نشده است.';}catch(error){courseStatus.textContent='دریافت انجام نشد: '+error.message;}},'uc-secondary'));
+    const addCourse=el('details','uc-extra-settings');addCourse.append(el('summary','','＋ افزودن درس به فهرست'));
+    const courseLabel=el('label','','نام درس'),courseTitle=el('input');courseTitle.type='text';courseTitle.name='new_course_title';courseTitle.maxLength=120;courseTitle.disabled=!!state.referencesLoading;courseLabel.append(courseTitle);const courseError=el('p','uc-form-error');courseError.setAttribute('role','alert');
+    const courseSave=button('ثبت و انتخاب درس',async()=>{
+      const title=courseTitle.value.trim();if(!title){courseError.textContent='نام درس را وارد کنید.';return;}
+      courseSave.disabled=true;courseError.textContent='';
+      try{const created=await apiFetch('/api/modules/academic/items',{method:'POST',body:JSON.stringify({title})});if(!form.isConnected)return;state.courses=[...(state.courses||[]).filter(c=>c.id!==created.id),created];inputs.course_id.add(new Option(created.title,created.id));inputs.course_id.value=created.id;inputs.course_id.dispatchEvent(new Event('input',{bubbles:true}));addCourse.open=false;courseTitle.value='';courseStatus.textContent='درس ثبت و انتخاب شد.';state.referencesError='';}
+      catch(error){courseError.textContent=error.message||'ثبت درس انجام نشد.';}finally{courseSave.disabled=false;}
+    },'uc-primary');courseSave.disabled=!!state.referencesLoading;addCourse.append(courseLabel,courseError,courseSave);links.append(addCourse);
     if(item)form.append(CalendarExtras.attachments(item));
     const hint=el('p','uc-form-hint','با تغییر تاریخ، آیتم به روز انتخاب‌شده منتقل می‌شود.');if(item?.recurrence)hint.textContent='ویرایش این فرم روی کل مجموعهٔ تکرار اعمال می‌شود. برای انجام یا حذف فقط یک نوبت، از دکمه‌های همان نوبت استفاده کنید.';if(item?.source==='event'&&['meeting','religious'].includes(item.kind))hint.textContent+=' اطلاعات تخصصی این مورد در بخش خودش حفظ می‌شود.';form.append(hint);
     const draft=window.NoavaDrafts?.bind(form,'calendar:'+(item?item.source+':'+item.id:'new:'+state.selected));
@@ -139,7 +151,7 @@
     const sync=()=>{const timed=!check.checked;for(const key of ['start_time','end_time']){inputs[key].disabled=!timed;inputs[key].required=timed;inputs[key].closest('label').hidden=!timed;}const single=item?item.source!=='event':['task','homework','project','goal'].includes(inputs.kind.value);multiLabel.hidden=single;multi.disabled=single;const spanning=!single&&multi.checked;inputs.end_date.closest('label').hidden=!spanning;inputs.end_date.disabled=!spanning;inputs.end_date.required=spanning;if(!spanning)inputs.end_date.value=inputs.date.value;};check.onchange=multi.onchange=sync;inputs.kind.onchange=sync;let previousDate=inputs.date.value;inputs.date.onchange=()=>{if(inputs.date.value){const duration=(Date.parse(inputs.end_date.value)-Date.parse(previousDate))/86400000;if(multi.checked&&Number.isFinite(duration)&&duration>=0)inputs.end_date.value=add(inputs.date.value,duration);previousDate=inputs.date.value}sync()};sync();
     if(item&&['task','project','outcome'].includes(item.source))inputs.kind.disabled=true;
     extra.sync?.();
-    if(inputs.course_id.value||inputs.project_id?.value)links.open=true;
+    if(inputs.course_id.value||inputs.project_id?.value||['exam','quiz','class','homework','study'].includes(inputs.kind.value))links.open=true;
     form.onsubmit=event=>{
       event.preventDefault();if(state.busy||!form.reportValidity())return;const dateValue=inputs.date.value,endDate=inputs.end_date.value||dateValue,start=inputs.start_time.value||'09:00',end=inputs.end_time.value||'10:00';
       if(endDate<dateValue||(!check.checked&&endDate===dateValue&&end<=start)){error.textContent='پایان باید بعد از شروع باشد.';return}
@@ -153,7 +165,7 @@
         draft?.clear();
         try{await CalendarExtras.upload(item||result,uploads)}catch(error){return {warning:'آیتم ذخیره شد، اما بارگذاری بعضی ضمیمه‌ها انجام نشد: '+error.message+' برای تلاش مجدد، ویرایش آیتم را باز کنید.'}}
       },moved?'آیتم به '+faDateLabel(body.date)+' منتقل شد.':item?'تغییرات ذخیره شد.':'برنامه ثبت شد.');
-    };form.addEventListener('input',()=>{state.draft={...extra(),title:inputs.title.value,kind:inputs.kind.value,date:inputs.date.value,end_date:inputs.end_date.value,start_time:inputs.start_time.value,end_time:inputs.end_time.value,priority:inputs.priority.value,all_day:check.checked,description:inputs.description.value}});return form;
+    };form.addEventListener('input',()=>{state.draft={...extra(),title:inputs.title.value,kind:inputs.kind.value,date:inputs.date.value,end_date:inputs.end_date.value,start_time:inputs.start_time.value,end_time:inputs.end_time.value,priority:inputs.priority.value,all_day:check.checked,description:inputs.description.value,course_id:inputs.course_id.value,project_id:inputs.project_id?.value||null}});return form;
   }
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='calendar')await load()};
   let refreshTimer;window.addEventListener('nova:data-changed',event=>{if(/\/api\/(projects|modules\/academic)/.test(event.detail?.path||''))state.referencesAt=0;if(state.busy)return;clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.getElementById('calendar').classList.contains('hidden'))load()},120)});

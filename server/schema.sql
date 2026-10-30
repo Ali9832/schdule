@@ -411,3 +411,34 @@ CREATE TABLE IF NOT EXISTS project_reports (
 CREATE INDEX IF NOT EXISTS project_reports_owner_idx ON project_reports(user_id,project_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS project_reports_recent_idx ON project_reports(user_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS planner_events_project_meetings_idx ON planner_events(user_id,project_id,start_at) WHERE type='meeting';
+
+-- Reading is isolated from existing task, resource and life records. No sample seed.
+CREATE TABLE IF NOT EXISTS reading_state (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  data JSONB NOT NULL DEFAULT '{"books":[],"sessions":[],"timer":null}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Start accurate completion tracking prospectively; never backfill from updated_at.
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS completed_due_date DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS completed_due_date DATE;
+CREATE OR REPLACE FUNCTION noava_track_completion() RETURNS trigger AS $$
+BEGIN
+  IF NEW.status = 'done' THEN
+    IF TG_OP = 'INSERT' THEN
+      NEW.completed_at := NOW(); NEW.completed_due_date := NEW.due_date;
+    ELSIF OLD.status IS DISTINCT FROM 'done' THEN
+      NEW.completed_at := NOW(); NEW.completed_due_date := NEW.due_date;
+    ELSE
+      NEW.completed_at := OLD.completed_at; NEW.completed_due_date := OLD.completed_due_date;
+    END IF;
+  ELSE
+    NEW.completed_at := NULL; NEW.completed_due_date := NULL;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE TRIGGER tasks_track_completion BEFORE INSERT OR UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION noava_track_completion();
+CREATE OR REPLACE TRIGGER projects_track_completion BEFORE INSERT OR UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION noava_track_completion();

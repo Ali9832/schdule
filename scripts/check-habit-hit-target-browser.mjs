@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 const base=process.env.NOVA_BASE_URL||'http://127.0.0.1:3012'
-const tabs=await(await fetch('http://127.0.0.1:9228/json/list')).json()
+const tabs=await(await fetch((process.env.NOVA_BROWSER_DEBUG||'http://127.0.0.1:9228')+'/json/list')).json()
 const socket=new WebSocket(tabs.find(tab=>tab.type==='page').webSocketDebuggerUrl)
 await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject})
 let sequence=0,dayRequests=0;const pending=new Map()
