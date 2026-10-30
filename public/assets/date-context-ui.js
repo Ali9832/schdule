@@ -2,66 +2,64 @@
   'use strict';
   const ctx = DateContext, scopedPages = new Set(['today', 'daily', 'workspace', 'finance', 'meetings']);
   const currentPage = () => document.querySelector('.page:not(.hidden)')?.id;
-  const label = value => new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(new Date(value + 'T12:00:00Z'));
+  const label = value => { const parts=new Intl.DateTimeFormat('fa-IR-u-ca-persian', { weekday:'long',year:'numeric',month:'long',day:'numeric',timeZone:'UTC' }).formatToParts(new Date(value+'T12:00:00Z'));const get=type=>parts.find(part=>part.type===type)?.value||'';return [get('weekday'),get('day'),get('month'),get('year')].join(' '); };
+  const weekLabel = value => { const first=ctx.shift(value,-((new Date(value+'T12:00:00Z').getUTCDay()+1)%7)),last=ctx.shift(first,6);const short=day=>{const parts=new Intl.DateTimeFormat('fa-IR-u-ca-persian',{day:'numeric',month:'long',timeZone:'UTC'}).formatToParts(new Date(day+'T12:00:00Z'));return ['day','month'].map(type=>parts.find(part=>part.type===type)?.value).join(' ');};return short(first)+' تا '+short(last); };
   let revision = 0, refreshing = Promise.resolve(), financeRequest = 0;
   const pageBar = page => document.querySelector(`.planning-date-bar[data-planning-page="${page}"]`);
+  const modes = { dashboard: 'day', today: 'day', daily: 'filter', workspace: 'filter', meetings: 'filter', finance: 'filter', academic: 'week' };
+  function proposalDate(page=currentPage()) {
+    return ['calendar','schedule','academic','dashboard','today','finance'].includes(page) || (scopedPages.has(page) && ctx.scoped(page)) ? ctx.date : ctx.today();
+  }
+  function mountBar(page,bar) {
+    const week=page.id==='academic'&&page.querySelector('.academic-week-panel');
+    if(week){if(bar.parentElement!==week)week.querySelector('h2').after(bar);return;}
+    if(bar.parentElement===page)return;
+    const heading=page.querySelector(':scope > .hero,:scope > .sheet-dashboard-hero,:scope > .v116-hero')||page.firstElementChild;
+    if(heading)heading.after(bar);else page.append(bar);
+  }
   function bars() {
     document.querySelectorAll('.page').forEach(page => {
-      let bar = pageBar(page.id);
-      if (!bar) {
-        bar = document.createElement('section'); bar.className = 'planning-date-bar'; bar.setAttribute('aria-label', 'تاریخ مبنای این صفحه');
-        bar.dataset.planningPage = page.id;
-        const heading = document.createElement('div'), title = document.createElement('strong'), actual = document.createElement('small');
-        title.className = 'planning-date-label'; actual.className = 'planning-real-date'; heading.append(title, actual);
-        const controls = document.createElement('div'); controls.className = 'planning-date-controls';
-        const button = (text, name, click) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = text; b.setAttribute('aria-label', name); b.onclick = click; controls.append(b); return b; };
-        button(page.id === 'academic' ? 'هفتهٔ قبل →' : '→', page.id === 'academic' ? 'هفتهٔ قبل' : 'روز قبل', () => ctx.set(ctx.shift(ctx.date, page.id === 'academic' ? -7 : -1), page.id === 'academic' ? 'academic' : ''));
-        const dateLabel = document.createElement('label'); dateLabel.textContent = page.id === 'academic' ? 'رفتن به تاریخ' : 'تاریخ مبنا';
-        const input = document.createElement('input'); input.type = 'date'; input.className = 'planning-date-input'; input.setAttribute('aria-label', 'انتخاب تاریخ مبنای صفحه'); input.value = ctx.date;
-        input.onchange = () => { if (input.value) ctx.set(input.value); };
-        dateLabel.append(input); controls.append(dateLabel);
-        button(page.id === 'academic' ? '← هفتهٔ بعد' : '←', page.id === 'academic' ? 'هفتهٔ بعد' : 'روز بعد', () => ctx.set(ctx.shift(ctx.date, page.id === 'academic' ? 7 : 1), page.id === 'academic' ? 'academic' : ''));
-        button('امروز', 'بازگشت به امروز تهران', () => ctx.set(ctx.today()));
-        bar.append(heading, controls);
-        if (scopedPages.has(page.id)) {
-          const filter = document.createElement('label'); filter.className = 'planning-date-filter';
-          const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = ctx.scoped(page.id);
-          checkbox.onchange = () => ctx.setScope(page.id, checkbox.checked);
-          filter.append(checkbox, document.createTextNode('نمایش فقط موارد این روز')); bar.append(filter);
+      if(!modes[page.id])return;
+      let bar=pageBar(page.id);
+      if(!bar){
+        bar=document.createElement('section');bar.className='planning-date-bar';bar.dataset.planningPage=page.id;bar.setAttribute('aria-label',page.id==='academic'?'انتخاب هفته':'انتخاب روز و فیلتر تاریخ');
+        if(modes[page.id]==='filter'){
+          const filter=document.createElement('label');filter.className='planning-date-filter';
+          const checkbox=document.createElement('input');checkbox.type='checkbox';checkbox.checked=ctx.scoped(page.id);checkbox.onchange=()=>ctx.setScope(page.id,checkbox.checked);
+          filter.append(checkbox,document.createTextNode('فقط روز انتخابی'));bar.append(filter);
         }
-        const hint = document.createElement('small'); hint.className = 'planning-date-hint'; bar.append(hint); document.getElementById('pageDateControls').append(bar);
-        PersianUI.scan(bar);
+        const controls=document.createElement('div');controls.className='planning-date-controls';
+        const button=(text,name,action,className='')=>{const b=document.createElement('button');b.type='button';b.textContent=text;b.className=className;b.title=name;b.setAttribute('aria-label',name);b.onclick=action;controls.append(b);return b;};
+        const week=modes[page.id]==='week',step=week?7:1;
+        button('→',week?'هفتهٔ قبل':'روز قبل',()=>ctx.set(ctx.shift(ctx.date,-step),week?'academic':''));
+        const pick=button('انتخاب تاریخ','انتخاب تاریخ شمسی',()=>bar.querySelector('.persian-calendar-button').click(),'planning-date-label');pick.setAttribute('aria-haspopup','dialog');
+        const editor=document.createElement('label');editor.className='planning-date-editor';editor.hidden=true;editor.textContent='انتخاب تاریخ';
+        const input=document.createElement('input');input.type='date';input.className='planning-date-input';input.tabIndex=-1;input.value=ctx.date;input.onchange=()=>{if(input.value)ctx.set(input.value,week?'academic':'');};editor.append(input);controls.append(editor);
+        button('←',week?'هفتهٔ بعد':'روز بعد',()=>ctx.set(ctx.shift(ctx.date,step),week?'academic':''));
+        button('امروز','بازگشت به امروز تهران',()=>ctx.set(ctx.today(),week?'academic':''),'planning-today');
+        bar.append(controls);
+        const status=document.createElement('small');status.className='planning-date-hint';bar.append(status);
+        mountBar(page,bar);PersianUI.scan(bar);
       }
-      bar.hidden = page.id !== currentPage();
-      bar.querySelector('.planning-date-label').textContent = (ctx.date === ctx.today() ? 'امروز، ' : 'روز انتخاب‌شده، ') + label(ctx.date);
-      bar.querySelector('.planning-real-date').textContent = ctx.date === ctx.today() ? 'به وقت تهران' : 'امروز: ' + label(ctx.today());
-      const input = bar.querySelector('.planning-date-input'); if (document.activeElement !== input) input.value = ctx.date;
-      const filter = bar.querySelector('.planning-date-filter input'); if (filter) filter.checked = ctx.scoped(page.id);
-      bar.querySelector('.planning-date-hint').textContent = page.id === 'finance'
-        ? 'فیلتر روز برای تراکنش‌ها و موعدهاست؛ بودجه مربوط به ماه انتخابی و مانده حساب‌ها، مانده فعلی است. موارد بدون موعد باقی می‌مانند.'
-        : ['calendar', 'schedule', 'habits'].includes(page.id) ? 'بازهٔ تقویم / ماه روتین‌ها و تاریخ پیشنهادی ثبت جدید با این روز هماهنگ است.'
-        : scopedPages.has(page.id) ? 'موارد بدون موعد هم نمایش داده می‌شوند؛ با برداشتن تیک، فهرست همهٔ روزها را ببینید.'
-        : 'تاریخ پیشنهادی ثبت جدید؛ فهرست‌های دائمی این بخش بدون حذف یا مخفی‌سازی باقی می‌مانند.';
-      if(page.id === 'academic')bar.querySelector('.planning-date-hint').textContent = 'با انتخاب تاریخ، برنامهٔ هفتهٔ همان روز را ببینید؛ برنامهٔ جدید برای روز انتخاب‌شده پیشنهاد می‌شود.';
+      mountBar(page,bar);bar.hidden=page.id!==currentPage();
+      const scoped=ctx.scoped(page.id),filtered=modes[page.id]==='filter';
+      bar.classList.toggle('date-filter-off',filtered&&!scoped);
+      bar.querySelector('.planning-date-controls').hidden=filtered&&!scoped&&page.id!=='finance';
+      const input=bar.querySelector('.planning-date-input');if(document.activeElement!==input)input.value=ctx.date;
+      const pick=bar.querySelector('.planning-date-label');pick.textContent=(modes[page.id]==='week'?weekLabel(ctx.date):label(ctx.date))+' ▾';
+      const filter=bar.querySelector('.planning-date-filter input');if(filter)filter.checked=scoped;
+      bar.querySelector('.planning-date-hint').textContent=page.id==='finance'?'بودجه برای ماه انتخابی است؛ ماندهٔ حساب‌ها مقدار فعلی است.':filtered?(scoped?'موارد بدون موعد هم نمایش داده می‌شوند.':'همهٔ روزها؛ برای محدودکردن فهرست، فیلتر را فعال کن.'):'';
     });
   }
   function prepare(page) {
     if (page === 'calendar' && window.UnifiedCalendar) UnifiedCalendar.state.anchor = ctx.date;
     if (page === 'schedule' && typeof V115_ANCHOR !== 'undefined') V115_ANCHOR = new Date(ctx.date + 'T12:00:00');
-    if (page === 'habits') {
-      const p = PersianUI.localParts(new Date(ctx.date + 'T12:00:00'));
-      for (const [id, value] of [['habitMonthSelect', p.month], ['habitYearSelect', p.year]]) {
-        const select = document.getElementById(id); if (!select) continue;
-        if (![...select.options].some(o => Number(o.value) === value)) select.add(new Option(String(value), String(value)));
-        select.value = String(value);
-      }
-    }
     // Untouched proposals may follow the day; manually changed dates and drafts do not.
     const proposals = { habits: ['v119Date'], calendar: ['v119ApptStart', 'v119ApptEnd', 'v1111RelDate'], relationships: ['v1110CommitDue'] };
     for (const id of proposals[page] || []) {
       const input = document.getElementById(id); if (!input) continue;
       if (!input.value || input.value === input.dataset.planningProposal) {
-        input.value = ctx.date + (id.endsWith('Start') ? 'T09:00' : id.endsWith('End') ? 'T10:00' : '');
+        input.value = proposalDate(page) + (id.endsWith('Start') ? 'T09:00' : id.endsWith('End') ? 'T10:00' : '');
         input.dataset.planningProposal = input.value;
       }
     }
@@ -89,7 +87,7 @@
   const meetings = window.v116FilteredMeetings;
   window.v116FilteredMeetings = () => meetings().filter(row => ctx.matches(row.start_at, 'meetings'));
   const renderMeetings = window.renderV116;
-  window.renderV116 = function () { renderMeetings(); if (V116_DATA) v116SetText('v116KpiToday', (V116_DATA.items || []).filter(row => String(row.start_at).slice(0, 10) === ctx.date).length); };
+  window.renderV116 = function () { renderMeetings(); if (V116_DATA) v116SetText('v116KpiToday', (V116_DATA.items || []).filter(row => String(row.start_at).slice(0, 10) === proposalDate('meetings')).length); };
   const financeRender = window.v1112Render;
   window.v1112Render = function () {
     if (!V1112_DATA) return;
@@ -133,12 +131,12 @@
   }
   window.addEventListener('nova:date-changed', event => {
     bars();
-    if(currentPage() === 'academic')return; // Academic owns its weekly reload.
+    if(!modes[currentPage()] || currentPage() === 'academic')return; // Academic owns its weekly reload.
     if (event.detail.source === 'calendar' || event.detail.source === 'schedule') return;
     refreshing = refresh();
   });
   window.addEventListener('nova:date-scope', () => { refreshing = refresh(); });
-  window.addEventListener('nova:clock-day', bars);
+  window.addEventListener('nova:clock-day',()=>{bars();if(currentPage()==='spiritual')window.handleFunctionalPageOpen('spiritual');});
   for (const event of ['click', 'change']) document.addEventListener(event, e => {
     if (e.target.closest('#unifiedCalendar') && window.UnifiedCalendar) ctx.set(UnifiedCalendar.state.anchor, 'calendar');
   });
@@ -146,7 +144,7 @@
   window.v115ShiftRange = function (step) { shiftSchedule(step); ctx.set(v115Iso(V115_ANCHOR), 'schedule'); };
   window.v115JumpToday = function () { V115_ANCHOR = new Date(ctx.today() + 'T12:00:00'); ctx.set(ctx.today(), 'schedule'); loadV115Schedule(true); };
   const clearMeeting = window.clearMeetingForm;
-  window.clearMeetingForm = function () { clearMeeting(); document.getElementById('meetingDate').value = ctx.date; };
+  window.clearMeetingForm = function () { clearMeeting(); document.getElementById('meetingDate').value = proposalDate('meetings'); };
   // The selected date is a proposal, not a forced value: the user can clear/change it.
   const openGeneric = window.openGenericAdd, saveGeneric = window.saveGenericAdd, editTask = window.baseEditTask, closeGeneric = window.closeGenericAdd;
   window.closeGenericAdd = function () { closeGeneric(); document.getElementById('planningGenericDue')?.closest('label').remove(); };
@@ -155,7 +153,7 @@
     document.getElementById('planningGenericDue')?.closest('label').remove();
     if (!['daily', 'general', 'item', 'project', 'finance'].includes(currentAddType)) return;
     const label = document.createElement('label'); label.className = 'planning-generic-date'; label.textContent = 'تاریخ پیشنهادی / موعد (قابل تغییر)';
-    const input = document.createElement('input'); input.type = 'date'; input.id = 'planningGenericDue'; input.value = ctx.date;
+    const input = document.createElement('input'); input.type = 'date'; input.id = 'planningGenericDue'; input.value = proposalDate();
     label.append(input); document.getElementById('genericNotes').after(label); PersianUI.scan(label);
   };
   window.baseEditTask = function (id) { document.getElementById('planningGenericDue')?.closest('label').remove(); return editTask(id); };
@@ -169,7 +167,7 @@
     const priority = document.getElementById('genericPriority').value === 'P2' ? 'medium' : 'high';
     let path = '/api/tasks', body = { title, description: note, priority, status: 'todo', due_date: selectedDate, category: 'شخصی' };
     if (currentAddType === 'project') { path = '/api/projects'; body = { name: title, description: note, status: 'in_progress', due_date: selectedDate, color: '#7165f3', icon: '✦' }; }
-    if (currentAddType === 'finance') { path = '/api/finance/transactions'; body = { type: 'expense', amount: NoavaMoney.parse(document.getElementById('genericAmount').value), description: title, date: selectedDate || ctx.date, status: 'confirmed', category: 'عمومی' }; }
+    if (currentAddType === 'finance') { path = '/api/finance/transactions'; body = { type: 'expense', amount: NoavaMoney.parse(document.getElementById('genericAmount').value), description: title, date: selectedDate || proposalDate(), status: 'confirmed', category: 'عمومی' }; }
     genericSaving = true;
     const buttons = [...document.querySelectorAll('#genericModalBg .modal-actions button')];
     const submit = buttons[0], originalLabel = submit?.textContent;
@@ -178,6 +176,6 @@
     catch (error) { showToast('ذخیره نشد', error.message); }
     finally { genericSaving = false; buttons.forEach(button => button.disabled = false); if(submit)submit.textContent = originalLabel; }
   };
-  window.DateContextUI = { refresh, bars, prepare, pageBar, get refreshing() { return refreshing; } };
+  window.DateContextUI = { refresh, bars, prepare, pageBar, proposalDate, modes, get refreshing() { return refreshing; } };
   bars(); prepare(currentPage());
 })();

@@ -3,7 +3,7 @@
   const controllers = new Map(), drafts = new Map();
   const node = (tag, text, className) => { const n = document.createElement(tag); if (text != null) n.textContent = text; if (className) n.className = className; return n; };
   const button = (label, action) => { const b = node('button', label); b.type = 'button'; b.onclick = action; return b; };
-  const day = () => window.DateContext?.date || todayIso();
+  const day = () => window.DateContext?.today() || todayIso();
   const field = (form, name, label, type = 'text') => {
     const wrap = node('label', label), input = node(type === 'textarea' ? 'textarea' : 'input');
     if (input.tagName === 'INPUT') input.type = type;

@@ -1,0 +1,15 @@
+.saved-filter-menu{font:inherit;direction:rtl;flex:0 0 auto;min-width:0}
+.saved-filter-menu>summary{list-style:none;cursor:pointer;padding:9px 12px;border:1px solid var(--line,#dce4e0);border-radius:9px;background:var(--card,#fff);color:inherit;font-size:12px;line-height:1.7;min-height:38px}
+.saved-filter-menu>summary::-webkit-details-marker{display:none}
+.saved-filter-menu>summary::after{content:'⌄';margin-inline-start:10px}
+.saved-filter-menu[open]>summary{border-color:#70a393;background:#eef7f3}
+.saved-filter-popover{position:fixed;z-index:1000;box-sizing:border-box;max-height:min(420px,70dvh);overflow:auto;padding:8px;background:var(--card,#fff);color:var(--ink,#25433d);border:1px solid var(--line,#dce4e0);border-radius:12px;box-shadow:0 10px 32px #17382f24}
+.saved-filter-row{display:flex;align-items:stretch;gap:4px;margin-bottom:5px}
+.saved-filter-menu .saved-filter-apply{flex:1;min-width:0;text-align:right;overflow-wrap:anywhere;padding:10px;border:0;border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer;min-height:40px}
+.saved-filter-menu .saved-filter-apply:hover,.saved-filter-menu .saved-filter-apply[aria-pressed=true]{background:#edf6f1;color:#24654e}
+.saved-filter-menu .saved-filter-delete{flex:0 0 38px;min-height:40px;border:0;border-radius:8px;background:transparent;color:#a6535b;font:inherit;font-size:19px;cursor:pointer}
+.saved-filter-menu .saved-filter-save{width:100%;min-height:40px;padding:10px;border:0;border-radius:8px;background:#edf4f9;color:#2b526c;text-align:right;font:inherit;font-size:12px;cursor:pointer}
+.saved-filter-menu summary:focus-visible,.saved-filter-menu button:focus-visible{outline:2px solid #67ad98;outline-offset:2px}
+body.theme-dark .saved-filter-menu>summary,body.theme-dark .saved-filter-popover{background:#1a2930;border-color:#3b5054;color:#dcece5}
+body.theme-dark .saved-filter-menu .saved-filter-apply[aria-pressed=true],body.theme-dark .saved-filter-menu .saved-filter-apply:hover{background:#28443a;color:#b9dfcb}
+body.theme-dark .saved-filter-menu .saved-filter-save{background:#293e4a;color:#d4e5f0}

@@ -16,7 +16,6 @@
     finally{if(generation===request)root.setAttribute('aria-busy','false');}
   }
   function render(from){
-    DateContextUI.bars();
     root.replaceChildren();
     const header=node('header',null,'noava-section-heading');header.append(node('h1','تحصیل و یادگیری'),node('p','درس‌ها، برنامهٔ هفتگی و موعدهای درسی؛ متصل به کارها، پروژه‌ها و تقویم.'));root.append(header);
     const subjects=node('details',null,'noava-panel academic-subjects');subjects.open=!!editing||!courses.length;subjects.append(node('summary','مدیریت درس‌ها · '+toFaNum(courses.length)+' درس'));
@@ -35,7 +34,7 @@
     const academic=entries.filter(item=>(item.course_id||Object.hasOwn(names,item.kind))&&(!course||item.course_id===course)&&(!kind||item.kind===kind));
     const week=node('section',null,'noava-panel academic-week-panel');week.append(node('h2','برنامهٔ هفتگی'),node('p',`${faDateLabel(from)} تا ${faDateLabel(DateContext.shift(from,6))}`,'academic-week-range'),tools);const days=node('div',null,'academic-week');
     for(let offset=0;offset<7;offset++){const date=DateContext.shift(from,offset),column=node('section');column.append(button(faDateLabel(date),()=>UnifiedCalendar.openDay(date)));const rows=academic.filter(item=>item.date<=date&&item.end_date>=date).sort((a,b)=>Number(a.done)-Number(b.done)||a.start_time.localeCompare(b.start_time));for(const item of rows)column.append(itemRow(item));if(!rows.length)column.append(node('small','برنامه‌ای ثبت نشده'));days.append(column);}week.append(days);root.append(week);
-    const upcoming=node('section',null,'noava-panel');upcoming.append(node('h2','موعدها و برنامه‌های پیش رو (شش ماه)'));const rows=academic.filter(item=>item.date>=DateContext.date&&item.kind!=='class').sort((a,b)=>Number(a.done)-Number(b.done)||a.date.localeCompare(b.date));for(const item of rows)upcoming.append(itemRow(item));if(!rows.length)upcoming.append(node('p','هنوز موعدی ثبت نشده است.'));root.append(upcoming);
+    const upcoming=node('section',null,'noava-panel');upcoming.append(node('h2','موعدها و برنامه‌های پیش رو (شش ماه)'));const rows=academic.filter(item=>item.date>=DateContext.date&&item.kind!=='class').sort((a,b)=>Number(a.done)-Number(b.done)||a.date.localeCompare(b.date));for(const item of rows)upcoming.append(itemRow(item));if(!rows.length)upcoming.append(node('p','هنوز موعدی ثبت نشده است.'));root.append(upcoming);DateContextUI.bars();
   }
   function itemRow(item){
     const row=node('article',null,'academic-item'+(item.done?' is-done':''));const main=node('div');main.append(node('strong',item.title),node('small',`${names[item.kind]||'برنامه'} · ${courses.find(c=>c.id===item.course_id)?.title||'بدون درس'} · ${faDateLabel(item.date)} ${item.all_day?'':toFaNum(item.start_time)}`));row.append(main,button('جزئیات / ویرایش',()=>UnifiedCalendar.openDay(item.date)));if(item.project_id)row.append(button('پروژه',()=>openV11Inspector('project',item.project_id)));else if(item.source==='project')row.append(button('پروژه',()=>openV11Inspector('project',item.id)));return row;

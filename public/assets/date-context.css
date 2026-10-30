@@ -1,1 +1,26 @@
-.planning-date-bar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;padding:16px 18px;margin-bottom:20px;border:1px solid #d8e7e0;background:var(--card,#f6fbf8);color:var(--text,#294c41);border-radius:14px;direction:rtl}.planning-date-bar>div:first-child{display:grid;gap:5px}.planning-date-label{font-size:15px}.planning-real-date,.planning-date-hint{font-size:11px;line-height:1.8;opacity:.8}.planning-date-hint{flex-basis:100%}.planning-date-controls{display:flex;align-items:center;flex-wrap:wrap;gap:7px}.planning-date-controls>label{display:flex;align-items:center;gap:7px;font-size:12px}.planning-date-controls button{min-height:38px;min-width:38px;padding:7px 10px;border:1px solid #d8e7e0;border-radius:8px;background:transparent;color:inherit;font:inherit;cursor:pointer}.planning-date-controls input{width:125px;min-height:38px;box-sizing:border-box;border:1px solid #d8e7e0;border-radius:8px;padding:7px;font:inherit;background:transparent;color:inherit}.planning-date-filter{display:flex;align-items:center;gap:7px;font-size:12px}.planning-date-filter input{width:18px;height:18px}.planning-generic-date{display:grid;gap:8px;margin:12px 0;font-size:12px}.planning-generic-date input{padding:10px;border:1px solid #d8e7e0;border-radius:8px;font:inherit}.planning-date-bar button:focus-visible,.planning-date-bar input:focus-visible{outline:3px solid #79b9a5;outline-offset:2px}.planning-date-bar[aria-busy=true]{opacity:.75}body.theme-dark .planning-date-bar{background:#1a2c30;color:#dcece5;border-color:#3b554d}@media(max-width:600px){.planning-date-bar{padding:12px;gap:10px}.planning-date-controls{width:100%}.planning-date-label{font-size:13px}.planning-date-controls>label{flex:1}.planning-date-controls .persian-date-field{flex:1}}
+.planning-date-bar{display:flex;align-items:center;flex-wrap:wrap;gap:10px 16px;padding:12px 14px;margin:14px 0 18px;border:1px solid var(--line,#d8e7e0);background:var(--card,#fff);color:var(--text,#294c41);border-radius:12px;direction:rtl;min-width:0}
+.planning-date-bar[hidden],.planning-date-controls[hidden],.planning-date-editor[hidden]{display:none!important}
+.planning-date-controls{display:grid;grid-template-columns:38px minmax(145px,auto) 38px auto;align-items:center;gap:6px;max-width:100%;min-width:0}
+.planning-date-controls>button{min-width:0;min-height:40px;padding:7px 10px;border:1px solid #d8e7e0;border-radius:9px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+.planning-date-controls>.planning-date-label{font-weight:650;line-height:1.7;background:#f3f8f6}
+.planning-date-controls>.planning-today{font-size:12px}
+.planning-date-filter{display:flex;align-items:center;gap:7px;font-size:13px;white-space:nowrap;cursor:pointer}
+.planning-date-filter input{width:18px;height:18px;accent-color:#19785f}
+.planning-date-hint{font-size:11px;line-height:1.8;color:#74858b}
+.planning-date-hint:empty{display:none}
+.planning-date-bar:not(.date-filter-off) .planning-date-hint{flex-basis:100%}
+.planning-date-bar[aria-busy=true]{opacity:.7}
+.planning-date-controls>button:focus-visible,.planning-date-filter input:focus-visible{outline:3px solid #79b9a5;outline-offset:2px}
+.planning-generic-date{display:grid;gap:8px;margin:12px 0;font-size:12px}
+.planning-generic-date input{padding:10px;border:1px solid #d8e7e0;border-radius:8px;font:inherit}
+body.theme-dark .planning-date-bar{background:#1a2c30;color:#dcece5;border-color:#3b554d}
+body.theme-dark .planning-date-controls>.planning-date-label{background:#243c35;border-color:#48675a}
+.academic-week-panel>.planning-date-bar{margin:12px 0}
+.academic-week-panel>.academic-week-range{display:none}
+@media(max-width:600px){
+ .planning-date-bar{padding:10px;gap:10px}
+ .planning-date-controls{width:100%;grid-template-columns:32px minmax(0,1fr) 32px 45px;gap:4px}
+ .planning-date-controls>button{font-size:12px;padding:6px 4px}
+ .planning-date-controls>.planning-date-label{font-size:12px}
+ .planning-date-hint{font-size:11px}
+}

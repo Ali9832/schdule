@@ -2,6 +2,42 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.6.0] - 2026-10-30
+
+Upgrade: **2.5.0 → 2.6.0**. Includes the reviewed local navigation, header/date and saved-filter changes. No database migration or record deletion.
+
+### Compact saved filters
+- Replace the standalone Saved Views strip with a small Saved Filters menu beside the task filters. The empty state has no message or extra strip; the save action remains available inside the menu.
+- Preserve existing saved filter records and API contracts. Give each preset a keyboard-accessible apply/delete button, close after applying/saving and keep the popup within the viewport.
+- Validation: build and all 66 QA checks passed; isolated browser checks verified save persistence, applying/deleting presets, no empty message/strip, Escape focus, outside-click closing and desktop/mobile popup bounds without runtime exceptions.
+
+### Contextual headers and dates
+- Reduce the shared header to the page name and search. Move theme/version to Settings, retain account access in the sidebar and hide the duplicate global daily summary/actions.
+- Keep compact date navigation only where it affects the displayed content. Place academic week controls inside the weekly panel; use existing controls for the calendar, timeline and habit matrix.
+- Default Tasks, Meetings and Finance to all dates; keep an explicit opt-in day filter and show which scope is active.
+- Keep dates in timeless-page forms independent of a previously selected planning day. Spiritual completion and review registration use today's Tehran date; clarify those dates in their views.
+- Preserve database records and APIs. Included in this explicitly requested release.
+- Validation: all 21 page/detail views passed shared-header and contextual-control checks at 1920, 3200, 1280 and 390px; the Persian date picker, theme toggle, task/day scopes, finance/meeting form proposals, calendar sync and academic week navigation passed browser checks. Build and all 66 QA checks passed. Shared header height is about 62px on desktop and 112px on mobile.
+
+### Sidebar counters limited to Tasks
+- Keep sidebar counters only on Tasks descendants: open tasks, waiting tasks, active projects, this week's meetings, active routines and spiritual routines. Other menu entries remain without counters.
+- Refresh these counters from their existing APIs after navigation and data changes, without a periodic polling timer.
+- Validation: build and all 66 QA checks passed; browser checks confirmed exactly six badges limited to Tasks, values matching API responses, functioning bank filters and desktop/mobile routine navigation without runtime exceptions.
+- Move the Routines group under Tasks, keeping All Routines and Spiritual View together and retaining existing destinations and routine data.
+
+### Routine navigation
+- Move Spiritual View under the collapsible Routines heading, beside All Routines. Retain both destinations, routine counters, active-item highlighting and saved group state.
+- Release prepared after the user explicitly requested the push; the project retains this requirement for future changes.
+- Validation: build and all 66 QA checks passed; browser checks verified both routine links, active states, automatic expansion of parent groups and desktop/mobile navigation.
+
+### Remove focus mode
+- Remove the Focus sidebar item, standalone timer page and stop/resume dialog.
+- Remove focus launch actions from the dashboard, suggested tasks, task table and command palette, along with the unused timer UI code and badge refresh.
+- Redirect old Focus navigation to Today. Keep task creation/editing, recommendations and waiting/delegated workflows intact.
+- Preserve existing execution history, database records and API compatibility; no database migration or data removal.
+- Validation: production build and all 66 QA checks passed. Browser checks verified removed Focus UI/functions, old-route redirection, retained task submenu, dashboard updates, task form and desktop/mobile navigation without runtime exceptions.
+- Outstanding: production deployment verification; signed-in production data verification is tracked separately from the push.
+
 ## [2.5.0] - 2026-10-30
 
 ### Integrated operations

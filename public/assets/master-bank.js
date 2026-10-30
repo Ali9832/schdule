@@ -78,7 +78,6 @@ async function setStatus(id,done){
 function renderDashboard(){
  if(!DATA)return;
  const active=DATA.items.filter(item=>!item.deleted),done=active.filter(item=>item.status==='☑').length;
- const badge=document.getElementById('bankNavBadge');if(badge){badge.textContent=faDigits(active.length);badge.title=`${faDigits(active.length)} آیتم • ${faDigits(done)} انجام‌شده`;}
  const stats=document.querySelectorAll('#items .kpis .kpi b');if(stats[1])stats[1].textContent=faDigits(DATA.categories.length);if(stats[2])stats[2].textContent=faDigits(Object.keys(DATA.macroTitles).length);
  if(stats[3])stats[3].textContent=faDigits(done);
  const overview=document.getElementById('bank-comparison-summary');if(overview&&DATA.comparisonSummary){const s=DATA.comparisonSummary;overview.textContent=`ساختار تلفیقی: ${faDigits(s.categories)} دسته در ${faDigits(s.macros)} حوزه • ${faDigits(s.workbookCorrections)} اصلاح نسبت به اکسل • ${faDigits(active.filter(i=>i.classification?.needsReview).length)} مورد نیازمند بازبینی`}

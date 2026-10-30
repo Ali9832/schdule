@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 const base = process.env.NOVA_BASE_URL || 'http://127.0.0.1:3011'
-const tabs = await (await fetch('http://127.0.0.1:9228/json/list')).json()
+const tabs = await (await fetch((process.env.NOVA_BROWSER_DEBUG||'http://127.0.0.1:9227')+'/json/list')).json()
 const socket = new WebSocket(tabs.find(tab => tab.type === 'page').webSocketDebuggerUrl)
 await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject })
 let sequence = 0
@@ -17,9 +17,9 @@ try {
   await send('Page.navigate', { url: base }); await pause(400)
   await until('typeof DateContextUI!=="undefined" && !!V112_DASH')
   assert.equal(await evaluate('DateContext.date===DateContext.today()'), true)
-  assert.equal(await evaluate('document.querySelectorAll(".page").length===document.querySelectorAll(".planning-date-bar").length'), true)
+  assert.equal(await evaluate('document.querySelectorAll(".planning-date-bar").length'),7);assert.equal(await evaluate('DateContext.scoped("workspace")'),false)
   await evaluate(`(async()=>{for(const [suffix,due_date] of [[' A','${a}'],[' B','${b}'],[' Undated',null]])await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title:${JSON.stringify(title)}+suffix,due_date,status:'todo'})});})()`)
-  await evaluate('goPage("workspace")'); await until('!V111_PAGE.loading')
+  await evaluate('DateContext.setScope("workspace",true);goPage("workspace")'); await until('!V111_PAGE.loading')
   await evaluate(`DateContext.set('${a}');DateContextUI.refreshing`)
   await until(`!V111_PAGE.loading && V111_PAGE.items.some(x=>x.title===${JSON.stringify(title + ' A')})`)
   assert.equal(await evaluate(`V111_PAGE.items.some(x=>x.title===${JSON.stringify(title + ' B')})`), false)
@@ -37,7 +37,7 @@ try {
   assert.equal(created.due_date, b)
   await evaluate(`(async()=>{await v112EnsureLegacy();baseEditTask(${JSON.stringify(created.id)})})()`)
   assert.equal(await evaluate('!!document.getElementById("planningGenericDue")'), false)
-  await evaluate('closeGenericAdd();goPage("finance")')
+  await evaluate('closeGenericAdd();DateContext.setScope("finance",true);goPage("finance")')
   await until(`!!V1112_DATA && V1112_DATA.date==='${b}'`)
   assert.equal(await evaluate('V1112_DATA.summary.month'), '2026-11')
   for (const [kind, field] of [['transactions', 'date'], ['commitments', 'due_date'], ['debts', 'next_due'], ['budgets', 'period']]) {
@@ -57,6 +57,8 @@ try {
   await evaluate('FinanceEditor.close();goPage("meetings")')
   await until('typeof V116_DATA!=="undefined" && !!V116_DATA')
   await evaluate('v116OpenNew()')
+  assert.equal(await evaluate('document.getElementById("v116Date").value===DateContext.today()'),true,'unfiltered meeting forms propose today')
+  await evaluate('v116CloseComposer();DateContext.setScope("meetings",true);v116OpenNew()')
   assert.equal(await evaluate('document.getElementById("v116Date").value'), a)
   await evaluate('v116CloseComposer();goPage("calendar")')
   await until(`UnifiedCalendar.state.anchor==='${a}' && document.getElementById('unifiedCalendar').getAttribute('aria-busy')!=='true'`)
@@ -65,8 +67,8 @@ try {
   assert.equal(await evaluate('DateContext.date'), b)
   assert.equal(await evaluate('document.getElementById("calendarItemForm").elements.date.value'), b)
   await evaluate('UnifiedCalendar.state.dialog.close();goPage("habits")')
-  const month = await evaluate('PersianUI.localParts(new Date(DateContext.date+"T12:00:00")).month')
-  assert.equal(Number(await evaluate('document.getElementById("habitMonthSelect").value')), month)
+  const month = await evaluate('document.getElementById("habitMonthSelect").value');await evaluate('goPage("dashboard");goPage("habits")')
+  assert.equal(Number(await evaluate('document.getElementById("habitMonthSelect").value')), Number(month))
   const dashboard = await evaluate(`apiFetch('/api/v11.2/dashboard?date=${a}')`)
   assert.equal(dashboard.today, a); assert.ok(dashboard.now.next_actions.some(x => x.title === title + ' A'))
   assert.ok(!dashboard.now.next_actions.some(x => x.title === title + ' B'))
@@ -76,7 +78,7 @@ try {
   await evaluate('goPage("finance")')
   assert.equal(await evaluate('document.querySelector("[data-planning-page=finance]").getBoundingClientRect().width<=390'), true)
   assert.equal(errors.length, 0, JSON.stringify(errors))
-  console.log('Planning browser passed: date bar on every page, date/task scopes, undated preservation, new task persistence, old-date preservation, finance month/day filters and proposals, meetings, calendar sync, habit month, API validation and mobile layout.')
+  console.log('Planning browser passed: contextual date bars only on time-scoped pages, date/task scopes, undated preservation, new task persistence, old-date preservation, finance month/day filters and proposals, meetings, calendar sync, habit month, API validation and mobile layout.')
 } finally {
   await send('Emulation.clearDeviceMetricsOverride'); socket.close()
 }

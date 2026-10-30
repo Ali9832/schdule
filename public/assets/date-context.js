@@ -7,7 +7,7 @@
   const scopes = new Map();
   window.DateContext = {
     get date() { return selected; }, today, valid, shift,
-    scoped: page => scopes.get(page) !== false,
+    scoped: page => scopes.has(page) ? scopes.get(page) : ['today','daily'].includes(page),
     matches(value, page, undated = true) { return !this.scoped(page) || (!value ? undated : String(value).slice(0, 10) === selected); },
     setScope(page, enabled) { scopes.set(page, !!enabled); window.dispatchEvent(new CustomEvent('nova:date-scope', { detail: { page } })); },
     set(value, source = '') {
