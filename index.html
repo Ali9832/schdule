@@ -891,31 +891,31 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="app">
 <aside class="sidebar" id="mainSidebar">
 <div class="brand"><div class="brand-mark">N</div><div><strong>NOAVA</strong><small>آوای نو</small></div><button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="جمع کردن منو" aria-label="جمع کردن منو" aria-controls="mainSidebar" aria-expanded="true">‹</button></div>
-<button class="nav-item calendar-primary-nav" data-page="calendar"><span class="nav-icon">▦</span>تقویم جامع</button>
+<details class="nav-group calendar-nav-group" data-nav-group="calendar"><summary class="calendar-primary-nav" title="تقویم جامع"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-group-title">تقویم جامع</span></summary><div class="nav-group-items">
+<button class="nav-item" data-page="calendar"><span class="nav-icon">▦</span>نمای کلی</button>
+<button class="nav-item" data-page="schedule"><span class="nav-icon">▤</span>تقویم / خط زمانی<span class="nav-badge" id="v115ScheduleBadge">—</span></button>
+</div></details>
 <details class="nav-group" data-nav-group="daily"><summary title="اجرای روز"><span class="nav-icon" aria-hidden="true">☀</span><span class="nav-group-title">اجرای روز</span></summary><div class="nav-group-items">
 <button class="nav-item active" data-page="dashboard"><span class="nav-icon">◫</span>مرکز فرمان</button>
-<button class="nav-item" data-page="control-center"><span class="nav-icon">▦</span>مرکز کنترل</button>
+
 <button class="nav-item" data-page="today"><span class="nav-icon">◎</span>امروز</button>
 <button class="nav-item" data-page="focus"><span class="nav-icon">◉</span>تمرکز<span class="nav-badge" id="focusNavBadge">—</span></button>
-<button class="nav-item" onclick="focusQuickCapture()" type="button"><span class="nav-icon">＋</span>ثبت سریع</button>
-<button class="nav-item" data-page="workspace"><span class="nav-icon">☷</span>کارها<span class="nav-badge" id="v11TaskBadge">—</span></button>
+
+<details class="nav-group" data-nav-group="tasks"><summary title="کارها"><span class="nav-icon" aria-hidden="true">☷</span><span class="nav-group-title">کارها</span></summary><div class="nav-group-items">
+<button class="nav-item" data-page="workspace"><span class="nav-icon">☷</span>فهرست کارها<span class="nav-badge" id="v11TaskBadge">—</span></button>
 <button class="nav-item" data-page="waiting"><span class="nav-icon">⌛</span>در انتظار / واگذارشده<span class="nav-badge" id="waitingNavBadge">—</span></button>
 <button class="nav-item" data-page="projects"><span class="nav-icon">▣</span>پروژه‌ها</button>
 <button class="nav-item" data-page="meetings"><span class="nav-icon">▦</span>جلسات<span class="nav-badge" id="meetingNavBadge">—</span></button>
-<button class="nav-item" data-page="schedule"><span class="nav-icon">▤</span>تقویم / خط زمانی<span class="nav-badge" id="v115ScheduleBadge">—</span></button>
+</div></details>
 </div></details>
 <details class="nav-group" data-nav-group="areas"><summary title="سیستم و حوزه‌ها"><span class="nav-icon" aria-hidden="true">◫</span><span class="nav-group-title">سیستم و حوزه‌ها</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="items"><span class="nav-icon">☑</span>بانک آیتم‌ها<span class="nav-badge" id="bankNavBadge">—</span></button>
-<button class="nav-item" data-page="academic"><span class="nav-icon">🎓</span>حوزهٔ تحصیلی</button>
+<button class="nav-item" data-page="academic"><span class="nav-icon">🎓</span>تحصیل / یادگیری</button>
 <button class="nav-item" data-page="habits"><span class="nav-icon">◉</span>روتین‌ها<span class="nav-badge" id="habitNavBadge">—</span></button>
-<button class="nav-item" data-page="health"><span class="nav-icon">♥</span>سلامت / انرژی<span class="nav-badge" id="v119EnergyBadge">—</span></button>
 <button class="nav-item" data-page="relationships"><span class="nav-icon">👥</span>روابط / افراد<span class="nav-badge" id="v1110DueBadge">—</span></button>
 <button class="nav-item" data-page="finance"><span class="nav-icon">◈</span>مالی</button>
 <button class="nav-item" data-page="spiritual"><span class="nav-icon">✦</span>نمای معنوی</button>
-<button class="nav-item" data-page="religious"><span class="nav-icon">☾</span>تقویم مذهبی</button>
-<button class="nav-item" data-page="areas"><span class="nav-icon">◫</span>حوزه‌های زندگی<span class="nav-badge" id="v11AreaBadge">—</span></button>
-<button class="nav-item" data-page="resources"><span class="nav-icon">◇</span>دانش / یادگیری<span class="nav-badge" id="v11ResourceBadge">—</span></button>
-<button class="nav-item" data-page="archive"><span class="nav-icon">▱</span>آرشیو</button>
+
 </div></details>
 <details class="nav-group" data-nav-group="planning"><summary title="برنامه‌ریزی و جهت"><span class="nav-icon" aria-hidden="true">🎯</span><span class="nav-group-title">برنامه‌ریزی و جهت</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="weekly"><span class="nav-icon">▦</span>چرخه / برنامه هفتگی</button>
@@ -935,7 +935,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <header class="noava-page-header" id="pageHeader" aria-label="سربرگ و کنترل‌های صفحه">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.4.0</small></div>
+<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> <small id="app-version" dir="ltr">v2.5.0</small></div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 <button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button>
@@ -955,20 +955,39 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div id="pageDateControls" class="page-date-controls"></div>
 </header>
 <!-- DASHBOARD -->
-<section class="page hidden" id="calendar"><div id="unifiedCalendar"></div></section>
-<section class="page hidden" id="academic"><div id="academicBody"></div></section>
-<section class="page hidden" id="profile"><div id="noavaProfile" class="noava-panel noava-profile"></div></section>
-<section class="page hidden" id="control-center">
-<div id="simpleHome" class="simple-home">
-<header class="home-heading"><div><span class="home-eyebrow" id="homeDate">امروز</span><h1>مرکز کنترل</h1><p>کارها، برنامه‌ها و بخش‌های زندگی؛ در یک نگاه.</p></div><button class="home-text-button" onclick="goPage('today')">برنامهٔ کامل امروز ←</button></header>
-<div id="homeOverview" class="command-overview" aria-label="خلاصهٔ امروز"></div>
-<form class="home-capture" onsubmit="submitHomeTask(event)"><label for="homeTaskInput">چه کاری در ذهن داری؟</label><div><input id="homeTaskInput" maxlength="500" required placeholder="عنوان کار را بنویس…" autocomplete="off"/><button type="submit">＋ ثبت کار</button></div><p id="homeCaptureStatus" role="status" aria-live="polite">بعداً می‌توانی زمان و جزئیاتش را مشخص کنی.</p></form>
-<div class="home-columns"><section class="home-task-panel"><div class="home-section-heading"><h2>کارهای پیش رو</h2><button class="home-text-button" onclick="goPage('workspace')">همهٔ کارها ←</button></div><p class="home-section-note">برای دیدن جزئیات، روی عنوان کار بزن.</p><div id="homeTaskList" aria-live="polite"><p class="home-empty">در حال دریافت کارها…</p></div><div class="home-progress"><span id="homeProgressLabel">خلاصهٔ امروز در حال دریافت است.</span><progress id="homeProgress" max="100" value="0" aria-label="پیشرفت کارهای امروز"></progress></div></section>
-<aside class="home-day-panel"><div class="home-section-heading"><h2>تقویم پیش رو</h2><button class="home-text-button" onclick="goPage('schedule')">تقویم ←</button></div><div id="homeNextMeeting"><p class="home-empty">در حال دریافت برنامه…</p></div><button class="home-habits-link" onclick="goPage('habits')"><span>روتین‌های امروز</span><strong id="homeHabitProgress">—</strong><span aria-hidden="true">←</span></button></aside></div>
-<div class="home-columns command-secondary"><section class="home-task-panel"><div class="home-section-heading"><h2>پروژه‌های در جریان</h2><button class="home-text-button" onclick="goPage('projects')">همهٔ پروژه‌ها ←</button></div><div id="homeProjects"></div></section><section class="home-day-panel"><div class="home-section-heading"><h2>نیازمند پیگیری</h2><button class="home-text-button" onclick="goPage('waiting')">پیگیری‌ها ←</button></div><div id="homeAttention"></div></section></div>
-<div class="command-section-title"><h2>همهٔ بخش‌ها</h2><p>خلاصهٔ هر بخش را ببین و برای ادامه وارد آن شو.</p></div><nav id="homeSections" class="command-sections" aria-label="بخش‌های مرکز فرمان"></nav>
+<section class="page hidden" id="calendar"><div id="unifiedCalendar"></div><details class="integrated-tools " id="calendarAppointmentTools"><summary>قرارها و پیگیری‌های سلامت</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content"><section class="v119-panel">
+<div class="v119-panel-head"><div><h2>قرارها و پیگیری‌های سلامت</h2><span>قرارهای ثبت‌شده در تقویم شما</span></div><button class="v119-btn v119-ghost" onclick="goPage('schedule')">بازکردن تقویم</button></div>
+<div class="v119-list" id="v119Appointments"></div>
+<div class="v119-form">
+<label class="wide">عنوان<input id="v119ApptTitle" placeholder="مثلاً چکاپ / فیزیوتراپی / آزمایش"/></label>
+<label>شروع<input id="v119ApptStart" type="datetime-local"/></label>
+<label>پایان<input id="v119ApptEnd" type="datetime-local"/></label>
+<label>پزشک / ارائه‌دهنده<input id="v119ApptProvider" placeholder="اختیاری"/></label>
+<label>محل<input id="v119ApptLocation" placeholder="اختیاری"/></label>
+<label class="wide">یادداشت<textarea id="v119ApptNote" placeholder="آمادگی، مدارک، سؤال‌ها..."></textarea></label>
+<div class="v119-form-actions"><button class="v119-btn v119-primary" onclick="v119AddAppointment()">＋ افزودن به تقویم</button></div>
 </div>
- </section>
+</section></div></details><details class="integrated-tools v1111-page" id="calendarOccasionTools"><summary>مناسبت‌ها و کارهای آمادگی</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+<div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleReligiousComposer(true)">＋ مناسبت</button></div>
+<div class="v1111-summary" id="v1111ReligiousSummary"></div>
+<div class="v1111-composer hidden" id="v1111ReligiousComposer">
+<div class="v1111-composer-head"><div><b>افزودن مناسبت به تقویم</b><small>تاریخ را خودت ثبت می‌کنی؛ NOAVA تاریخ مذهبی را حدس نمی‌زند.</small></div><button onclick="v1111ToggleReligiousComposer(false)">×</button></div>
+<div class="v1111-form-grid"><label>عنوان<input id="v1111RelTitle" placeholder="عنوان مناسبت"/></label><label>تاریخ<input id="v1111RelDate" type="date"/></label><label>ساعت<input id="v1111RelTime" type="time" value="09:00"/></label><label>یادآوری آمادگی<select id="v1111RelReminder"><option value="0">همان روز</option><option selected="" value="1">۱ روز قبل</option><option value="3">۳ روز قبل</option><option value="7">۷ روز قبل</option></select></label><label class="wide">یادداشت مناسبت<input id="v1111RelObservance" placeholder="اعمال/یادداشت شخصی یا منبع"/></label><label class="wide">آمادگی لازم<input id="v1111RelPreparation" placeholder="چه چیزی باید قبل از این مناسبت آماده شود؟"/></label></div>
+<div class="v1111-form-actions"><button class="v1111-secondary-dark" onclick="v1111ToggleReligiousComposer(false)">انصراف</button><button class="v1111-primary-dark" onclick="v1111SaveReligious()">ثبت در تقویم</button></div>
+</div>
+<div class="v1111-grid"><div class="v1111-panel span2"><div class="v1111-panel-head"><div><h2>مناسبت‌های پیش‌رو</h2><span>مناسبت‌های ثبت‌شده در تقویم</span></div><span class="v1111-chip">در تقویم</span></div><div class="v1111-event-list" id="v1111ReligiousEvents"></div></div><div class="v1111-panel"><div class="v1111-panel-head"><div><h2>آمادگی‌ها</h2><span>کارهای لینک‌شده به مناسبت‌ها</span></div></div><div class="v1111-prep-list" id="v1111PreparationTasks"></div></div></div>
+</div></details></section>
+<section class="page hidden" id="academic"><div id="academicBody"></div><details class="integrated-tools " id="academicLearningTools"><summary>منابع و برنامه‌های یادگیری</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+<div class="v118-hero-actions"><button class="ghost" onclick="v118SetView('attention')">⚠ نیازمند توجه</button><button class="primary" onclick="v118OpenComposer()">＋ ثبت اولیه سریع</button></div>
+<div class="v118-flow"><span>ثبت اولیه</span><i>←</i><span>برای بعد</span><i>←</i><span>برنامهٔ یادگیری</span><i>←</i><span>یادداشت‌ها / جمع‌بندی</span><i>←</i><span>قدم بعدی / هدف</span><i>←</i><span>بایگانی</span></div>
+<div class="v118-summary" id="v118Summary"></div>
+<div class="v118-toolbar">
+<div class="v118-view-switch"><button class="active" data-v118-view="pipeline" onclick="v118SetView('pipeline')">▦ مسیر یادگیری</button><button data-v118-view="active" onclick="v118SetView('active')">▶ یادگیری فعال</button><button data-v118-view="attention" onclick="v118SetView('attention')">⚠ نیازمند پیگیری</button><button data-v118-view="library" onclick="v118SetView('library')">☷ کتابخانه</button></div>
+<div class="v118-filters"><input id="v118Search" oninput="renderV118()" placeholder="جستجو در عنوان، یادداشت، نکتهٔ کلیدی…"/><select id="v118TypeFilter" onchange="renderV118()"><option value="">همه نوع‌ها</option><option value="book">کتاب</option><option value="course">دوره</option><option value="article">مقاله</option><option value="paper">پژوهش</option><option value="video">ویدئو</option><option value="podcast">پادکست</option><option value="idea">ایده</option><option value="question">پرسش</option><option value="tool">ابزار</option><option value="note">یادداشت</option></select><select id="v118AreaFilter" onchange="renderV118()"><option value="">همه حوزه‌ها</option></select></div>
+</div>
+<div class="v118-root" id="v118Root"><div class="v118-empty">در حال بارگذاری یادگیری مسیر یادگیری…</div></div>
+</div></details></section>
+<section class="page hidden" id="profile"><div id="noavaProfile" class="noava-panel noava-profile"></div></section>
 <section class="page" id="dashboard">
 <div class="sheet-dashboard-hero v101-hero">
 <div class="sheet-dashboard-title">
@@ -978,21 +997,10 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </div>
 <div class="sheet-dashboard-side">
 <div class="sheet-date-card"><b id="v10DashboardDate">امروز</b><span>همه‌چیز ثبت می‌شود؛ فقط مهم‌ترین‌ها برای توجه بالا می‌آیند.</span></div>
-<button class="sheet-dashboard-quick" onclick="focusQuickCapture()">＋ ثبت سریع</button>
+
 <button class="sheet-dashboard-quick" onclick="goPage('today')">◎ نمای امروز</button>
 </div>
 </div>
-
-<div class="v101-capture" id="v101Capture">
-<div class="v101-capture-icon">＋</div>
-<div class="v101-capture-main">
-<label for="v101CaptureInput">ثبت سریع</label>
-<input id="v101CaptureInput" placeholder="هر چیزی که ذهنت را مشغول کرده بنویس؛ فعلاً فقط عنوان کافی است…"/>
-</div>
-<button onclick="quickCaptureTask()">ثبت در یادداشت‌های ورودی</button>
-<span class="v101-capture-hint">Enter</span>
-</div>
-
 
 <div class="v113-cycle-strip" id="v113CycleStrip">
 <div class="v113-stage-card v113-stage-main"><b>چرخه اجرا و مرور</b><small id="v113ThemeSummary">موضوع هفته و کارهای ضروری را با توجه به وقت آزاد خود انتخاب کنید.</small></div>
@@ -1349,7 +1357,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="module-head">
 <div class="module-icon">＋</div>
 <div class="module-head-actions">
-<button class="module-add" onclick="focusQuickCapture()">＋</button>
+<button class="module-add" onclick="openGenericAdd('daily','افزودن کار')">＋</button>
 <span class="module-status status-info">آماده ثبت</span>
 </div>
 </div>
@@ -1357,7 +1365,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="module-meta">هر ورودی ابتدا ثبت اولیه؛ سپس مشخص‌کردن قدم بعدی و برنامه‌ریزی</div>
 </div>
 <div class="module-scroll"><div class="module-list-item"><span class="nova-mini-icon">＋</span><span class="item-name">ایده، کار یا یادداشت جدید</span><span class="mini-state mini-blue" id="novaInboxCapture">ثبت از همین داشبورد</span></div><div class="module-list-item"><span class="nova-mini-icon">→</span><span class="item-name">مشخص‌کردن قدم بعدی</span><span class="mini-state mini-yellow" id="novaInboxClarify">تبدیل به کار / پروژه / منبع</span></div><div class="module-list-item"><span class="nova-mini-icon">⌘</span><span class="item-name">ثبت سریع با Enter</span><span class="mini-state mini-green" id="novaInboxQuick">فعال</span></div></div>
-<div class="module-footer"><small>ثبت اولیه → مشخص‌کردن قدم بعدی → برنامه‌ریزی</small><button onclick="focusQuickCapture()">ثبت سریع ←</button></div>
+<div class="module-footer"><small>ثبت اولیه → مشخص‌کردن قدم بعدی → برنامه‌ریزی</small><button onclick="openGenericAdd('daily','افزودن کار')">افزودن کار ←</button></div>
 </div>
 <div class="module-card mod-review" data-nova-group="control">
 <div class="module-card-top">
@@ -1559,7 +1567,48 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <table class="habit-matrix" id="habitMatrixTable"></table>
 </div>
 </div>
+<details class="integrated-tools " id="habitHealthTools"><summary>ثبت روزانه و شاخص‌های سلامت</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+
+<div class="v119-rule">ⓘ این بخش ابزار خودپایش و برنامه‌ریزی شخصی است؛ وضعیت‌ها فقط نسبت به هدف تعیین‌شدههای خودت نمایش داده می‌شوند و جایگزین ارزیابی پزشکی نیستند.</div>
+<div class="v119-summary" id="v119Summary"></div>
+<div class="v119-layout">
+<section class="v119-panel">
+<div class="v119-panel-head"><div><h2>ثبت حال روزانه</h2><span>ثبت کوتاه؛ بدون نیاز به پر کردن همه فیلدها</span></div><input id="v119Date" style="border:1px solid #dce4e1;border-radius:8px;padding:6px;background:inherit;color:inherit;font:inherit;font-size:7px" type="date"/></div>
+<div class="v119-checkin">
+<label>خواب / ساعت<input id="v119Sleep" max="24" min="0" placeholder="7.5" step=".1" type="number"/></label>
+<label>انرژی / 10<input id="v119Energy" max="10" min="1" placeholder="7" type="number"/></label>
+<label>حرکت / دقیقه<input id="v119Move" min="0" placeholder="30" type="number"/></label>
+<label>حال عمومی / 10<input id="v119Mood" max="10" min="1" placeholder="7" type="number"/></label>
+<label>فشار ذهنی / 10<input id="v119Stress" max="10" min="1" placeholder="4" type="number"/></label>
+<label class="wide">یادداشت کوتاه<textarea id="v119Note" placeholder="اختیاری: چه چیزی روی انرژی امروز اثر گذاشت؟"></textarea></label>
+</div>
+<div class="v119-checkin-actions"><button class="v119-primary" onclick="v119SaveCheckin()">ذخیرهٔ ثبت روزانه</button><button class="v119-ghost" onclick="v119ClearCheckin()">پاک کردن فرم</button></div>
 </section>
+<section class="v119-panel">
+<div class="v119-panel-head"><div><h2>تطبیق کار با انرژی</h2><span>انتخاب کار بر اساس سطح انرژی ثبت‌شده + زمان مناسب</span></div><span class="v119-energy-chip" id="v119EnergyState">بدون داده</span></div>
+<div class="v119-taskfit" id="v119TaskFit"></div>
+</section>
+</div>
+<div class="v119-metrics" id="v119MetricGrid"></div>
+<div class="v119-lower">
+<section class="v119-panel">
+<div class="v119-panel-head"><div><h2>روتین‌های سلامت</h2><span>روتین‌هایی برای مراقبت از سلامت و انرژی</span></div><button class="v119-btn v119-ghost" onclick="goPage('habits')">ماتریس روتین‌ها</button></div>
+<div class="v119-list" id="v119RoutineList"></div>
+<div class="v119-custom">
+<div class="v119-panel-head"><div><h2>شاخص سفارشی</h2><span>مثلاً زمان نور روز، ضربان استراحت یا هر معیار شخصی قابل‌اندازه‌گیری</span></div></div>
+<div class="v119-custom-grid">
+<label>نام شاخص<input id="v119CustomName" placeholder="نام شاخص"/></label>
+<label>واحد<input id="v119CustomUnit" placeholder="مثلاً دقیقه"/></label>
+<label>کمینه<input id="v119CustomMin" placeholder="کمینه" step="any" type="number"/></label>
+<label>بیشینه<input id="v119CustomMax" placeholder="بیشینه" step="any" type="number"/></label>
+<label>وضعیت مطلوب<select id="v119CustomDir"><option value="range">داخل بازه</option><option value="high">بیشتر بهتر</option><option value="low">کمتر بهتر</option></select></label>
+<button class="v119-btn v119-primary" onclick="v119AddMetric()">＋ افزودن</button>
+</div>
+</div>
+</section>
+
+</div>
+</div></details></section>
 <!-- SPIRITUAL — V11.11 canonical روتین view -->
 <section class="page hidden v1111-page" id="spiritual">
 <div class="v1111-hero spiritual"><div><h1>روتین‌های معنوی</h1><p>روتین‌های معنوی، هدف هفتگی و یادداشت‌های خود را مدیریت کنید.</p></div><div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleSpiritualComposer(true)">＋ روتین معنوی</button><button class="v1111-secondary" onclick="goPage('habits')">ماتریس همه روتین‌ها</button></div></div>
@@ -1572,16 +1621,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v1111-grid"><div class="v1111-panel span2"><div class="v1111-panel-head"><div><h2>روتین‌های معنوی امروز</h2><span>روتین‌های معنوی انتخاب‌شدهٔ شما</span></div><span class="v1111-chip">روتین‌های شما</span></div><div class="v1111-routine-list" id="v1111SpiritualList"></div></div><div class="v1111-panel"><div class="v1111-panel-head"><div><h2>راهنمای استفاده</h2><span>ثبت و پیگیری برنامهٔ روزانه</span></div></div><div class="v1111-principles"><div><b>یک روتین</b><span>روتین‌ها را در این صفحه یا بخش عادت‌ها پیگیری کنید.</span></div><div><b>بدون امتیاز معنویت</b><span>روند انجام روتین‌های خود را ببینید.</span></div><div><b>اختیار کاربر</b><span>نوع و عنوان روتین‌ها کاملاً قابل تنظیم است.</span></div></div></div></div>
 </section>
 <!-- RELIGIOUS — V11.11 canonical رویداد view -->
-<section class="page hidden v1111-page" id="religious">
-<div class="v1111-hero religious"><div><h1>مناسبت‌های مذهبی</h1><p>مناسبت‌ها را در تقویم ثبت کنید و برای آن‌ها یادآوری و کارهای آمادگی تعیین کنید.</p></div><div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleReligiousComposer(true)">＋ مناسبت</button><button class="v1111-secondary" onclick="goPage('schedule')">تقویم / خط زمانی</button></div></div>
-<div class="v1111-summary" id="v1111ReligiousSummary"></div>
-<div class="v1111-composer hidden" id="v1111ReligiousComposer">
-<div class="v1111-composer-head"><div><b>افزودن مناسبت به تقویم</b><small>تاریخ را خودت ثبت می‌کنی؛ NOAVA تاریخ مذهبی را حدس نمی‌زند.</small></div><button onclick="v1111ToggleReligiousComposer(false)">×</button></div>
-<div class="v1111-form-grid"><label>عنوان<input id="v1111RelTitle" placeholder="عنوان مناسبت"/></label><label>تاریخ<input id="v1111RelDate" type="date"/></label><label>ساعت<input id="v1111RelTime" type="time" value="09:00"/></label><label>یادآوری آمادگی<select id="v1111RelReminder"><option value="0">همان روز</option><option selected="" value="1">۱ روز قبل</option><option value="3">۳ روز قبل</option><option value="7">۷ روز قبل</option></select></label><label class="wide">یادداشت مناسبت<input id="v1111RelObservance" placeholder="اعمال/یادداشت شخصی یا منبع"/></label><label class="wide">آمادگی لازم<input id="v1111RelPreparation" placeholder="چه چیزی باید قبل از این مناسبت آماده شود؟"/></label></div>
-<div class="v1111-form-actions"><button class="v1111-secondary-dark" onclick="v1111ToggleReligiousComposer(false)">انصراف</button><button class="v1111-primary-dark" onclick="v1111SaveReligious()">ثبت در تقویم</button></div>
-</div>
-<div class="v1111-grid"><div class="v1111-panel span2"><div class="v1111-panel-head"><div><h2>مناسبت‌های پیش‌رو</h2><span>مناسبت‌های ثبت‌شده در تقویم</span></div><span class="v1111-chip">در تقویم</span></div><div class="v1111-event-list" id="v1111ReligiousEvents"></div></div><div class="v1111-panel"><div class="v1111-panel-head"><div><h2>آمادگی‌ها</h2><span>کارهای لینک‌شده به مناسبت‌ها</span></div></div><div class="v1111-prep-list" id="v1111PreparationTasks"></div></div></div>
-</section>
+
 <!-- V10.2 FOCUS MODE -->
 <section class="page hidden v102-focus-page" id="focus">
 <div class="v102-focus-hero"><div><div class="eyebrow2">زمان تمرکز</div><h1>فقط همین کار، همین حالا</h1><p>داشبورد برای دیدن کل سیستم است؛ این صفحه فقط اقدام فعلی، زمان، موقعیت انجام کار و نقطه بازگشت را نگه می‌دارد.</p></div><div class="v102-focus-clock"><div><strong id="v102FocusClock">00:00</strong><span id="v102FocusClockLabel">جلسه تمرکز شروع نشده</span></div></div></div>
@@ -1720,91 +1760,18 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </section>
 <!-- V11 CANONICAL TASK WORKSPACE -->
 <section class="page hidden" id="workspace">
-<div class="hero"><div><h1>کارها و <span>نماهای لینک‌شده</span></h1><p>کارهای خود را به‌صورت فهرست، برد یا تقویم مدیریت کنید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('daily','افزودن کار')">＋ کار</button><button class="secondary" onclick="goPage('daily')">جدول کارها</button></div></div>
+<div class="hero"><div><h1>کارها و <span>نماهای لینک‌شده</span></h1><p>کارهای خود را به‌صورت فهرست، برد یا تقویم مدیریت کنید.</p></div><div class="hero-actions"><button class="secondary" onclick="IntegratedTools.open('areas')">مدیریت حوزه‌ها</button><button class="primary" onclick="openGenericAdd('daily','افزودن کار')">＋ کار</button><button class="secondary" onclick="goPage('daily')">جدول کارها</button></div></div>
 <div class="v114-saved-shell" id="v114SavedViews"><span>نماهای ذخیره‌شده</span><div id="v114SavedViewButtons"></div><button class="v114-save-view" onclick="saveCurrentV114View()">＋ ذخیره نمای فعلی</button></div>
 
 <div class="v11-toolbar"><div class="v11-view-switch"><button class="active" id="v11ListBtn" onclick="setV11TaskView('list')">☷ فهرست</button><button id="v11BoardBtn" onclick="setV11TaskView('board')">▦ نمای ستونی</button><button id="v11CalendarBtn" onclick="setV11TaskView('calendar')">▣ تقویم</button></div><div class="v11-filter-row"><input id="v11TaskSearch" oninput="debouncedV111Reload()" placeholder="جستجو در کار…"/><select id="v11TaskArea" onchange="reloadV111Tasks()"><option value="">همه حوزه‌ها</option></select><select id="v11TaskStatus" onchange="reloadV111Tasks()"><option value="">همه وضعیت‌ها</option><option value="todo">باز</option><option value="in_progress">در جریان</option><option value="done">انجام‌شده</option></select><select id="v11TaskContext" onchange="reloadV111Tasks()"><option value="">هر موقعیت انجام کار</option><option>کامپیوتر</option><option>تلفن</option><option>جلسه</option><option>بیرون</option><option>خانه</option><option>دانشگاه</option><option>فکر عمیق</option></select><select id="v11TaskEnergy" onchange="reloadV111Tasks()"><option value="">هر سطح انرژی</option><option value="high">بالا</option><option value="medium">متوسط</option><option value="low">پایین</option></select><select id="v11TaskMinutes" onchange="reloadV111Tasks()"><option value="">هر مدت</option><option value="15">≤ ۱۵ دقیقه</option><option value="30">≤ ۳۰ دقیقه</option><option value="60">≤ ۶۰ دقیقه</option><option value="120">≤ ۱۲۰ دقیقه</option></select></div></div>
 <div class="v11-workspace-shell" id="v11WorkspaceRoot"></div>
 </section>
 <!-- V11.7 AREAS CONTROL -->
-<section class="page hidden" id="areas">
-<div class="v117-hero"><div><h1>حوزه‌ها / <span>حوزه‌ها</span></h1><p>حوزه مسئولیت جاری است، نه پروژه و نه «درصد زندگی». وضعیت هر حوزه از شواهد قابل اقدام مثل کار عقب‌افتاده، در انتظار پاسخ، پروژه بدون قدم بعدی و هدف در ریسک ساخته می‌شود.</p></div><div class="v117-hero-actions"><input id="v117NewArea" placeholder="نام حوزه جدید"/><button onclick="v117CreateArea()">＋ حوزه</button></div></div>
 
-<div class="v117-summary" id="v117AreaSummary"></div>
-<div class="v117-area-grid" id="v117AreasRoot"><div class="v117-empty">در حال بارگذاری حوزه‌ها…</div></div>
-</section>
 <!-- V11.8 KNOWLEDGE / LEARNING PIPELINE -->
-<section class="page hidden" id="resources">
-<div class="v118-hero">
-<div><h1>دانش، یادگیری و <span>منابع</span></h1><p>هر چیز جالب اول منبع است؛ فقط وقتی تعهد واقعی ایجاد شد به برنامهٔ یادگیری، کار یا هدف متصل می‌شود.</p></div>
-<div class="v118-hero-actions"><button class="ghost" onclick="v118SetView('attention')">⚠ نیازمند توجه</button><button class="primary" onclick="v118OpenComposer()">＋ ثبت اولیه سریع</button></div>
-</div>
-<div class="v118-flow"><span>ثبت اولیه</span><i>←</i><span>برای بعد</span><i>←</i><span>برنامهٔ یادگیری</span><i>←</i><span>یادداشت‌ها / جمع‌بندی</span><i>←</i><span>قدم بعدی / هدف</span><i>←</i><span>بایگانی</span></div>
-<div class="v118-summary" id="v118Summary"></div>
-<div class="v118-toolbar">
-<div class="v118-view-switch"><button class="active" data-v118-view="pipeline" onclick="v118SetView('pipeline')">▦ مسیر یادگیری</button><button data-v118-view="active" onclick="v118SetView('active')">▶ یادگیری فعال</button><button data-v118-view="attention" onclick="v118SetView('attention')">⚠ نیازمند پیگیری</button><button data-v118-view="library" onclick="v118SetView('library')">☷ کتابخانه</button></div>
-<div class="v118-filters"><input id="v118Search" oninput="renderV118()" placeholder="جستجو در عنوان، یادداشت، نکتهٔ کلیدی…"/><select id="v118TypeFilter" onchange="renderV118()"><option value="">همه نوع‌ها</option><option value="book">کتاب</option><option value="course">دوره</option><option value="article">مقاله</option><option value="paper">پژوهش</option><option value="video">ویدئو</option><option value="podcast">پادکست</option><option value="idea">ایده</option><option value="question">پرسش</option><option value="tool">ابزار</option><option value="note">یادداشت</option></select><select id="v118AreaFilter" onchange="renderV118()"><option value="">همه حوزه‌ها</option></select></div>
-</div>
-<div class="v118-root" id="v118Root"><div class="v118-empty">در حال بارگذاری یادگیری مسیر یادگیری…</div></div>
-</section>
+
 <!-- V11.9 HEALTH / ENERGY / SUSTAINABLE PERFORMANCE -->
-<section class="page hidden" id="health">
-<div class="v119-hero">
-<div><h1>سلامت، انرژی و <span>عملکرد پایدار</span></h1><p>خواب، انرژی، حرکت، روتین‌های سلامت و قرارها در یک نمای عملیاتی؛ بدون ساختن «درصد کلی سلامت» مصنوعی. داده ثبت‌نشده با وضعیت نامطلوب یکی نیست.</p></div>
-<button onclick="document.getElementById('v119Sleep')?.focus()">＋ ثبت حال روزانه امروز</button>
-</div>
-<div class="v119-rule">ⓘ این بخش ابزار خودپایش و برنامه‌ریزی شخصی است؛ وضعیت‌ها فقط نسبت به هدف تعیین‌شدههای خودت نمایش داده می‌شوند و جایگزین ارزیابی پزشکی نیستند.</div>
-<div class="v119-summary" id="v119Summary"></div>
-<div class="v119-layout">
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>ثبت حال روزانه روزانه</h2><span>ثبت کوتاه؛ بدون نیاز به پر کردن همه فیلدها</span></div><input id="v119Date" style="border:1px solid #dce4e1;border-radius:8px;padding:6px;background:inherit;color:inherit;font:inherit;font-size:7px" type="date"/></div>
-<div class="v119-checkin">
-<label>خواب / ساعت<input id="v119Sleep" max="24" min="0" placeholder="7.5" step=".1" type="number"/></label>
-<label>انرژی / 10<input id="v119Energy" max="10" min="1" placeholder="7" type="number"/></label>
-<label>حرکت / دقیقه<input id="v119Move" min="0" placeholder="30" type="number"/></label>
-<label>حال عمومی / 10<input id="v119Mood" max="10" min="1" placeholder="7" type="number"/></label>
-<label>فشار ذهنی / 10<input id="v119Stress" max="10" min="1" placeholder="4" type="number"/></label>
-<label class="wide">یادداشت کوتاه<textarea id="v119Note" placeholder="اختیاری: چه چیزی روی انرژی امروز اثر گذاشت؟"></textarea></label>
-</div>
-<div class="v119-checkin-actions"><button class="v119-primary" onclick="v119SaveCheckin()">ثبت ثبت حال روزانه</button><button class="v119-ghost" onclick="v119ClearCheckin()">پاک کردن فرم</button></div>
-</section>
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>تطبیق کار با انرژی</h2><span>انتخاب کار بر اساس سطح انرژی ثبت‌شده + زمان مناسب</span></div><span class="v119-energy-chip" id="v119EnergyState">بدون داده</span></div>
-<div class="v119-taskfit" id="v119TaskFit"></div>
-</section>
-</div>
-<div class="v119-metrics" id="v119MetricGrid"></div>
-<div class="v119-lower">
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>روتین‌های سلامت</h2><span>روتین‌هایی برای مراقبت از سلامت و انرژی</span></div><button class="v119-btn v119-ghost" onclick="goPage('habits')">ماتریس روتین‌ها</button></div>
-<div class="v119-list" id="v119RoutineList"></div>
-<div class="v119-custom">
-<div class="v119-panel-head"><div><h2>شاخص سفارشی</h2><span>مثلاً زمان نور روز، ضربان استراحت یا هر معیار شخصی قابل‌اندازه‌گیری</span></div></div>
-<div class="v119-custom-grid">
-<label>نام شاخص<input id="v119CustomName" placeholder="نام شاخص"/></label>
-<label>واحد<input id="v119CustomUnit" placeholder="مثلاً دقیقه"/></label>
-<label>کمینه<input id="v119CustomMin" placeholder="کمینه" step="any" type="number"/></label>
-<label>بیشینه<input id="v119CustomMax" placeholder="بیشینه" step="any" type="number"/></label>
-<label>وضعیت مطلوب<select id="v119CustomDir"><option value="range">داخل بازه</option><option value="high">بیشتر بهتر</option><option value="low">کمتر بهتر</option></select></label>
-<button class="v119-btn v119-primary" onclick="v119AddMetric()">＋ افزودن</button>
-</div>
-</div>
-</section>
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>قرارها و پیگیری‌های سلامت</h2><span>قرارهای ثبت‌شده در تقویم شما</span></div><button class="v119-btn v119-ghost" onclick="goPage('schedule')">بازکردن تقویم</button></div>
-<div class="v119-list" id="v119Appointments"></div>
-<div class="v119-form">
-<label class="wide">عنوان<input id="v119ApptTitle" placeholder="مثلاً چکاپ / فیزیوتراپی / آزمایش"/></label>
-<label>شروع<input id="v119ApptStart" type="datetime-local"/></label>
-<label>پایان<input id="v119ApptEnd" type="datetime-local"/></label>
-<label>پزشک / ارائه‌دهنده<input id="v119ApptProvider" placeholder="اختیاری"/></label>
-<label>محل<input id="v119ApptLocation" placeholder="اختیاری"/></label>
-<label class="wide">یادداشت<textarea id="v119ApptNote" placeholder="آمادگی، مدارک، سؤال‌ها..."></textarea></label>
-<div class="v119-form-actions"><button class="v119-btn v119-primary" onclick="v119AddAppointment()">＋ افزودن به تقویم</button></div>
-</div>
-</section>
-</div>
-</section>
+
 <!-- V11.10 RELATIONSHIPS / PEOPLE / COMMITMENTS -->
 <section class="page hidden" id="relationships">
 <div class="v1110-hero">
@@ -1854,11 +1821,6 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </section>
 </div>
 </section>
-<!-- V11 ARCHIVE -->
-<section class="page hidden" id="archive">
-<div class="hero"><div><div class="eyebrow"><span class="dot"></span>بایگانی</div><h1>آرشیو <span>NOAVA</span></h1><p>چیزهای غیرفعال از بین نمی‌روند؛ فقط از سطح توجه روزانه خارج می‌شوند.</p></div></div>
-<div class="v11-page-shell" id="v11ArchiveRoot"><div class="v11-archive-list"></div></div>
-</section>
 <section class="page hidden" id="finance">
 <div class="hero"><div><div class="eyebrow"><span class="dot"></span>مدیریت منابع شخصی</div><h1>مالی؛ <span>تصمیم و تعهد</span></h1><p>حساب‌ها، جریان نقدی، بودجه، بدهی و موعدهای مالی — بدون ساخت «امتیاز کلی مالی» مصنوعی.</p></div><div class="hero-actions"><button onclick="v1112Toggle('tx',true)">＋ تراکنش</button><button onclick="v1112Toggle('commit',true)">＋ تعهد مالی</button><button class="primary" onclick="v1112Toggle('budget',true)">＋ بودجه</button></div></div>
 <div class="v1112-shell">
@@ -1881,7 +1843,12 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>چرخه <span>هفتگی</span></h1><p>موضوع هفته، ظرفیت انجام کارها و اولویت‌های این دوره را مشخص کنید.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('reports')">مرور سیستم</button><button class="primary" onclick="saveV113Cycle()">ذخیره چرخه</button></div></div>
 <div class="v113-cycle-shell" id="v113CycleRoot"></div>
 </section>
-<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>P0 / P1</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>نمای پروژه‌محور از بانک آیتم‌های اکسل</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه یا اقدام')">＋ پروژه / اقدام</button></div></div><div class="functional-grid" id="projectsPageBody"></div></section>
+<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>P0 / P1</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>نمای پروژه‌محور از بانک آیتم‌های اکسل</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه یا اقدام')">＋ پروژه / اقدام</button></div></div><div class="functional-grid" id="projectsPageBody"></div><details class="integrated-tools " id="projectAreasTools"><summary>دسته‌بندی حوزه‌ها و مسئولیت‌ها</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+<div class="v117-hero-actions"><input id="v117NewArea" placeholder="نام حوزه جدید"/><button onclick="v117CreateArea()">＋ حوزه</button></div>
+
+<div class="v117-summary" id="v117AreaSummary"></div>
+<div class="v117-area-grid" id="v117AreasRoot"><div class="v117-empty">در حال بارگذاری حوزه‌ها…</div></div>
+</div></details></section>
 <section class="page hidden" id="goals">
 <div class="v117-hero"><div><h1>اهداف / <span>هدف‌ها</span></h1><p>هدف باید نتیجه قابل مشاهده داشته باشد، معیار سنجش آن روشن باشد و به پروژه‌هایی که آن را جلو می‌برند متصل شود. این صفحه «درصد کلی زندگی» تولید نمی‌کند.</p></div><div class="v117-hero-actions"><button onclick="v117OpenOutcome()">＋ هدف جدید</button></div></div>
 <div class="v117-summary" id="v117OutcomeSummary"></div>
@@ -2025,7 +1992,7 @@ function syncSidebarNavigation(id){
     if(selected){button.setAttribute('aria-current','page');active=button}else button.removeAttribute('aria-current');
   });
   if(!active)return;
-  const group=active.closest('.nav-group');if(group)group.open=true;
+  for(let group=active.closest('.nav-group');group;group=group.parentElement.closest('.nav-group'))group.open=true;
   if(!matchMedia('(max-width:900px)').matches&&document.querySelector('.app').classList.contains('sidebar-collapsed'))toggleSidebar(false);
   function reveal(){
     const container=sidebar.getBoundingClientRect(),item=active.getBoundingClientRect();
@@ -2035,6 +2002,7 @@ function syncSidebarNavigation(id){
   reveal();requestAnimationFrame(reveal);
 }
 function goPage(id){
+  id=({'control-center':'dashboard',archive:'academic',areas:'projects',resources:'academic',health:'habits',religious:'calendar'})[id]||id;
   if(id==='items')window.NovaBank?.ensureLoaded();
   window.dispatchEvent(new CustomEvent('nova:page-open',{detail:{page:id}}));
   window.AppOverlays?.closeAll();
@@ -2043,7 +2011,7 @@ function goPage(id){
   syncSidebarNavigation(id);
   const labels={dashboard:'مرکز فرمان',focus:'تمرکز',waiting:'در انتظار / واگذارشده',workspace:"کارها",areas:'حوزه‌ها',resources:'دانش / یادگیری',health:'سلامت / انرژی',relationships:'روابط / افراد',archive:'آرشیو',items:'مدیریت آیتم‌ها',habits:'روتین‌ها و عادت‌ها',spiritual:'عادات معنوی',religious:'مناسبات مذهبی',daily:"کار‌ها / کارها",meetings:'جلسات',schedule:"تقویم / خط زمانی",finance:'مدیریت مالی',today:'امروز',weekly:'چرخه هفتگی',projects:'پروژه‌ها',goals:'هدف‌ها',reports:'مرور و بازنگری',settings:'تنظیمات',moduleDetail:'جزئیات ماژول'};
   document.getElementById('crumb').textContent=labels[id]||'NOAVA';
-  if(id==='control-center')document.getElementById('crumb').textContent='مرکز کنترل';
+
   if(id==='calendar')document.getElementById('crumb').textContent='تقویم جامع';
   if(typeof handleFunctionalPageOpen==='function') handleFunctionalPageOpen(id);
 }
@@ -2897,21 +2865,6 @@ setTimeout(loadBase,0);
 // NOAVA V10.1 — Attention Architecture
 // Front-only migration layer: no backend rewrite required.
 // ============================================================
-function focusQuickCapture(){
-  if(document.getElementById('dashboard')?.classList.contains('hidden')) goPage('dashboard');
-  const el=document.getElementById('v101CaptureInput');
-  if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'center'});}
-}
-async function quickCaptureTask(){
-  const el=document.getElementById('v101CaptureInput');if(!el)return;
-  const title=el.value.trim();if(!title)return;
-  const btn=document.querySelector('#v101Capture>button');if(btn){btn.disabled=true;btn.textContent='در حال ثبت…'}
-  try{
-    await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:"یادداشت‌های ورودی",status:'todo',priority:'medium'})});
-    el.value='';showToast('ثبت شد',"مورد در یادداشت‌های ورودی ذخیره شد؛ تعهد و زمان‌بندی را بعداً روشن کن.");await refreshAll();
-  }catch(err){showToast('ثبت انجام نشد',err.message||String(err))}
-  finally{if(btn){btn.disabled=false;btn.textContent="ثبت در یادداشت‌های ورودی"}}
-}
 function v101PriorityWeight(p){return p==='high'?0:p==='medium'?1:2}
 function v101OpenTasks(){return (BASE_DATA?.tasks||[]).filter(t=>t.status!=='done')}
 function v101TaskButton(t,i){return `<button onclick="baseEditTask('${jsSafe(t.id)}')"><i>${toFaNum(i+1)}</i><span>${escapeHtml(t.title)}</span><b>${t.due_date===BASE_DATA?.stats?.today?'امروز':taskPriorityFa(t.priority)}</b></button>`}
@@ -3173,7 +3126,7 @@ function v112UpdatePerf(initialMs,dash,cacheHit){const a=document.getElementById
 function v112SeedCanonicalFromDashboard(d){if(!d)return;V11_DATA={areas:(d.areas||[]).map(a=>({id:a.id,name:a.name,icon:a.icon,status:a.status,description:a.description,standard:a.standard})),tasks:[],projects:d.projects||[],outcomes:[],routines:[],events:[],meetings:d.meetings?.upcoming||[],resources:[],links:[],execution:d.execution||{},summary:d.summary||{}};hydrateV11()}
 function v112TaskAction(t,i){return `<button onclick="openV11Inspector('task','${jsSafe(t.id)}')"><i>${toFaNum(i+1)}</i><span>${escapeHtml(t.title)}</span><b>${t.due_date===V112_DASH?.today?'امروز':taskPriorityFa(t.priority)}</b></button>`}
 function v112RenderDashboard(d){
-  if(d && typeof renderSimpleHome==='function')renderSimpleHome(d);
+
   if(!d)return;V112_DASH=d;const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
   set('v11Coverage',`${toFaNum(d.summary?.next_action_coverage||0)}٪`);set('v11Stale',toFaNum(d.summary?.stale_projects||0));set('v11AreasCount',toFaNum(d.summary?.areas||0));set('v11ResourceCount',toFaNum(d.summary?.resources_backlog||0));set('v102WaitingInline',toFaNum(d.attention?.waiting_count||0));
   const next=d.now?.next_actions||[],nextRoot=document.getElementById('v101NextActions');if(nextRoot)nextRoot.innerHTML=next.map(v112TaskAction).join('')||'<div class="empty">فعلاً اقدام فوری ثبت نشده است.</div>';
@@ -3206,17 +3159,15 @@ async function v112LoadCanonicalPage(id){await v112EnsureReferences();V11_DATA=V
 const v112OldToggleLegacy=toggleLegacyAnalytics;
 toggleLegacyAnalytics=async function(){const d=document.getElementById('dashboard');const willOpen=!d?.classList.contains('show-legacy-analytics');if(willOpen)await v112EnsureLegacy();v112OldToggleLegacy()}
 
-// Fast capture refreshes the compact dashboard rather than the entire application state.
-quickCaptureTask=async function(){const el=document.getElementById('v101CaptureInput'),title=el?.value.trim();if(!title)return;const btn=document.querySelector('#v101Capture>button');if(btn){btn.disabled=true;btn.textContent='در حال ثبت…'}try{await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,category:"یادداشت‌های ورودی",status:'todo',priority:'medium'})});el.value='';v112Invalidate('dashboard');await v112RefreshDashboard(true);showToast('ثبت شد',"در یادداشت‌های ورودی ذخیره شد.")}catch(e){showToast('ثبت نشد',e.message||String(e))}finally{if(btn){btn.disabled=false;btn.textContent="ثبت در یادداشت‌های ورودی"}}}
 
 const v112OldFunctional=window.handleFunctionalPageOpen;
 window.handleFunctionalPageOpen=async function(id){
   try{
-    if(id==='control-center'){await v112RefreshDashboard();return}
+    if(id==='dashboard'){await v112RefreshDashboard();return}
     if(id==='workspace'){await v112EnsureReferences();if(!V111_PAGE.items.length)await reloadV111Tasks();v111HydrateMetrics();return}
     if(id==='areas'){await v112LoadAreasPage();return}
     if(['projects','goals','resources','archive'].includes(id)){await v112LoadCanonicalPage(id);return}
-    if(['today','daily','finance','habits','spiritual','religious','meetings','weekly','focus','waiting','reports','settings','items'].includes(id))await v112EnsureLegacy();
+    if(['today','daily','finance','habits','spiritual','meetings','weekly','focus','waiting','reports','settings','items'].includes(id))await v112EnsureLegacy();
     if(v112OldFunctional)await v112OldFunctional(id)
   }catch(e){console.error(e);showToast('بارگذاری صفحه',e.message||String(e))}
 }
@@ -3413,9 +3364,9 @@ function v117CloseOutcome(){document.getElementById('v117Composer')?.classList.r
 function v117SelectedProjects(){return [...document.querySelectorAll('#v117ProjectPicks input:checked')].map(x=>x.value)}
 async function v117SaveOutcome(){const title=document.getElementById('v117Title')?.value.trim();if(!title)return showToast('عنوان لازم است',"برای هدف یک نتیجه مشخص بنویس.");const body={title,area_id:document.getElementById('v117Area')?.value||null,status:document.getElementById('v117Status')?.value||'active',metric_name:document.getElementById('v117Metric')?.value||'',unit:document.getElementById('v117Unit')?.value||'',target_direction:document.getElementById('v117Direction')?.value||'increase',baseline_value:Number(document.getElementById('v117Baseline')?.value||0),current_value:Number(document.getElementById('v117Current')?.value||0),target_value:Number(document.getElementById('v117Target')?.value||0),due_date:document.getElementById('v117Due')?.value||null,review_at:document.getElementById('v117Review')?.value||null,next_action:document.getElementById('v117NextAction')?.value||'',measurement_note:document.getElementById('v117Measurement')?.value||'',note:document.getElementById('v117Note')?.value||''},selected=v117SelectedProjects();try{const res=await apiFetch(V117_EDIT_ID?`/api/v11.7/outcomes/${encodeURIComponent(V117_EDIT_ID)}`:'/api/v11.7/outcomes',{method:V117_EDIT_ID?'PATCH':'POST',body:JSON.stringify(body)}),oid=res.outcome?.id||V117_EDIT_ID;if(!oid)throw new Error("هدف id missing");for(const pid of selected.filter(x=>!V117_ORIGINAL_PROJECTS.includes(x)))await apiFetch(`/api/v11.7/outcomes/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`,{method:'POST',body:'{}'});for(const pid of V117_ORIGINAL_PROJECTS.filter(x=>!selected.includes(x)))await apiFetch(`/api/v11.7/outcomes/${encodeURIComponent(oid)}/projects/${encodeURIComponent(pid)}`,{method:'DELETE'});V117_DATA=await apiFetch('/api/v11.7/control');showToast("هدف ذخیره شد",title)}catch(e){const id=V117_EDIT_ID||`preview-o-${Date.now()}`,area=(V117_DATA.areas||[]).find(a=>a.id===body.area_id),linked=(V117_DATA.projects||[]).filter(p=>selected.includes(p.id));const progress=body.target_value>body.baseline_value?Math.max(0,Math.min(100,Math.round((body.current_value-body.baseline_value)/(body.target_value-body.baseline_value)*100))):null,row={...body,id,progress_percent:progress,control_state:!body.target_value||!body.unit||!body.next_action?'attention':'stable',control_reason:!body.target_value||!body.unit?'معیار سنجش کامل نیست':!body.next_action?"قدم بعدی تعریف نشده":'بر اساس داده‌های فعلی نیاز فوری دیده نمی‌شود',linked_projects:linked,linked_project_ids:selected};const ix=V117_DATA.outcomes.findIndex(x=>x.id===id);if(ix>=0)V117_DATA.outcomes[ix]=row;else V117_DATA.outcomes.unshift(row);(V117_DATA.projects||[]).forEach(p=>p.linked_outcome_ids=(p.linked_outcome_ids||[]).filter(x=>x!==id).concat(selected.includes(p.id)?[id]:[]));showToast('حالت Preview','تغییرات در همین HTML نگه داشته شد.')}V117_EDIT_ID=null;v117CloseOutcome();renderV117All()}
 async function v117DeleteOutcome(){if(!V117_EDIT_ID||!confirm("این هدف حذف شود؟"))return;try{const res=await apiFetch(`/api/v11.7/outcomes/${encodeURIComponent(V117_EDIT_ID)}`,{method:'DELETE'});V117_DATA=res.payload||await apiFetch('/api/v11.7/control')}catch(e){V117_DATA.outcomes=V117_DATA.outcomes.filter(o=>o.id!==V117_EDIT_ID);for(const p of V117_DATA.projects||[])p.linked_outcome_ids=(p.linked_outcome_ids||[]).filter(x=>x!==V117_EDIT_ID)}v117CloseOutcome();V117_EDIT_ID=null;renderV117All()}
-async function v117EditArea(id){const a=(V117_DATA?.areas||[]).find(x=>x.id===id);if(!a)return;const standard=await AppDialogs.ask("انتظار از این حوزه این حوزه چیست؟",a.standard||'');if(standard===null)return;const description=await AppDialogs.ask("توضیح کوتاه حوزه",a.description||'');if(description===null)return;try{await apiFetch(`/api/v11/areas/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({standard,description})});V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){a.standard=standard;a.description=description}renderV117Areas()}
-async function v117CreateArea(){const inp=document.getElementById('v117NewArea'),name=inp?.value.trim();if(!name)return;try{await apiFetch('/api/v11/areas',{method:'POST',body:JSON.stringify({name,icon:'◫'})});inp.value='';V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){const a={id:`preview-a-${Date.now()}`,name,icon:'◫',standard:'',description:'',control_state:'stable',control_reason:'استثنای مهمی دیده نمی‌شود',tasks_open:0,waiting:0,projects_active:0,outcomes_active:0};V117_DATA.areas.push(a);inp.value=''}renderV117All()}
-const v117OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v117OldFunctional)await v117OldFunctional(id);if(['goals','areas'].includes(id))await loadV117(true)};
+async function v117EditArea(id){const a=(V117_DATA?.areas||[]).find(x=>x.id===id);if(!a)return;const standard=await AppDialogs.ask("انتظار از این حوزه این حوزه چیست؟",a.standard||'');if(standard===null)return;const description=await AppDialogs.ask("توضیح کوتاه حوزه",a.description||'');if(description===null)return;try{await apiFetch(`/api/v11/areas/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({standard,description})});V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV117Areas()}
+async function v117CreateArea(){const inp=document.getElementById('v117NewArea'),name=inp?.value.trim();if(!name)return;try{await apiFetch('/api/v11/areas',{method:'POST',body:JSON.stringify({name,icon:'◫'})});inp.value='';V117_DATA=await apiFetch('/api/v11.7/control')}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV117All()}
+const v117OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v117OldFunctional)await v117OldFunctional(id);if(id==='goals')await loadV117(true)};
 // Outcomes are loaded when their view opens.
 </script>
 <aside aria-hidden="true" class="v118-composer" id="v118Composer">
@@ -3469,13 +3420,13 @@ function renderV118(){if(!V118_DATA)return;v118Summary();const root=document.get
 function v118OpenComposer(id=null){V118_EDIT_ID=id;const r=(V118_DATA?.items||[]).find(x=>x.id===id)||{title:'',area_id:'',resource_type:'note',status:'inbox',url:'',note:'',author:'',source_name:'',started_at:'',completed_at:'',progress_percent:0,next_action:'',key_takeaways:'',learning_output:'',rating:0,last_reviewed_at:'',linked:[]};v118FillRefs();const set=(x,v)=>{const e=document.getElementById(x);if(e)e.value=v??''};set('v118Title',r.title);set('v118Area',r.area_id);set('v118Type',r.resource_type||'note');set('v118Status',r.status||'inbox');set('v118Progress',r.progress_percent||0);set('v118Author',r.author);set('v118Source',r.source_name);set('v118Url',r.url);set('v118Started',r.started_at?String(r.started_at).slice(0,10):'');set('v118Reviewed',r.last_reviewed_at?String(r.last_reviewed_at).slice(0,10):'');set('v118NextAction',r.next_action);set('v118Note',r.note);set('v118Takeaways',r.key_takeaways);set('v118Output',r.learning_output);set('v118Rating',r.rating||0);set('v118Completed',r.completed_at?String(r.completed_at).slice(0,10):'');document.getElementById('v118ComposerTitle').textContent=id?r.title:"ثبت اولیه جدید";const lp=document.getElementById('v118Linked');if(lp)lp.innerHTML=`<h4>ارتباط‌ها</h4>${(r.linked||[]).map(x=>`<div class="v118-link-chip" style="display:inline-block;margin:3px">${escapeHtml(x.type)} • ${escapeHtml(x.relation)} • ${escapeHtml(x.label)}</div>`).join('')||'<div>هنوز ارتباطی ثبت نشده است.</div>'}`;document.getElementById('v118Composer')?.classList.add('open')}
 function v118CloseComposer(){document.getElementById('v118Composer')?.classList.remove('open')}
 function v118Body(){return {title:document.getElementById('v118Title')?.value.trim(),area_id:document.getElementById('v118Area')?.value||null,resource_type:document.getElementById('v118Type')?.value||'note',status:document.getElementById('v118Status')?.value||'inbox',progress_percent:Number(document.getElementById('v118Progress')?.value||0),author:document.getElementById('v118Author')?.value||'',source_name:document.getElementById('v118Source')?.value||'',url:document.getElementById('v118Url')?.value||'',started_at:document.getElementById('v118Started')?.value||null,last_reviewed_at:document.getElementById('v118Reviewed')?.value||null,next_action:document.getElementById('v118NextAction')?.value||'',note:document.getElementById('v118Note')?.value||'',key_takeaways:document.getElementById('v118Takeaways')?.value||'',learning_output:document.getElementById('v118Output')?.value||'',rating:Number(document.getElementById('v118Rating')?.value||0),completed_at:document.getElementById('v118Completed')?.value||null}}
-async function v118Save(){const b=v118Body();if(!b.title)return showToast('عنوان لازم است',"برای منبع عنوان بنویس.");try{const res=await apiFetch(V118_EDIT_ID?`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}`:'/api/v11.8/resources',{method:V118_EDIT_ID?'PATCH':'POST',body:JSON.stringify(b)});V118_DATA=res.payload||await apiFetch('/api/v11.8/learning');showToast("منبع ذخیره شد",b.title)}catch(e){const id=V118_EDIT_ID||`preview-r-${Date.now()}`,row={...b,id,updated_at:new Date().toISOString(),linked:[],attention_reasons:b.status==='active'&&!b.next_action?["قدم بعدی ندارد"]:[]},ix=V118_DATA.items.findIndex(x=>x.id===id);if(ix>=0)V118_DATA.items[ix]=row;else V118_DATA.items.unshift(row);showToast('حالت Preview','تغییر در همین HTML نگه داشته شد.')}v118CloseComposer();renderV118()}
-async function v118QuickProgress(id,p){try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({progress_percent:p,last_reviewed_at:v118Today()})});V118_DATA=res.payload}catch(e){const r=V118_DATA.items.find(x=>x.id===id);if(r){r.progress_percent=p;r.last_reviewed_at=v118Today()}}renderV118()}
-async function v118PromoteProject(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن سپس برنامهٔ یادگیری بساز.");try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/promote-project`,{method:'POST',body:JSON.stringify({})});V118_DATA=res.payload;showToast("برنامهٔ یادگیری ساخته شد",res.project?.name||'')}catch(e){const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID);if(r){r.status='active';r.started_at=r.started_at||v118Today();r.linked=[...(r.linked||[]),{type:'project',id:`preview-p-${Date.now()}`,label:`یادگیری: ${r.title}`,relation:'became_learning_project'}]}showToast('حالت Preview',"پروژه نمونه به منبع متصل شد.")}v118OpenComposer(V118_EDIT_ID);renderV118()}
-async function v118CreateAction(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن سپس کار بساز.");const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID),title=await AppDialogs.ask("عنوان کار",r?.next_action||`اقدام از: ${r?.title||''}`);if(title===null||!title.trim())return;try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/create-action`,{method:'POST',body:JSON.stringify({title:title.trim()})});V118_DATA=res.payload;showToast("کار ساخته شد",res.task?.title||title)}catch(e){if(r)r.linked=[...(r.linked||[]),{type:'task',id:`preview-t-${Date.now()}`,label:title.trim(),relation:'generated_action'}];showToast('حالت Preview',"کار نمونه متصل شد.")}v118OpenComposer(V118_EDIT_ID);renderV118()}
-async function v118LinkOutcome(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن.");const oid=document.getElementById('v118OutcomeLink')?.value;if(!oid)return showToast("هدف انتخاب نشده","یک هدف انتخاب کن.");try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/outcomes/${encodeURIComponent(oid)}`,{method:'POST',body:'{}'});V118_DATA=res.payload;showToast("هدف متصل شد","منبع به نتیجه مرتبط شد.")}catch(e){const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID),o=V118_DATA.references.outcomes.find(x=>x.id===oid);if(r&&o)r.linked=[...(r.linked||[]),{type:'outcome',id:o.id,label:o.title,relation:'supports'}]}v118OpenComposer(V118_EDIT_ID);renderV118()}
-async function v118Archive(){if(!V118_EDIT_ID)return;try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/archive`,{method:'POST',body:JSON.stringify({completed_at:v118Today()})});V118_DATA=res.payload}catch(e){const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID);if(r){r.status='archived';r.completed_at=v118Today()}}v118CloseComposer();renderV118();showToast('آرشیو شد',"منبع از سطح توجه روزانه خارج شد.")}
-const v118OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v118OldFunctional)await v118OldFunctional(id);if(id==='resources')await loadV118(true)};
+async function v118Save(){const b=v118Body();if(!b.title)return showToast('عنوان لازم است',"برای منبع عنوان بنویس.");try{const res=await apiFetch(V118_EDIT_ID?`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}`:'/api/v11.8/resources',{method:V118_EDIT_ID?'PATCH':'POST',body:JSON.stringify(b)});V118_DATA=res.payload||await apiFetch('/api/v11.8/learning');showToast("منبع ذخیره شد",b.title)}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}v118CloseComposer();renderV118()}
+async function v118QuickProgress(id,p){try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({progress_percent:p,last_reviewed_at:v118Today()})});V118_DATA=res.payload}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV118()}
+async function v118PromoteProject(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن سپس برنامهٔ یادگیری بساز.");try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/promote-project`,{method:'POST',body:JSON.stringify({})});V118_DATA=res.payload;showToast("برنامهٔ یادگیری ساخته شد",res.project?.name||'')}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}v118OpenComposer(V118_EDIT_ID);renderV118()}
+async function v118CreateAction(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن سپس کار بساز.");const r=V118_DATA.items.find(x=>x.id===V118_EDIT_ID),title=await AppDialogs.ask("عنوان کار",r?.next_action||`اقدام از: ${r?.title||''}`);if(title===null||!title.trim())return;try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/create-action`,{method:'POST',body:JSON.stringify({title:title.trim()})});V118_DATA=res.payload;showToast("کار ساخته شد",res.task?.title||title)}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}v118OpenComposer(V118_EDIT_ID);renderV118()}
+async function v118LinkOutcome(){if(!V118_EDIT_ID)return showToast('اول ذخیره کن',"منبع جدید را ذخیره کن.");const oid=document.getElementById('v118OutcomeLink')?.value;if(!oid)return showToast("هدف انتخاب نشده","یک هدف انتخاب کن.");try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/outcomes/${encodeURIComponent(oid)}`,{method:'POST',body:'{}'});V118_DATA=res.payload;showToast("هدف متصل شد","منبع به نتیجه مرتبط شد.")}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}v118OpenComposer(V118_EDIT_ID);renderV118()}
+async function v118Archive(){if(!V118_EDIT_ID)return;try{const res=await apiFetch(`/api/v11.8/resources/${encodeURIComponent(V118_EDIT_ID)}/archive`,{method:'POST',body:JSON.stringify({completed_at:v118Today()})});V118_DATA=res.payload}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}v118CloseComposer();renderV118();showToast('آرشیو شد',"منبع از سطح توجه روزانه خارج شد.")}
+// Learning controls are loaded by integrated-tools.js inside the academic view.
 // Learning is loaded when its view opens.
 </script>
 <script id="v119Script">
@@ -3512,11 +3463,11 @@ function v119Appointments(){const r=document.getElementById('v119Appointments');
 function v119PatchDashboard(){const e=(V119_DATA?.metrics||[]).find(m=>m.slug==='energy'),s=V119_DATA?.summary||{},cards=[...document.querySelectorAll('#v101Areas .v101-area-card')],card=cards.find(c=>c.querySelector('h4')?.textContent.includes('سلامت'));if(!card)return;const state=card.querySelector('.state'),sub=card.querySelector('p');if(state)state.textContent=e?.latest_value===null||e?.latest_value===undefined?'بدون داده':`${toFaNum(e.latest_value)}/10`;if(sub)sub.textContent=s.attention?`${toFaNum(s.attention)} شاخص نیازمند توجه • ${toFaNum(s.appointments_upcoming||0)} قرار پیش‌رو`:`انرژی، روتین و قرارهای سلامت • ${toFaNum(s.no_data||0)} شاخص بدون داده`}
 function renderV119(){if(!V119_DATA)return;const date=document.getElementById('v119Date');if(date&&!date.value)date.value=V119_DATA.today||v119Today();v119Summary();const grid=document.getElementById('v119MetricGrid');if(grid)grid.innerHTML=(V119_DATA.metrics||[]).map(v119MetricCard).join('');v119TaskFit();v119Routines();v119Appointments();v119PatchDashboard()}
 function v119ClearCheckin(){['v119Sleep','v119Energy','v119Move','v119Mood','v119Stress','v119Note'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''})}
-async function v119SaveCheckin(){const body={date:document.getElementById('v119Date')?.value||v119Today(),sleep_hours:document.getElementById('v119Sleep')?.value,energy:document.getElementById('v119Energy')?.value,movement_minutes:document.getElementById('v119Move')?.value,mood:document.getElementById('v119Mood')?.value,stress:document.getElementById('v119Stress')?.value,note:document.getElementById('v119Note')?.value||''};if(!Object.entries(body).some(([k,v])=>!['date','note'].includes(k)&&v!==''))return showToast('داده‌ای وارد نشده',"حداقل یک مقدار ثبت حال روزانه وارد کن.");try{V119_DATA=await apiFetch('/api/v11.9/checkin',{method:'POST',body:JSON.stringify(body)});showToast("ثبت حال روزانه ثبت شد","شاخص‌ها و تطبیق سطح انرژی به‌روز شد.")}catch(e){const map={sleep_hours:body.sleep_hours,energy:body.energy,movement_minutes:body.movement_minutes,mood:body.mood,stress:body.stress};for(const [slug,v] of Object.entries(map)){if(v==='')continue;const m=V119_DATA.metrics.find(x=>x.slug===slug);if(m){m.latest_value=Number(v);m.latest_date=body.date;m.series[m.series.length-1]={date:body.date,value:Number(v)}}}const en=Number(body.energy);if(body.energy!=='')V119_DATA.task_fit.energy_level=en>=8?'high':en<=4?'low':'medium';showToast('حالت Preview',"ثبت حال روزانه داخل همین HTML اعمال شد.")}renderV119()}
-async function v119QuickLog(id,name){const m=V119_DATA?.metrics.find(x=>x.id===id),v=await AppDialogs.ask(`مقدار ${name}`,m?.latest_value??'');if(v===null||v==='')return;try{V119_DATA=await apiFetch('/api/v11.9/logs',{method:'POST',body:JSON.stringify({metric_id:id,log_date:v119Today(),value_numeric:Number(v)})})}catch(e){if(m){m.latest_value=Number(v);m.latest_date=v119Today();m.series[m.series.length-1]={date:v119Today(),value:Number(v)}}}renderV119()}
-async function v119AddMetric(){const name=document.getElementById('v119CustomName')?.value.trim();if(!name)return showToast('نام شاخص لازم است','یک نام برای شاخص بنویس.');const body={name,unit:document.getElementById('v119CustomUnit')?.value||'',target_min:document.getElementById('v119CustomMin')?.value||null,target_max:document.getElementById('v119CustomMax')?.value||null,good_direction:document.getElementById('v119CustomDir')?.value||'range',category:'custom',value_type:'number',icon:'＋'};try{V119_DATA=await apiFetch('/api/v11.9/metrics',{method:'POST',body:JSON.stringify(body)})}catch(e){V119_DATA.metrics.push({id:`preview-hm-${Date.now()}`,slug:`custom_${Date.now()}`,...body,latest_value:null,avg7:null,control:{state:'no_data',label:'بدون داده'},series:v119Days().map(date=>({date,value:null}))});V119_DATA.summary.metrics++ ;V119_DATA.summary.no_data++}['v119CustomName','v119CustomUnit','v119CustomMin','v119CustomMax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('شاخص اضافه شد',name)}
-async function v119AddAppointment(){const title=document.getElementById('v119ApptTitle')?.value.trim(),start=document.getElementById('v119ApptStart')?.value;if(!title||!start)return showToast('اطلاعات ناقص','عنوان و زمان شروع را وارد کن.');const body={title,start_at:new Date(start).toISOString(),end_at:document.getElementById('v119ApptEnd')?.value?new Date(document.getElementById('v119ApptEnd').value).toISOString():null,provider:document.getElementById('v119ApptProvider')?.value||'',location:document.getElementById('v119ApptLocation')?.value||'',note:document.getElementById('v119ApptNote')?.value||''};try{const res=await apiFetch('/api/v11.9/appointments',{method:'POST',body:JSON.stringify(body)});V119_DATA=res.payload}catch(e){V119_DATA.appointments.push({id:`preview-a-${Date.now()}`,title,start_at:body.start_at,end_at:body.end_at||body.start_at,type:'appointment'});V119_DATA.appointments.sort((a,b)=>new Date(a.start_at)-new Date(b.start_at));V119_DATA.summary.appointments_upcoming=V119_DATA.appointments.length;showToast('حالت Preview','قرار داخل همین HTML اضافه شد.')}['v119ApptTitle','v119ApptStart','v119ApptEnd','v119ApptProvider','v119ApptLocation','v119ApptNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('قرار ذخیره شد',title)}
-const v119OldFunctional=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(id){if(v119OldFunctional)await v119OldFunctional(id);if(id==='health')await loadV119(true)};
+async function v119SaveCheckin(){const body={date:document.getElementById('v119Date')?.value||v119Today(),sleep_hours:document.getElementById('v119Sleep')?.value,energy:document.getElementById('v119Energy')?.value,movement_minutes:document.getElementById('v119Move')?.value,mood:document.getElementById('v119Mood')?.value,stress:document.getElementById('v119Stress')?.value,note:document.getElementById('v119Note')?.value||''};if(!Object.entries(body).some(([k,v])=>!['date','note'].includes(k)&&v!==''))return showToast('داده‌ای وارد نشده',"حداقل یک مقدار ثبت حال روزانه وارد کن.");try{V119_DATA=await apiFetch('/api/v11.9/checkin',{method:'POST',body:JSON.stringify(body)});showToast("ثبت حال روزانه ثبت شد","شاخص‌ها و تطبیق سطح انرژی به‌روز شد.")}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV119()}
+async function v119QuickLog(id,name){const m=V119_DATA?.metrics.find(x=>x.id===id),v=await AppDialogs.ask(`مقدار ${name}`,m?.latest_value??'');if(v===null||v==='')return;try{V119_DATA=await apiFetch('/api/v11.9/logs',{method:'POST',body:JSON.stringify({metric_id:id,log_date:v119Today(),value_numeric:Number(v)})})}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}renderV119()}
+async function v119AddMetric(){const name=document.getElementById('v119CustomName')?.value.trim();if(!name)return showToast('نام شاخص لازم است','یک نام برای شاخص بنویس.');const body={name,unit:document.getElementById('v119CustomUnit')?.value||'',target_min:document.getElementById('v119CustomMin')?.value||null,target_max:document.getElementById('v119CustomMax')?.value||null,good_direction:document.getElementById('v119CustomDir')?.value||'range',category:'custom',value_type:'number',icon:'＋'};try{V119_DATA=await apiFetch('/api/v11.9/metrics',{method:'POST',body:JSON.stringify(body)})}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}['v119CustomName','v119CustomUnit','v119CustomMin','v119CustomMax'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('شاخص اضافه شد',name)}
+async function v119AddAppointment(){const title=document.getElementById('v119ApptTitle')?.value.trim(),start=document.getElementById('v119ApptStart')?.value;if(!title||!start)return showToast('اطلاعات ناقص','عنوان و زمان شروع را وارد کن.');const body={title,start_at:new Date(start).toISOString(),end_at:document.getElementById('v119ApptEnd')?.value?new Date(document.getElementById('v119ApptEnd').value).toISOString():null,provider:document.getElementById('v119ApptProvider')?.value||'',location:document.getElementById('v119ApptLocation')?.value||'',note:document.getElementById('v119ApptNote')?.value||''};try{const res=await apiFetch('/api/v11.9/appointments',{method:'POST',body:JSON.stringify(body)});V119_DATA=res.payload}catch(e){showToast('ثبت انجام نشد',e.message||String(e));return}['v119ApptTitle','v119ApptStart','v119ApptEnd','v119ApptProvider','v119ApptLocation','v119ApptNote'].forEach(id=>{const e=document.getElementById(id);if(e)e.value=''});renderV119();showToast('قرار ذخیره شد',title)}
+// Health controls are loaded by integrated-tools.js inside habits and calendar.
 // Health is loaded when its view opens.
 </script>
 <script>
@@ -3587,7 +3538,7 @@ async function v1111ToggleSpiritual(id,value){if(V1111_DATA?.stage==='V11.11-pre
 async function v1111SaveReligious(){const title=document.getElementById('v1111RelTitle')?.value.trim(),date=document.getElementById('v1111RelDate')?.value;if(!title||!date)return alert('عنوان و تاریخ مناسبت را وارد کنید.');const body={title,date,time:document.getElementById('v1111RelTime')?.value||'09:00',reminder_days:Number(document.getElementById('v1111RelReminder')?.value||1),observance_notes:document.getElementById('v1111RelObservance')?.value.trim(),preparation_notes:document.getElementById('v1111RelPreparation')?.value.trim()};try{V1111_DATA=await apiFetch('/api/v11.11/religious-events',{method:'POST',body:JSON.stringify(body)});showToast('به تقویم اضافه شد',title);v1111ToggleReligiousComposer(false);v1111RenderReligious()}catch(e){showToast('خطا',e.message||String(e))}}
 async function v1111CreatePrepTask(id){if(V1111_DATA?.stage==='V11.11-preview')return showToast('Preview','برای ثبت کار، ابتدا اطلاعات را بارگذاری کنید.');try{const res=await apiFetch(`/api/v11.11/religious-events/${encodeURIComponent(id)}/create-task`,{method:'POST',body:JSON.stringify({})});V1111_DATA=res.payload||V1111_DATA;showToast("کار ساخته شد",res.task?.title||'آمادگی مناسبت');v1111RenderReligious()}catch(e){showToast('خطا',e.message||String(e))}}
 const v1111PrevFunctionalOpen=window.handleFunctionalPageOpen;
-window.handleFunctionalPageOpen=async function(id){if(v1111PrevFunctionalOpen)await v1111PrevFunctionalOpen(id);if(id==='spiritual'||id==='religious')await v1111Load()}
+window.handleFunctionalPageOpen=async function(id){if(v1111PrevFunctionalOpen)await v1111PrevFunctionalOpen(id);if(id==='spiritual')await v1111Load()}
 </script>
 <script>
 /* ===== NOAVA V11.12 Finance & Personal Resource Control ===== */
@@ -3615,8 +3566,8 @@ const v1112PrevFunctional=window.handleFunctionalPageOpen;window.handleFunctiona
  const request=window.apiFetch;
  const dirty=new Set();
  let legacyDirty=false;
- const legacyPages=new Set(['today','daily','habits','spiritual','religious','meetings','weekly','focus','waiting','reports','settings','items','health','relationships']);
- const pages=['dashboard','control-center','today','daily','workspace','waiting','focus','projects','goals','areas','resources','archive','schedule','meetings','finance','health','relationships','spiritual','religious','habits','weekly','reports'];
+ const legacyPages=new Set(['today','daily','habits','spiritual','religious','meetings','weekly','focus','waiting','reports','settings','items','relationships']);
+ const pages=['dashboard','today','daily','workspace','waiting','focus','projects','goals','schedule','meetings','finance','relationships','spiritual','habits','weekly','reports'];
  window.apiFetch=async function(path,options={}){
   const result=await request(path,options);
   const method=(options.method||'GET').toUpperCase();
@@ -3708,11 +3659,11 @@ function setMobileMenu(open){
 <script src="/assets/money-input.js"></script>
 <link rel="stylesheet" href="/assets/noava.css?v=2.2.0"/>
 <link rel="stylesheet" href="/assets/editing.css"/>
-<script src="/assets/editing.js?v=2.4.0"></script>
+<script src="/assets/editing.js?v=2.5.0"></script>
 <link rel="stylesheet" href="/assets/task-list.css"/>
 <script src="/assets/task-list.js"></script>
-<link rel="stylesheet" href="/assets/simple-home.css"/>
-<script src="/assets/simple-home.js"></script>
+
+
 <link rel="stylesheet" href="/assets/calendar.css"/>
 <link rel="stylesheet" href="/assets/calendar-form.css?v=2.1.0"/>
 <script src="/assets/calendar-extras.js?v=2.1.0"></script>
@@ -3725,10 +3676,12 @@ function setMobileMenu(open){
 <script src="/assets/fast-mutations.js"></script>
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
 <script src="/assets/today-tasks.js"></script>
-<link rel="stylesheet" href="/assets/project-workspace.css?v=2.4.0"/>
-<script src="/assets/project-workspace.js?v=2.4.0"></script>
+<link rel="stylesheet" href="/assets/project-workspace.css?v=2.5.0"/>
+<script src="/assets/project-workspace.js?v=2.5.0"></script>
 <script src="/assets/academic.js?v=2.3.0"></script>
 <script src="/assets/noava-workspace.js?v=2.1.2"></script>
 <script src="/assets/keyboard-submit.js?v=2.1.1"></script>
+<link rel="stylesheet" href="/assets/integrated-tools.css"/>
+<script src="/assets/integrated-tools.js"></script>
 </body>
 </html>

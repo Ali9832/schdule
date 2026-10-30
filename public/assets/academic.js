@@ -18,7 +18,7 @@
   function render(from){
     DateContextUI.bars();
     root.replaceChildren();
-    const header=node('header',null,'noava-section-heading');header.append(node('h1','حوزهٔ تحصیلی'),node('p','درس‌ها، برنامهٔ هفتگی و موعدهای درسی؛ متصل به کارها، پروژه‌ها و تقویم.'));root.append(header);
+    const header=node('header',null,'noava-section-heading');header.append(node('h1','تحصیل و یادگیری'),node('p','درس‌ها، برنامهٔ هفتگی و موعدهای درسی؛ متصل به کارها، پروژه‌ها و تقویم.'));root.append(header);
     const subjects=node('details',null,'noava-panel academic-subjects');subjects.open=!!editing||!courses.length;subjects.append(node('summary','مدیریت درس‌ها · '+toFaNum(courses.length)+' درس'));
     const chips=node('div',null,'noava-actions');
     for(const subject of courses)chips.append(button('✎ ویرایش '+subject.title,()=>{editing=subject;render(from);}));
@@ -40,7 +40,7 @@
   function itemRow(item){
     const row=node('article',null,'academic-item'+(item.done?' is-done':''));const main=node('div');main.append(node('strong',item.title),node('small',`${names[item.kind]||'برنامه'} · ${courses.find(c=>c.id===item.course_id)?.title||'بدون درس'} · ${faDateLabel(item.date)} ${item.all_day?'':toFaNum(item.start_time)}`));row.append(main,button('جزئیات / ویرایش',()=>UnifiedCalendar.openDay(item.date)));if(item.project_id)row.append(button('پروژه',()=>openV11Inspector('project',item.project_id)));else if(item.source==='project')row.append(button('پروژه',()=>openV11Inspector('project',item.id)));return row;
   }
-  const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='academic'){document.getElementById('crumb').textContent='حوزهٔ تحصیلی';await load();}};
+  const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='academic'){document.getElementById('crumb').textContent='تحصیل و یادگیری';await load();}};
   let timer;window.addEventListener('nova:data-changed',event=>{if(!document.getElementById('academic').classList.contains('hidden')&&/\/api\/(calendar|modules\/academic|projects|tasks)/.test(event.detail?.path||'')){clearTimeout(timer);timer=setTimeout(load,400);}});
   window.addEventListener('nova:date-changed',()=>{if(!document.getElementById('academic').classList.contains('hidden'))load();});
   window.NoavaAcademic={load,openNew,get courses(){return courses;}};

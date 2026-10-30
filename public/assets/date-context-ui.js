@@ -57,7 +57,7 @@
       }
     }
     // Untouched proposals may follow the day; manually changed dates and drafts do not.
-    const proposals = { health: ['v119Date', 'v119ApptStart', 'v119ApptEnd'], religious: ['v1111RelDate'], relationships: ['v1110CommitDue'] };
+    const proposals = { habits: ['v119Date'], calendar: ['v119ApptStart', 'v119ApptEnd', 'v1111RelDate'], relationships: ['v1110CommitDue'] };
     for (const id of proposals[page] || []) {
       const input = document.getElementById(id); if (!input) continue;
       if (!input.value || input.value === input.dataset.planningProposal) {
@@ -126,7 +126,7 @@
     bar?.setAttribute('aria-busy', 'true');
     try {
       v112Invalidate('dashboard');
-      if (page === 'dashboard' || page === 'control-center') await v112RefreshDashboard(true);
+      if (page === 'dashboard') await v112RefreshDashboard(true);
       else await handleFunctionalPageOpen(page);
     } catch (error) { if (request === revision) showToast('تغییر تاریخ انجام نشد', error.message); }
     finally { if (request === revision) { bars(); bar?.setAttribute('aria-busy', 'false'); } }

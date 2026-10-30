@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const legacy = [
-    ['#modalBg','saveModal'],['#v101Capture','quickCaptureTask'],
+    ['#modalBg','saveModal'],
     ['#v116Composer','v116Save'],['#v117Composer','v117SaveOutcome'],['#v118Composer','v118Save'],
     ['#v115Composer','v115CreateEvent'],
     ['#v1111SpiritualComposer','v1111SaveSpiritual'],['#v1111ReligiousComposer','v1111SaveReligious'],

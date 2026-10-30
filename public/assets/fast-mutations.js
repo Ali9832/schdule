@@ -50,7 +50,7 @@
     if (page === 'workspace') renderV111Workspace();
     if (page === 'today') renderTodayBase();
     if (page === 'daily') renderDailyTaskManager();
-    if ((page === 'dashboard' || page === 'control-center') && V112_DASH) renderSimpleHome(V112_DASH);
+    if ((page === 'dashboard') && V112_DASH) v112RenderDashboard(V112_DASH);
     return true;
   }
   async function refreshVisible() {
@@ -58,7 +58,7 @@
     if (running) { again = true; return running; }
     const page = activePage();
     running = (async () => {
-      if (page === 'dashboard' || page === 'control-center') await v112RefreshDashboard(true);
+      if (page === 'dashboard') await v112RefreshDashboard(true);
       else if (page === 'workspace') { await reloadV111Tasks(); window.NovaViewSync?.markClean(page); }
       else await window.handleFunctionalPageOpen?.(page);
     })().finally(() => { running = null; if (again) { again = false; scheduleVisibleRefresh(); } });

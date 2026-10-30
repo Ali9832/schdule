@@ -2,6 +2,52 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.5.0] - 2026-10-30
+
+### Integrated operations
+- Production-data requirement: preserve existing database records and relationships; local demo/test data must never be imported or included in deployment. Recorded in AGENTS.md for subsequent releases.
+- Remove the standalone Areas, Resources, Health and Religious Calendar pages. Keep their existing operations, records and API contracts in related views.
+- Place area management in Projects, with a shortcut from Tasks; learning resources and project/task promotion in Academic; daily health metrics and routines in Habits; health appointments and religious occasions/preparation tasks in Unified Calendar.
+- Redirect old links to the matching expandable tools in their new parent page. Load tools on demand, show retry on load failure and refresh visible tools after mutations.
+- Move date proposals to their new hosts while preserving manually edited values.
+- Failed migrated saves now keep their drafts and report errors instead of displaying unsaved preview records as successful writes.
+- Validation: build and all 66 QA checks passed. An isolated browser run verified area creation/editing and task-filter references; resource-to-project/task links; failed-save drafts and load retry; health check-in and custom metrics; appointments and occasions in the shared calendar; preparation tasks; preserved manual dates; desktop/mobile layout without runtime exceptions. Existing academic-navigation and calendar-form browser checks passed.
+- Outstanding: production deployment verification; included in the v2.5.0 release.
+
+## [2.4.4] - 2026-10-30
+
+### Sidebar cleanup
+- Remove Health / Energy, Religious Calendar, Life Areas and Knowledge / Learning entries from the sidebar.
+- Preserve existing records and page functionality used by other views.
+- Validation: production build and all 66 QA checks passed.
+- Outstanding: production deployment verification; included in the v2.5.0 release.
+
+## [2.4.3] - 2026-10-30
+
+### Task navigation
+- Group the task list, waiting/delegated tasks, projects and meetings under a collapsible Tasks heading. Keep existing destinations and counters.
+- Reveal all parent groups when navigating directly to a nested item.
+- Validation: build and all 66 QA checks passed. Browser checks verified all four child destinations, click/keyboard toggling, active-page marking, expansion of both ancestor groups and desktop/mobile navigation.
+- Outstanding: production deployment verification; included in the v2.5.0 release.
+
+## [2.4.2] - 2026-10-30
+
+### Simplified navigation
+- Remove the standalone Archive and Control Center pages and sidebar entries. Keep Command Center as the main dashboard; the former Control Center duplicated its summaries and links.
+- Remove the quick-capture sidebar entry, dashboard capture panel and shortcut. Related task-module add buttons now open the regular task form.
+- Remove the obsolete Control Center assets and refresh hooks. Confirmed task changes update the retained dashboard; old Control Center and Archive navigation calls redirect to Dashboard and Resources.
+- Preserve archived records and existing record archive actions. No storage or API changes.
+- Validation: build and all 66 QA checks passed. Browser checks passed for removed sections, old-route redirects, live dashboard updates, regular task creation/editing with Enter, and desktop/mobile navigation without runtime exceptions.
+- Outstanding: production deployment verification; included in the v2.5.0 release.
+
+## [2.4.1] - 2026-10-30
+
+### Calendar navigation
+- Make the primary calendar heading a collapsible sidebar group containing Overview (the existing unified calendar) and Calendar / Timeline. Remove the timeline link from the daily group.
+- Reuse existing keyboard controls, active-page highlighting, automatic expansion on navigation and saved group state.
+- Validation: browser checks passed for heading-only toggling, both child links and active states, keyboard controls, persisted expansion after reload and mobile navigation. Production build and all 66 QA checks passed.
+- Included in v2.5.0; production deployment verification is tracked separately.
+
 ## [2.4.0] - 2026-10-25
 
 Upgrade: **2.3.0 → 2.4.0**, based on `3a4ebc6a19b24d3aac4acd285803146be5351d48`. Release commit: annotated tag `v2.4.0`.

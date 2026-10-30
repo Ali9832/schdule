@@ -6,7 +6,7 @@ const shared=[]
 const sandbox=vm.createContext({ console,URLSearchParams,Set,Map,Number,Array,String,clearTimeout(){},setTimeout(){},
  document:{querySelector:()=>({id:page})},BASE_DATA:{tasks:shared},BASE_TASKS:shared,V11_DATA:{tasks:shared},V111_PAGE:{items:shared,total:0},
  V112_DASH:{today:'2026-10-23',now:{today_total:0,today_done:0,today_open:0,next_actions:[]}},
- DateContext:{date:'2026-10-23'},v111TaskParams:()=>query,todayIso:()=> '2026-10-23',renderV111Workspace:()=>renders++,renderTodayBase:()=>renders++,renderDailyTaskManager:()=>renders++,renderSimpleHome:()=>renders++,reloadV111Tasks:async()=>reads++,v112RefreshDashboard:async()=>reads++,showToast(){}
+ DateContext:{date:'2026-10-23'},v111TaskParams:()=>query,todayIso:()=> '2026-10-23',renderV111Workspace:()=>renders++,renderTodayBase:()=>renders++,renderDailyTaskManager:()=>renders++,v112RenderDashboard:()=>renders++,reloadV111Tasks:async()=>reads++,v112RefreshDashboard:async()=>reads++,showToast(){}
 })
 sandbox.window=sandbox
 vm.runInContext(fs.readFileSync('public/assets/fast-mutations.js','utf8'),sandbox)
