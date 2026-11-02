@@ -1,6 +1,10 @@
 (() => {
   const group=document.querySelector('#mainSidebar [data-nav-group="tasks"]');
   const labels={v11TaskBadge:'کار باز',waitingNavBadge:'کار در انتظار',projectNavBadge:'پروژهٔ فعال',meetingNavBadge:'جلسه در هفتهٔ جاری',habitNavBadge:'روتین فعال',spiritualNavBadge:'روتین معنوی فعال'};
+  const taskBadge=document.getElementById('v11TaskBadge');
+  const taskShortcuts=[...document.querySelectorAll('[data-nav-count="v11TaskBadge"]')];
+  function syncTaskShortcuts(){for(const badge of taskShortcuts){badge.textContent=taskBadge.textContent;for(const name of ['title','aria-label']){const value=taskBadge.getAttribute(name);if(value===null)badge.removeAttribute(name);else badge.setAttribute(name,value);}}}
+  if(taskBadge&&taskShortcuts.length){new MutationObserver(syncTaskShortcuts).observe(taskBadge,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['title','aria-label']});syncTaskShortcuts();}
   let running,again=false,timer;
   function set(id,value){const badge=group?.querySelector('#'+id);if(!badge)return;badge.textContent=toFaNum(value??0);badge.title=labels[id];badge.setAttribute('aria-label',labels[id]+': '+badge.textContent);}
   async function refresh(){

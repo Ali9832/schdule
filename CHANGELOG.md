@@ -4,6 +4,8 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
 ## [2.8.0] - 2026-11-02
 
+- Add a Tasks shortcut under the comprehensive calendar, sharing the original task list and live count while retaining navigation at the clicked menu group. Published as a follow-up commit with version 2.8.0 unchanged, as requested.
+
 Upgrade: **2.7.0 → 2.8.0**. Unifies task/calendar creation, adds similar-task suggestions and confirmation, improves numeric clock entry, and fixes mobile filters. Existing database records are preserved; local and test data are not included.
 
 Validation: build and all 78 QA checks passed. Isolated browser checks passed for shared creation, numeric clock input, duplicate suggestions/confirmation, planning dates, calendar forms, headers and sign-in. Layout checks covered all 23 page sections at 320/390/768px and opened the saved-filter menu and meeting/goal/resource forms. These local tests do not verify the deployed PostgreSQL connection or signed-in production data.

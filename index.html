@@ -897,6 +897,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="brand"><div class="brand-mark">N</div><div><strong>NOAVA</strong><small>آوای نو</small></div><button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="جمع کردن منو" aria-label="جمع کردن منو" aria-controls="mainSidebar" aria-expanded="true">‹</button></div>
 <details class="nav-group calendar-nav-group" data-nav-group="calendar"><summary class="calendar-primary-nav" title="تقویم جامع"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-group-title">تقویم جامع</span></summary><div class="nav-group-items">
 <button class="nav-item active" data-page="calendar"><span class="nav-icon">▦</span>نمای کلی</button>
+<button class="nav-item" data-page="workspace"><span class="nav-icon">☷</span>فهرست کارها<span class="nav-badge" data-nav-count="v11TaskBadge">—</span></button>
 <button class="nav-item" data-page="schedule"><span class="nav-icon">▤</span>تقویم / خط زمانی</button>
 </div></details>
 <details class="nav-group" data-nav-group="daily"><summary title="اجرای روز"><span class="nav-icon" aria-hidden="true">☀</span><span class="nav-group-title">اجرای روز</span></summary><div class="nav-group-items">
@@ -1985,6 +1986,7 @@ let tasks=[
 ];
 const statusMap={done:['انجام‌شده','chip-done'],doing:['در دست اقدام','chip-doing'],attention:['نیاز به توجه','chip-attn'],plan:['برنامه‌ریزی','chip-plan']};
 
+let lastSidebarButton=null;
 function syncSidebarNavigation(id){
   const navId=({daily:'workspace'})[id]||id;
   const sidebar=document.getElementById('mainSidebar');if(!sidebar)return;
@@ -1993,6 +1995,7 @@ function syncSidebarNavigation(id){
     const selected=button.dataset.page===navId;button.classList.toggle('active',selected);
     if(selected){button.setAttribute('aria-current','page');active=button}else button.removeAttribute('aria-current');
   });
+  if(lastSidebarButton?.dataset.page===navId)active=lastSidebarButton;
   if(!active)return;
   for(let group=active.closest('.nav-group');group;group=group.parentElement.closest('.nav-group'))group.open=true;
   if(!matchMedia('(max-width:900px)').matches&&document.querySelector('.app').classList.contains('sidebar-collapsed'))toggleSidebar(false);
@@ -2019,7 +2022,7 @@ function goPage(id){
   if(id==='statistics')document.getElementById('crumb').textContent='آمار و روند';
   if(typeof handleFunctionalPageOpen==='function') handleFunctionalPageOpen(id);
 }
-document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>goPage(b.dataset.page)));
+document.querySelectorAll('.nav-item[data-page]').forEach(b=>b.addEventListener('click',()=>{lastSidebarButton=b;goPage(b.dataset.page)}));
 
 function renderCards(){
   const root=document.getElementById('categoryCards');
@@ -3677,7 +3680,7 @@ function setMobileMenu(open){
 <script defer src="/assets/keyboard-submit.js?v=2.1.1"></script>
 <link rel="stylesheet" href="/assets/integrated-tools.css"/>
 <script defer src="/assets/integrated-tools.js?rev=compact-health"></script>
-<script defer src="/assets/nav-counts.js"></script>
+<script defer src="/assets/nav-counts.js?rev=calendar-shortcut"></script>
 <link rel="stylesheet" href="/assets/saved-filters.css"/>
 <script defer src="/assets/saved-filters.js"></script>
 <script defer src="/assets/reading.js?rev=page-log"></script>
