@@ -1,0 +1,33 @@
+/* Filters must retain enough width to show their selected value on touch screens. */
+@media(max-width:900px){
+ .page .v11-toolbar{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+ .page .v11-filter-row{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:10px;min-width:0}
+ .page .v11-filter-row>*{width:100%;min-width:0!important;max-width:100%;box-sizing:border-box;flex:none}
+ .page .v11-filter-row>input,.page .v11-filter-row>.saved-filter-menu{grid-column:1/-1}
+ .page .v11-filter-row input,.page .v11-filter-row select{height:46px;min-height:46px;font-size:14px!important;padding:8px 10px;width:100%!important}
+ .page .v11-filter-row .saved-filter-menu>summary{min-height:44px;display:flex;align-items:center;justify-content:space-between;font-size:13px}
+ .page .v11-view-switch{display:flex;flex-wrap:wrap;align-self:stretch;gap:5px}
+ .page .v11-view-switch>button{flex:1;min-width:0;min-height:44px;font-size:12px;padding-inline:8px}
+ .page .v118-toolbar{flex-direction:column;align-items:stretch;gap:12px}
+ .page .v118-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%;gap:10px}
+ .page .v118-filters>*{width:100%;min-width:0;max-width:100%;min-height:44px;font-size:14px;box-sizing:border-box}
+ .page .v118-filters>input{grid-column:1/-1}
+ .page .task-editor-toolbar{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;min-width:0}
+ .page .task-editor-toolbar>.field{min-width:0;width:100%}
+ .page .task-editor-toolbar>.field:first-child,.page .task-editor-toolbar>.add-button{grid-column:1/-1}
+ .page .task-editor-toolbar input,.page .task-editor-toolbar select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+ .page .task-editor-toolbar>.add-button{min-height:44px}
+ .page .stats-filters label{min-width:140px;max-width:100%}
+ .page .stats-filters select{min-width:120px;max-width:100%}
+ .page .hero{min-width:0;gap:14px}.page .hero-actions{flex-wrap:wrap;gap:8px}
+ .page input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=hidden]),.page select{min-height:44px;font-size:16px}
+ .page .planning-date-controls{min-width:0;max-width:100%}
+ .uc-day-dialog,.generic-modal,.record-edit-dialog,.reading-dialog{max-width:calc(100vw - 24px);box-sizing:border-box}
+ .uc-form-grid>*,.modal-grid>*{min-width:0}
+ .uc-editor input:not([type=checkbox]):not([type=radio]):not([type=color]),.uc-editor select,.uc-editor textarea{font-size:16px;min-height:44px}
+ .uc-form-actions{display:flex;flex-wrap:wrap;gap:8px}.uc-form-actions button{min-height:44px;flex:1}
+}
+@media(max-width:380px){
+ .page .v11-filter-row,.page .v118-filters,.page .task-editor-toolbar{grid-template-columns:minmax(0,1fr)}
+ .page .v11-view-switch>button{font-size:11px;padding-inline:5px}
+}

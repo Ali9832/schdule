@@ -11,3 +11,4 @@ body.theme-dark .persian-calendar{background:#1b2c30;color:#d9ede4;border-color:
 input[data-persian-type]{direction:ltr!important;text-align:left!important;unicode-bidi:isolate;font-variant-numeric:tabular-nums}
 .persian-spin-row{direction:ltr}.persian-spin>span{direction:rtl}
 .persian-time-field>.persian-calendar-button{flex:0 0 auto;min-width:68px;padding:6px 10px;white-space:nowrap}
+.persian-time-field{position:relative}.persian-time-field input{padding-left:10px!important}.persian-time-guide{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#949cad;opacity:.65;pointer-events:none;white-space:pre;direction:ltr;font-variant-numeric:tabular-nums;unicode-bidi:isolate}

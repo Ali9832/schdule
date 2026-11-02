@@ -19,6 +19,10 @@ for (const f of ['package.json','index.html','dist/index.html','server/index.js'
   exists(f) ? pass(`Exists: ${f}`) : fail(`Missing: ${f}`)
 }
 syntaxCheck('server/index.js')
+syntaxCheck('server/task-similarity.js')
+syntaxCheck('public/assets/task-suggestions.js')
+const similarityCheck=spawnSync(process.execPath,['scripts/check-task-similarity.mjs'],{cwd:root,encoding:'utf8'})
+similarityCheck.status===0 ? pass('Task similarity, Persian normalization and account isolation verified') : fail(`Task similarity: ${(similarityCheck.stderr||similarityCheck.stdout).trim()}`)
 syntaxCheck('server/calendar-carry-forward.js')
 const carryForwardCheck=spawnSync(process.execPath,['scripts/check-calendar-carry-forward.mjs'],{cwd:root,encoding:'utf8'})
 carryForwardCheck.status===0 ? pass('Atomic bulk carry-forward, retries, ownership and bounded queries verified') : fail(`Bulk carry-forward: ${(carryForwardCheck.stderr||carryForwardCheck.stdout).trim()}`)

@@ -896,11 +896,11 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <aside class="sidebar" id="mainSidebar">
 <div class="brand"><div class="brand-mark">N</div><div><strong>NOAVA</strong><small>آوای نو</small></div><button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="جمع کردن منو" aria-label="جمع کردن منو" aria-controls="mainSidebar" aria-expanded="true">‹</button></div>
 <details class="nav-group calendar-nav-group" data-nav-group="calendar"><summary class="calendar-primary-nav" title="تقویم جامع"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-group-title">تقویم جامع</span></summary><div class="nav-group-items">
-<button class="nav-item" data-page="calendar"><span class="nav-icon">▦</span>نمای کلی</button>
+<button class="nav-item active" data-page="calendar"><span class="nav-icon">▦</span>نمای کلی</button>
 <button class="nav-item" data-page="schedule"><span class="nav-icon">▤</span>تقویم / خط زمانی</button>
 </div></details>
 <details class="nav-group" data-nav-group="daily"><summary title="اجرای روز"><span class="nav-icon" aria-hidden="true">☀</span><span class="nav-group-title">اجرای روز</span></summary><div class="nav-group-items">
-<button class="nav-item active" data-page="dashboard"><span class="nav-icon">◫</span>مرکز فرمان</button>
+<button class="nav-item" data-page="dashboard"><span class="nav-icon">◫</span>مرکز فرمان</button>
 
 <button class="nav-item" data-page="today"><span class="nav-icon">◎</span>امروز</button>
 
@@ -952,7 +952,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <header class="noava-page-header" id="pageHeader" aria-label="سربرگ و کنترل‌های صفحه">
 <div class="topbar">
 <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" onclick="setMobileMenu(true)" aria-controls="mainSidebar" aria-expanded="false" aria-label="باز کردن منو"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">داشبورد مدیریتی</strong> </div>
+<div class="breadcrumb">NOAVA <b>/</b> <strong id="crumb">نمای کلی</strong> </div>
 <div class="top-actions">
 <div class="search" onclick="openCommandPalette()">⌕ <input id="globalSearch" placeholder="جستجو یا اجرای فرمان..." readonly=""/><span class="search-shortcut">Ctrl K</span></div>
 
@@ -974,7 +974,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <!-- DASHBOARD -->
 <section class="page hidden" id="reading" aria-label="کتاب‌خوانی"><div id="readingBody"></div></section>
 <section class="page hidden" id="statistics" aria-label="آمار و روند"><div id="statisticsBody"></div></section>
-<section class="page hidden" id="calendar"><div id="unifiedCalendar"></div></section>
+<section class="page" id="calendar"><div id="unifiedCalendar"></div></section>
 <section class="page hidden" id="academic"><div id="academicBody"></div><details class="integrated-tools " id="academicLearningTools"><summary>منابع و برنامه‌های یادگیری</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
 <div class="v118-hero-actions"><button class="ghost" onclick="v118SetView('attention')">⚠ نیازمند توجه</button><button class="primary" onclick="v118OpenComposer()">＋ ثبت اولیه سریع</button></div>
 <div class="v118-flow"><span>ثبت اولیه</span><i>←</i><span>برای بعد</span><i>←</i><span>برنامهٔ یادگیری</span><i>←</i><span>یادداشت‌ها / جمع‌بندی</span><i>←</i><span>قدم بعدی / هدف</span><i>←</i><span>بایگانی</span></div>
@@ -986,7 +986,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v118-root" id="v118Root"><div class="v118-empty">در حال بارگذاری یادگیری مسیر یادگیری…</div></div>
 </div></details></section>
 <section class="page hidden" id="profile"><div id="noavaProfile" class="noava-panel noava-profile"></div></section>
-<section class="page" id="dashboard">
+<section class="page hidden" id="dashboard">
 <div class="sheet-dashboard-hero v101-hero">
 <div class="sheet-dashboard-title">
 <div class="v101-kicker">نوا • فضای شخصی</div>
@@ -1865,7 +1865,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.7.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.8.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -1936,7 +1936,6 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="modal-grid" style="margin-top:10px">
 <div class="field"><label>دسته / نوع</label><select id="genericCategory"><option>عمومی</option><option>فوری</option><option>مهم</option><option>پیگیری</option><option>برنامه‌ریزی</option></select></div>
 <div class="field"><label>اولویت</label><select id="genericPriority"><option>P0</option><option>P1</option><option selected="">P2</option><option>P3</option></select></div>
-<div class="field"><label>تاریخ / موعد</label><input id="genericDate" type="date"/></div>
 <div class="field"><label>وضعیت</label><select id="genericStatus"><option>برنامه‌ریزی</option><option>در دست اقدام</option><option>انجام‌شده</option></select></div>
 <div class="field hidden" id="genericAmountWrap"><label>مبلغ (تومان)</label><input id="genericAmount" min="0" placeholder="مثلاً 2500000" step="1000" type="text" inputmode="decimal" data-money-toman dir="ltr"/></div>
 </div>
@@ -2015,7 +2014,7 @@ function goPage(id){
   const labels={dashboard:'مرکز فرمان',waiting:'در انتظار / واگذارشده',workspace:"کارها",areas:'حوزه‌ها',resources:'دانش / یادگیری',health:'سلامت / انرژی',relationships:'روابط / افراد',archive:'آرشیو',items:'مدیریت آیتم‌ها',habits:'روتین‌ها و عادت‌ها',spiritual:'عادات معنوی',religious:'مناسبات مذهبی',daily:"کار‌ها / کارها",meetings:'جلسات',schedule:"تقویم / خط زمانی",finance:'مدیریت مالی',today:'امروز',weekly:'چرخه هفتگی',projects:'پروژه‌ها',goals:'هدف‌ها',reports:'مرور و بازنگری',settings:'تنظیمات',moduleDetail:'جزئیات ماژول'};
   document.getElementById('crumb').textContent=labels[id]||'NOAVA';
 
-  if(id==='calendar')document.getElementById('crumb').textContent='تقویم جامع';
+  if(id==='calendar')document.getElementById('crumb').textContent='نمای کلی';
   if(id==='reading')document.getElementById('crumb').textContent='کتاب‌خوانی';
   if(id==='statistics')document.getElementById('crumb').textContent='آمار و روند';
   if(typeof handleFunctionalPageOpen==='function') handleFunctionalPageOpen(id);
@@ -3648,8 +3647,8 @@ function setMobileMenu(open){
  });
 })();
 </script>
-<link rel="stylesheet" href="/assets/persian-ui.css?v=2.2.0"/>
-<script defer src="/assets/persian-ui.js?v=2.2.0"></script>
+<link rel="stylesheet" href="/assets/persian-ui.css?v=2.2.0&rev=clock-mask"/>
+<script defer src="/assets/persian-ui.js?v=2.2.0&rev=clock-mask"></script>
 <script defer src="/assets/drafts.js"></script>
 <script defer src="/assets/money-input.js"></script>
 <link rel="stylesheet" href="/assets/editing.css"/>
@@ -3661,20 +3660,20 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/calendar.css"/>
 <link rel="stylesheet" href="/assets/calendar-form.css?v=2.1.0"/>
 <script defer src="/assets/calendar-extras.js?v=2.1.0"></script>
-<script defer src="/assets/calendar.js?v=2.1.0&rev=course-picker"></script>
+<script defer src="/assets/calendar.js?v=2.1.0&rev=shared-composer"></script>
 <link rel="stylesheet" href="/assets/finance-editor.css"/>
 <script defer src="/assets/finance-editor.js"></script>
 <link rel="stylesheet" href="/assets/habit-layout.css?rev=compact-matrix"/>
 <link rel="stylesheet" href="/assets/reading.css?rev=page-log"/>
 <link rel="stylesheet" href="/assets/statistics.css"/>
-<script defer src="/assets/date-context-ui.js?v=2.3.0&rev=checkup-fields"></script>
+<script defer src="/assets/date-context-ui.js?v=2.3.0&rev=shared-composer"></script>
 <script defer src="/assets/fast-mutations.js"></script>
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
 <script defer src="/assets/today-tasks.js"></script>
 <link rel="stylesheet" href="/assets/project-workspace.css?v=2.7.0"/>
 <script defer src="/assets/project-workspace.js?v=2.7.0"></script>
 <script defer src="/assets/academic.js?v=2.3.0"></script>
-<script defer src="/assets/noava-workspace.js?v=2.1.2"></script>
+<script defer src="/assets/noava-workspace.js?v=2.1.2&rev=clock-draft"></script>
 <script defer src="/assets/keyboard-submit.js?v=2.1.1"></script>
 <link rel="stylesheet" href="/assets/integrated-tools.css"/>
 <script defer src="/assets/integrated-tools.js?rev=compact-health"></script>
@@ -3683,6 +3682,9 @@ function setMobileMenu(open){
 <script defer src="/assets/saved-filters.js"></script>
 <script defer src="/assets/reading.js?rev=page-log"></script>
 <script defer src="/assets/statistics.js"></script>
+<link rel="stylesheet" href="/assets/task-suggestions.css"/>
+<script defer src="/assets/task-suggestions.js"></script>
+<link rel="stylesheet" href="/assets/mobile-layout.css"/>
 <script defer src="/assets/ui-ready.js"></script>
 </body>
 </html>

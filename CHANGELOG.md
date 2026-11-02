@@ -2,6 +2,19 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.8.0] - 2026-11-02
+
+Upgrade: **2.7.0 → 2.8.0**. Unifies task/calendar creation, adds similar-task suggestions and confirmation, improves numeric clock entry, and fixes mobile filters. Existing database records are preserved; local and test data are not included.
+
+Validation: build and all 78 QA checks passed. Isolated browser checks passed for shared creation, numeric clock input, duplicate suggestions/confirmation, planning dates, calendar forms, headers and sign-in. Layout checks covered all 23 page sections at 320/390/768px and opened the saved-filter menu and meeting/goal/resource forms. These local tests do not verify the deployed PostgreSQL connection or signed-in production data.
+
+- Unify task creation and calendar creation on the same calendar composer, defaulting to a task while retaining time, recurrence, links and similar-task checks. Make task and academic filters readable on phones and audit the navigation pages at mobile/tablet widths.
+
+- Suggest existing account-owned tasks while entering a title, normalize Persian/Arabic spelling and digits, show status/deadline/project, and ask before creating a strongly similar task. Let users inspect/edit an existing task or deliberately create a separate one.
+
+- Open Overview (calendar) as the home page. Use calendar task metadata for optional start/end times.
+- Insert the clock colon automatically while typing Persian, Arabic or Latin digits, with a faint remaining-minute guide in time fields throughout the site.
+
 ## [2.7.0] - 2026-10-31
 
 Upgrade: **2.6.0 → 2.7.0**. Adds reading and statistics, streamlines calendar/routine tools, and improves delivery performance. Database changes are additive; existing records are preserved and no local/test data is imported.

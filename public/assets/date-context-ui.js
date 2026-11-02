@@ -149,16 +149,20 @@
   window.clearMeetingForm = function () { clearMeeting(); document.getElementById('meetingDate').value = proposalDate('meetings'); };
   // The selected date is a proposal, not a forced value: the user can clear/change it.
   const openGeneric = window.openGenericAdd, saveGeneric = window.saveGenericAdd, editTask = window.baseEditTask, closeGeneric = window.closeGenericAdd;
-  window.closeGenericAdd = function () { closeGeneric(); document.getElementById('planningGenericDue')?.closest('label').remove(); };
-  window.openGenericAdd = function (type, title) {
+  function clearGenericPlanning(){document.getElementById('planningGenericDue')?.closest('label').remove();}
+  window.closeGenericAdd = function () { closeGeneric(); clearGenericPlanning(); };
+  window.openGenericAdd = function (type='general', title) {
+    if(['daily','general','item'].includes(type)&&window.UnifiedCalendar){
+      return UnifiedCalendar.openComposer(proposalDate());
+    }
     openGeneric(type, title);
-    document.getElementById('planningGenericDue')?.closest('label').remove();
+    clearGenericPlanning();
     if (!['daily', 'general', 'item', 'project', 'finance'].includes(currentAddType)) return;
     const label = document.createElement('label'); label.className = 'planning-generic-date'; label.textContent = 'تاریخ پیشنهادی / موعد (قابل تغییر)';
     const input = document.createElement('input'); input.type = 'date'; input.id = 'planningGenericDue'; input.value = proposalDate();
-    label.append(input); document.getElementById('genericNotes').after(label); PersianUI.scan(label);
+    label.append(input); document.querySelector('#genericAddForm .modal-grid').append(label); PersianUI.scan(label);
   };
-  window.baseEditTask = function (id) { document.getElementById('planningGenericDue')?.closest('label').remove(); return editTask(id); };
+  window.baseEditTask = function (id) { clearGenericPlanning(); return editTask(id); };
   let genericSaving = false;
   window.saveGenericAdd = async function () {
     const due = document.getElementById('planningGenericDue');

@@ -58,7 +58,7 @@
   }
   function render(){
     window.CalendarExtras?.release();
-    const focused=document.activeElement?.id,preferencesOpen=root.querySelector('.uc-preferences')?.open;root.replaceChildren();const header=el('header','uc-header'),intro=el('div');intro.append(el('span','uc-eyebrow','برنامه‌های من'),el('h1','','تقویم جامع'),el('p','','کارها، جلسات، درس‌ها و موعدها؛ همه در یک تقویم شمسی.'));header.append(intro,button('＋ برنامهٔ جدید',()=>openDay(state.anchor,true),'uc-primary'));root.append(header);
+    const focused=document.activeElement?.id,preferencesOpen=root.querySelector('.uc-preferences')?.open;root.replaceChildren();const header=el('header','uc-header'),intro=el('div');intro.append(el('span','uc-eyebrow','برنامه‌های من'),el('h1','','تقویم جامع'),el('p','','کارها، جلسات، درس‌ها و موعدها؛ همه در یک تقویم شمسی.'));header.append(intro,button('＋ کار / برنامهٔ جدید',()=>openComposer(state.anchor),'uc-primary'));root.append(header);
     const toolbar=el('div','uc-toolbar'),views=el('div','uc-views');views.setAttribute('aria-label','نمای تقویم');for(const [value,label]of Object.entries(viewNames)){const b=button(label,()=>setView(value),state.view===value?'active':'');b.setAttribute('aria-pressed',String(state.view===value));views.append(b)}
     const navigation=el('div','uc-navigation');const prev=button('→',()=>shift(-1)),next=button('←',()=>shift(1));prev.setAttribute('aria-label','بازهٔ قبل');next.setAttribute('aria-label','بازهٔ بعد');navigation.append(prev,button('امروز',()=>{state.anchor=today();load()}),next);toolbar.append(views,navigation);root.append(toolbar);
     const tools=el('div','uc-tools'),jumpLabel=el('label','','رفتن به تاریخ'),jump=el('input');jump.type='date';jump.id='ucJumpDate';jump.value=state.anchor;jump.onchange=()=>{if(jump.value){state.anchor=jump.value;load()}};jumpLabel.append(jump);const search=el('input');search.type='search';search.id='ucSearch';search.placeholder='جستجو در برنامه‌های این بازه…';search.setAttribute('aria-label','جستجو در برنامه‌ها');search.value=state.search;search.oninput=()=>{const start=search.selectionStart;state.search=search.value;render();const replacement=document.getElementById('ucSearch');replacement.focus();if(start!==null)replacement.setSelectionRange?.(start,start)};tools.append(jumpLabel,search);const settings=preferences();settings.open=!!preferencesOpen;root.append(tools,settings);
@@ -88,7 +88,7 @@
   async function ensureDay(value){if(value>=state.from&&value<=state.to)return;try{const result=await apiFetch(`/api/calendar?from=${value}&to=${value}`),map=new Map(state.entries.map(item=>[item.key,item]));result.entries.forEach(item=>map.set(item.key,item));state.entries=[...map.values()]}catch(error){state.message=error.message||'دریافت روز انجام نشد.'}}
   async function mutate(action,message){
     if(state.busy)return;state.busy=true;const owner=state.dialog;state.message='';renderDay();
-    try{const result=await action();await load();if(owner===state.dialog&&owner?.open){await ensureDay(state.selected);state.editing=null;state.draft=null;state.message=result?.warning||message}}
+    try{const result=await action();await load();if(document.querySelector('.page:not(.hidden)')?.id!=='calendar')window.NovaFastUI?.scheduleVisibleRefresh();if(owner===state.dialog&&owner?.open){await ensureDay(state.selected);state.editing=null;state.draft=null;state.message=result?.warning||message}}
     catch(error){if(owner===state.dialog)state.message='ذخیره انجام نشد: '+(error.message||'دوباره تلاش کنید.')}
     finally{state.busy=false;render();if(state.dialog?.open)renderDay()}
   }
@@ -123,7 +123,7 @@
   }
   function editor(item){
     if(item?.recurrence)item={...item,date:item.series_date,end_date:item.series_end_date,due_date:item.series_due_date};
-    const form=el('form','uc-editor');form.id='calendarItemForm';form.append(el('h3','',item?'ویرایش و جابه‌جایی آیتم':'برنامهٔ جدید'));const inputs={},values=state.draft||item||state.initial||{};
+    const form=el('form','uc-editor');form.id='calendarItemForm';form.dataset.existingKey=item?.key||'';form.append(el('h3','',item?'ویرایش و جابه‌جایی آیتم':'برنامهٔ جدید'));const inputs={},values=state.draft||item||state.initial||{};
     function field(name,label,type,value,options=null){const wrap=el('label','',label),input=el(options?'select':type==='textarea'?'textarea':'input');if(options){options.forEach(([key,label])=>input.add(new Option(label,key)));if(value&&!options.some(([key])=>key===value))input.add(new Option('مورد انتخاب‌شده',value));}else if(type!=='textarea')input.type=type;input.name=name;input.id='calendarInput-'+name;input.value=value??'';if(['title','date','end_date','start_time','end_time'].includes(name))input.required=true;if(name==='title')input.maxLength=200;wrap.append(input);inputs[name]=input;return wrap}
     const grid=el('div','uc-form-grid');grid.append(field('title','عنوان','text',values.title||''),field('kind','نوع برنامه','select',values.kind||'task',Object.entries(kinds).filter(([key])=>item?.source!=='event'||!['task','homework','project','goal'].includes(key)).map(([key,[label]])=>[key,label])),field('date','تاریخ برنامه','date',values.date||state.selected),field('priority','اولویت','select',values.priority||'medium',[['low','کم'],['medium','متوسط'],['high','بالا']]));
     const allDay=el('label','uc-check-label'),check=el('input');check.type='checkbox';check.name='all_day';check.checked=values.all_day??true;allDay.append(check,document.createTextNode('بدون ساعت مشخص'));
@@ -169,7 +169,8 @@
   }
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='calendar')await load()};
   let refreshTimer;window.addEventListener('nova:data-changed',event=>{if(/\/api\/(projects|modules\/academic)/.test(event.detail?.path||''))state.referencesAt=0;if(state.busy)return;clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{if(!document.getElementById('calendar').classList.contains('hidden'))load()},120)});
-  window.UnifiedCalendar={load,openDay,setView,shift,state,prefs,range,render};render();
+  function openComposer(value=window.DateContext?.date||today(),seed={}){return openDay(value,true,{kind:'task',...seed});}
+  window.UnifiedCalendar={load,openDay,openComposer,setView,shift,state,prefs,range,render};render();
   if(new URLSearchParams(location.search).get('page')==='calendar'){
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>goPage('calendar'),{once:true});else goPage('calendar');
   }

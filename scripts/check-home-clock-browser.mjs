@@ -1,0 +1,55 @@
+import assert from 'node:assert/strict'
+const base=process.env.NOVA_BASE_URL||'http://127.0.0.1:3035'
+const targets=await(await fetch('http://127.0.0.1:9227/json/list')).json()
+const socket=new WebSocket(targets.find(t=>t.type==='page').webSocketDebuggerUrl)
+await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject})
+let id=0;const pending=new Map(),errors=[]
+socket.onmessage=event=>{const m=JSON.parse(event.data);if(m.id){const p=pending.get(m.id);pending.delete(m.id);m.error?p.reject(m.error):p.resolve(m.result)}if(m.method==='Runtime.exceptionThrown')errors.push(m.params.exceptionDetails.text)}
+const send=(method,params={})=>new Promise((resolve,reject)=>{pending.set(++id,{resolve,reject});socket.send(JSON.stringify({id,method,params}))})
+async function ev(expression){const r=await send('Runtime.evaluate',{expression,awaitPromise:true,returnByValue:true});if(r.exceptionDetails)throw Error(r.exceptionDetails.exception?.description||r.exceptionDetails.text);return r.result.value}
+const pause=ms=>new Promise(r=>setTimeout(r,ms))
+async function until(expression){for(let i=0;i<120;i++){if(await ev(expression))return;await pause(100)}throw Error('Timeout '+expression)}
+async function type(selector,text){await ev(`(()=>{const n=document.querySelector(${JSON.stringify(selector)});n.focus();n.select()})()`);for(const char of text)await send('Input.insertText',{text:char})}
+try{
+ await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Network.setBypassServiceWorker',{bypass:true})
+ await send('Page.navigate',{url:base});await until('window.NovaUIReady && window.NoavaWorkspace && window.UnifiedCalendar && !!V112_DASH')
+ assert.equal(await ev('document.querySelector(".page:not(.hidden)").id'),'calendar')
+ assert.equal(await ev('document.querySelector(".nav-item.active").dataset.page'),'calendar')
+ await ev('AppOverlays.closeAll();NoavaDrafts.clear("calendar:new:"+DateContextUI.proposalDate());openGenericAdd("daily","Task")')
+ assert.equal(await ev('document.getElementById("calendarInput-kind").value'),'task')
+ assert.equal(await ev('document.getElementById("calendarInput-start_time").disabled'),true)
+ await ev('document.querySelector("#calendarItemForm [name=all_day]").click()')
+ await type('#calendarInput-start_time','11')
+ assert.equal(await ev('Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,"value").get.call(document.getElementById("calendarInput-start_time")).length'),3)
+ assert.equal(await ev('document.getElementById("calendarInput-start_time").value'),'')
+ await send('Input.insertText',{text:'2'})
+ assert.equal(await ev('document.getElementById("calendarInput-start_time").value'),'','one minute digit is incomplete')
+ await send('Input.insertText',{text:'3'})
+ assert.equal(await ev('document.getElementById("calendarInput-start_time").value'),'11:23')
+ await type('#calendarInput-end_time','1210')
+ assert.equal(await ev('document.getElementById("calendarInput-end_time").value'),'12:10')
+ await type('#calendarInput-end_time','\u06f1\u06f2\u06f1\u06f0')
+ assert.equal(await ev('document.getElementById("calendarInput-end_time").value'),'12:10')
+ await type('#calendarInput-end_time','\u0661\u0662\u0661\u0660')
+ assert.equal(await ev('document.getElementById("calendarInput-end_time").value'),'12:10')
+ await type('#calendarInput-end_time','25:70')
+ assert.equal(await ev('document.getElementById("calendarInput-end_time").checkValidity()'),false)
+ await type('#calendarInput-end_time','12:10')
+ await ev('AppOverlays.closeAll();openGenericAdd("daily","Task")')
+ assert.equal(await ev('!document.querySelector("#calendarItemForm [name=all_day]").checked && !document.getElementById("calendarInput-start_time").disabled'),true,'restored draft enables its time fields')
+ const title='Home clock check '+Date.now(),date='2026-11-20'
+ await ev(`document.getElementById('calendarInput-title').value=${JSON.stringify(title)};document.getElementById('calendarInput-date').value=${JSON.stringify(date)};document.getElementById('calendarInput-date').dispatchEvent(new Event('change',{bubbles:true}));document.getElementById('calendarItemForm').requestSubmit()`)
+ await until('!UnifiedCalendar.state.busy && !document.getElementById("calendarItemForm")')
+ let entries=await ev(`apiFetch('/api/calendar?from=${date}&to=${date}').then(r=>r.entries)`)
+ const entry=entries.find(e=>e.title===title);assert.ok(entry);assert.equal(entry.source,'task');assert.equal(entry.start_time,'11:23');assert.equal(entry.end_time,'12:10');assert.equal(entry.all_day,false)
+ await send('Page.reload',{ignoreCache:true});await until('window.NovaUIReady && !!V112_DASH')
+ assert.equal(await ev('document.querySelector(".page:not(.hidden)").id'),'calendar')
+ entries=await ev(`apiFetch('/api/calendar?from=${date}&to=${date}').then(r=>r.entries)`)
+ assert.equal(entries.find(e=>e.title===title).start_time,'11:23','time survives reload')
+ await ev(`(()=>{const n=document.createElement('input');n.id='clockDateFixture';n.type='datetime-local';document.getElementById('calendar').append(n);PersianUI.enhance(n)})()`)
+ await type('#clockDateFixture','1405/08/29 1123')
+ assert.ok((await ev('document.getElementById("clockDateFixture").value')).endsWith('T11:23'))
+ await ev(`document.getElementById('clockDateFixture').closest('.persian-date-field').remove();apiFetch('/api/tasks/${entry.id}',{method:'DELETE'})`)
+ assert.deepEqual(errors,[])
+ console.log('PASS Overview home, one task date, optional clock, digit entry in three scripts, invalid times, draft restore and saved task time after reload')
+}finally{socket.close()}

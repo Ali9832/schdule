@@ -20,6 +20,7 @@ import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 import { registerProjectWorkspace } from './project-workspace.js'
 import { registerReading } from './reading.js'
 import { registerStatistics, completionMetadata } from './statistics.js'
+import { registerTaskSimilarity } from './task-similarity.js'
 import { createUserRefreshGate } from './user-refresh-gate.js'
 import { registerCalendarCarryForward, memoryCarryForward, postgresCarryForward } from './calendar-carry-forward.js'
 
@@ -1960,6 +1961,7 @@ app.get('/api/bootstrap', async (request) => {
 })
 
 app.get('/api/tasks', async (request) => listTasks(request.user.id))
+registerTaskSimilarity(app,{canonical:getV11Canonical})
 app.post('/api/tasks', { schema: { body: { ...taskBodySchema, required: ['title'] } } }, async (request, reply) => {
   try { return reply.code(201).send(await createTask(request.user.id, request.body)) } catch (error) { return reply.code(400).send({ error: error.message }) }
 })

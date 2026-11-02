@@ -107,21 +107,23 @@ try{
   assert.equal(linked.kind,'quiz');assert.equal(linked.course_id,'course-one');assert.equal(linked.project_id,'project-one');
   await request('POST','/api/calendar',{title:'Foreign course',kind:'class',date:dueDate,course_id:'course-one'},400,{'test-user':'two'});
   await request('POST','/api/calendar',{title:'Foreign project',kind:'class',date:dueDate,project_id:'project-one'},404,{'test-user':'two'});
-  const yesterday=new Date(Date.parse(dueDate+'T12:00:00Z')-86400000).toISOString().slice(0,10);
+  // The reminder can be tomorrow near Tehran midnight; carry-forward targets today.
+  const carryDate=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const yesterday=new Date(Date.parse(carryDate+'T12:00:00Z')-86400000).toISOString().slice(0,10);
   const recurring=await request('POST','/api/calendar',{title:'Weekly overdue',kind:'class',date:yesterday,recurrence:{frequency:'weekly',count:3}},201);
   await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday});
-  const moved=(await request('GET',`/api/calendar?from=${dueDate}&to=${dueDate}`)).entries.find(row=>row.id===recurring.id);
-  assert.equal(moved.date,dueDate);assert.equal(moved.occurrence_date,yesterday);assert.equal(moved.series_date,yesterday);
+  const moved=(await request('GET',`/api/calendar?from=${carryDate}&to=${carryDate}`)).entries.find(row=>row.id===recurring.id);
+  assert.equal(moved.date,carryDate);assert.equal(moved.occurrence_date,yesterday);assert.equal(moved.series_date,yesterday);
   assert.equal((await request('GET',`/api/calendar?from=${yesterday}&to=${yesterday}`)).entries.some(row=>row.id===recurring.id),false);
   await request('PATCH',`/api/calendar/event/${recurring.id}`,{done:true,occurrence_date:yesterday});
-  assert.equal((await request('GET',`/api/calendar?from=${dueDate}&to=${dueDate}`)).entries.find(row=>row.id===recurring.id).done,true);
+  assert.equal((await request('GET',`/api/calendar?from=${carryDate}&to=${carryDate}`)).entries.find(row=>row.id===recurring.id).done,true);
   const nextWeek=new Date(Date.parse(yesterday+'T12:00:00Z')+7*86400000).toISOString().slice(0,10);
   assert.equal((await request('GET',`/api/calendar?from=${nextWeek}&to=${nextWeek}`)).entries.find(row=>row.id===recurring.id).done,false);
   await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday},400);
   await request('POST',`/api/calendar/event/${recurring.id}/carry-forward`,{occurrence_date:yesterday},404,{'test-user':'two'});
   const late=await request('POST','/api/calendar',{title:'Late homework',kind:'homework',date:yesterday},201);
   assert.ok((await request('GET','/api/calendar/overdue')).entries.some(row=>row.id===late.id));
-  await request('POST',`/api/calendar/task/${late.id}/carry-forward`,{});assert.equal(user('one').tasks.find(row=>row.id===late.id).due_date,dueDate);
+  await request('POST',`/api/calendar/task/${late.id}/carry-forward`,{});assert.equal(user('one').tasks.find(row=>row.id===late.id).due_date,carryDate);
   console.log('PASS academic course/project links, quiz, user isolation, overdue review and per-occurrence carry-forward without shifting the series')
   console.log('PASS recurrence, Persian month/year boundaries, per-occurrence state, deadlines, priority, reminder times, private image/audio attachments and size/type validation')
   console.log('PASS calendar validation, multi-source CRUD, completion/undo, moving, safe unscheduling, metadata persistence, user isolation and structured-note preservation')

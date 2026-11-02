@@ -43,15 +43,34 @@
     input.removeAttribute('min');input.removeAttribute('max');input.removeAttribute('step');
     input.placeholder=kind==='time'?'ساعت:دقیقه (۲۴ ساعته)':kind==='date'?'۱۴۰۵/۰۱/۰۱':'۱۴۰۵/۰۱/۰۱  ۱۴:۳۰';
     input.setAttribute('aria-description',kind==='time'?'ساعت به صورت ۲۴ ساعته':'تاریخ شمسی، سال/ماه/روز'+(kind==='datetime-local'?' و ساعت ۲۴ ساعته':''));
-    function parse(){const text=digits(native.get.call(input)).trim();if(!text)return '';if(kind==='month')return monthValue(text)||'';if(kind==='time')return timeValue(text)||'';if(kind==='date')return fromPersian(text)||'';const m=text.match(/^(\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|\d{8})(?:[ T]+(\d{1,2}:\d{1,2}|\d{3,4}))?$/);if(!m)return '';const date=fromPersian(m[1]);if(!date)return '';const time=timeValue(m[2]||'');return time?date+'T'+time:''}
-    Object.defineProperty(input,'value',{configurable:true,get:parse,set(value){const text=digits(value||'');let display='';if(text){if(kind==='month')display=fa((monthValue(text)||text).replace('-','/'));else if(kind==='time')display=fa(timeValue(text)||text);else if(/^\d{4}-\d{2}-\d{2}/.test(text)&&Number(text.slice(0,4))>1700)display=toPersian(text)+(kind==='datetime-local'?'  '+fa(text.slice(11,16)||'00:00'):'');else display=fa(text)}native.set.call(input,display);input.setCustomValidity('')}});
+    function parse(){const text=digits(native.get.call(input)).trim();if(!text)return '';if(kind==='month')return monthValue(text)||'';if(kind==='time')return /^(?:\d{1,2}:\d{2}(?::\d{2})?|\d{4})$/.test(text)?timeValue(text)||'':'';if(kind==='date')return fromPersian(text)||'';const m=text.match(/^(\d{4}[\/-]\d{1,2}[\/-]\d{1,2}|\d{8})(?:[ T]+(\d{1,2}:\d{1,2}|\d{3,4}))?$/);if(!m)return '';const date=fromPersian(m[1]);if(!date)return '';if(m[2]&&!/^(?:\d{1,2}:\d{2}|\d{4})$/.test(m[2]))return '';const time=timeValue(m[2]||'');return time?date+'T'+time:''}
+    Object.defineProperty(input,'value',{configurable:true,get:parse,set(value){const text=digits(value||'');let display='';if(text){if(kind==='month')display=fa((monthValue(text)||text).replace('-','/'));else if(kind==='time')display=fa(timeValue(text)||text);else if(/^\d{4}-\d{2}-\d{2}/.test(text)&&Number(text.slice(0,4))>1700)display=toPersian(text)+(kind==='datetime-local'?'  '+fa(text.slice(11,16)||'00:00'):'');else display=fa(text)}native.set.call(input,display);input.setCustomValidity('');input._updateTimeGuide?.()}});
     input.value=initial;
     if(kind==='month'){input.placeholder='۲۰۲۶/۱۰ (میلادی)';input.setAttribute('aria-description','سال و ماه میلادی بودجه؛ تایپ عددی یا تغییر با اسکرول و کلیدهای بالا و پایین.');}
     input.inputMode='numeric';input.addEventListener('blur',()=>{const value=input.value,message=input.validity.customError?input.validationMessage:'';if(value){input.value=value;if(message)input.setCustomValidity(message);}});input.addEventListener('keydown',event=>{if(event.isComposing||event.ctrlKey||event.metaKey||event.altKey)return;if(event.key==='ArrowUp'||event.key==='ArrowDown'){event.preventDefault();stepInput(input,event.key==='ArrowUp'?1:-1);}});input.addEventListener('wheel',event=>{if(document.activeElement!==input||input.disabled||input.readOnly||event.ctrlKey||event.metaKey||!event.deltaY)return;event.preventDefault();stepInput(input,event.deltaY<0?1:-1);},{passive:false});
     input.setAttribute('aria-description',(input.getAttribute('aria-description')||'')+'؛ تایپ عددی یا انتخاب بخش عدد با موس و تغییر با اسکرول و کلید بالا/پایین.');
     const wrapper=document.createElement('span');wrapper.className='persian-date-field'+(kind==='time'?' persian-time-field':'');input.before(wrapper);wrapper.append(input);
     const button=document.createElement('button');button.type='button';button.className='persian-calendar-button';button.textContent=kind==='time'?'◷ ساعت':'▦';button.setAttribute('aria-label',kind==='time'?'انتخاب ساعت':'انتخاب تاریخ شمسی');if(kind==='month')button.setAttribute('aria-label','انتخاب ماه میلادی بودجه');button.onclick=()=>kind==='time'?openTime(input):kind==='month'?openMonth(input):openCalendar(input);wrapper.append(button);
+    if(kind==='time'){
+      const guide=document.createElement('span');guide.className='persian-time-guide';guide.setAttribute('aria-hidden','true');wrapper.append(guide);input.placeholder='';
+      const update=()=>{const raw=native.get.call(input),mask='۰۰:۰۰';guide.style.left=(input.offsetLeft+10)+'px';guide.style.font=getComputedStyle(input).font;guide.replaceChildren();if(!raw){guide.textContent=mask;return;}if(!/^\d{0,2}:?\d{0,2}$/.test(digits(raw))||raw.length>=5)return;const prefix=document.createElement('span');prefix.textContent=raw;prefix.style.visibility='hidden';guide.append(prefix,mask.slice(raw.length));};
+      input._updateTimeGuide=update;input.addEventListener('focus',update);input.addEventListener('input',update);input.addEventListener('change',update);input.addEventListener('blur',update);update();
+    }
   }
+  // Format before the validation capture handler and before form/draft listeners.
+  document.addEventListener('input',event=>{
+    const input=event.target;if(!(input instanceof HTMLInputElement)||event.isComposing||!['time','datetime-local'].includes(input.dataset.persianType))return;
+    const raw=native.get.call(input),kind=input.dataset.persianType;
+    const match=kind==='time'?['', '',raw]:raw.match(/^(.*?[ T]+)([0-9۰-۹٠-٩][\s\S]*)$/);
+    if(!match)return;const prefix=kind==='time'?'':match[1],clock=kind==='time'?raw:match[2],plain=digits(clock);
+    if(!/^\d{0,2}:?\d{0,2}$/.test(plain))return;
+    let formatted=plain;
+    if(!plain.includes(':')&&plain.length>=2&&!event.inputType?.startsWith('delete'))formatted=plain.slice(0,2)+':'+plain.slice(2);
+    if(formatted===plain&&raw===prefix+fa(formatted)){input._updateTimeGuide?.();return;}
+    const cursor=input.selectionStart??raw.length,selection=input.selectionEnd??cursor,added=formatted.length-plain.length;
+    native.set.call(input,prefix+fa(formatted));input.setSelectionRange(cursor+(added&&cursor>=prefix.length+2?added:0),selection+(added&&selection>=prefix.length+2?added:0));input._updateTimeGuide?.();
+  },true);
+  document.addEventListener('beforeinput',event=>{const input=event.target;if(!(input instanceof HTMLInputElement)||!['time','datetime-local'].includes(input.dataset.persianType)||event.data!==':')return;const raw=native.get.call(input),cursor=input.selectionStart;if(input.selectionEnd===cursor&&raw[cursor-1]===':')event.preventDefault();},true);
   for(const eventName of ['input','change'])document.addEventListener(eventName,event=>{const input=event.target;if(!(input instanceof HTMLInputElement)||!input.dataset.persianType)return;const raw=native.get.call(input).trim();const valid=!raw||!!input.value;input.setCustomValidity(valid?'':(input.dataset.persianType==='month'?'ماه میلادی معتبر به شکل سال/ماه وارد کنید.':'تاریخ شمسی یا ساعت ۲۴ ساعته معتبر وارد کنید.'));if(!valid){event.stopImmediatePropagation();if(eventName==='change')input.reportValidity()}},true);
   let dialog;
   function openMonth(input){

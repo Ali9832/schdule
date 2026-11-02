@@ -11,6 +11,7 @@ async function evaluate(expression) { const result = await send('Runtime.evaluat
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms))
 async function until(expression) { for (let i = 0; i < 120; i++) { if (await evaluate(expression)) return; await pause(100) } throw Error('Timeout: ' + expression) }
 const title = 'Planning date audit ' + Date.now(), a = '2026-11-18', b = '2026-11-19'
+const createdTitle='Unified calendar entry '+crypto.randomUUID()
 try {
   await send('Runtime.enable'); await send('Page.enable'); await send('Network.enable')
   await send('Network.setCacheDisabled', { cacheDisabled: true }); await send('Network.setBypassServiceWorker', { bypass: true })
@@ -18,7 +19,9 @@ try {
   await until('typeof DateContextUI!=="undefined" && !!V112_DASH')
   assert.equal(await evaluate('DateContext.date===DateContext.today()'), true)
   assert.equal(await evaluate('document.querySelectorAll(".planning-date-bar").length'),7);assert.equal(await evaluate('DateContext.scoped("workspace")'),false)
-  await evaluate(`(async()=>{for(const [suffix,due_date] of [[' A','${a}'],[' B','${b}'],[' Undated',null]])await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title:${JSON.stringify(title)}+suffix,due_date,status:'todo'})});})()`)
+  for(const [suffix,due_date] of [[' A',a],[' B',b],[' Undated',null]]){
+    const response=await fetch(base+'/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:title+suffix,due_date,status:'todo'})});assert.equal(response.status,201)
+  }
   await evaluate('DateContext.setScope("workspace",true);goPage("workspace")'); await until('!V111_PAGE.loading')
   await evaluate(`DateContext.set('${a}');DateContextUI.refreshing`)
   await until(`!V111_PAGE.loading && V111_PAGE.items.some(x=>x.title===${JSON.stringify(title + ' A')})`)
@@ -30,12 +33,12 @@ try {
   await until(`!V111_PAGE.loading && V111_PAGE.items.some(x=>x.title===${JSON.stringify(title + ' B')})`)
   assert.equal(await evaluate(`V111_PAGE.items.some(x=>x.title===${JSON.stringify(title + ' A')})`), false)
   await evaluate(`openGenericAdd('daily','New task')`)
-  assert.equal(await evaluate('document.getElementById("planningGenericDue").value'), b)
-  await evaluate(`document.getElementById('genericTitleInput').value=${JSON.stringify(title + ' Created')};saveGenericAdd()`)
-  await until(`document.getElementById('genericModalBg').classList.contains('hidden')`)
-  const created = await evaluate(`(async()=>{const result=await apiFetch('/api/v11/tasks/paged?date=${b}');return result.items.find(x=>x.title===${JSON.stringify(title + ' Created')})})()`)
+  assert.equal(await evaluate('document.getElementById("calendarInput-date").value'), b)
+  await evaluate(`document.getElementById('calendarInput-title').value=${JSON.stringify(createdTitle)};document.getElementById('calendarItemForm').requestSubmit()`)
+  await until(`!UnifiedCalendar.state.busy && !document.getElementById('calendarItemForm')`)
+  const created = await evaluate(`(async()=>{const result=await apiFetch('/api/v11/tasks/paged?date=${b}');return result.items.find(x=>x.title===${JSON.stringify(createdTitle)})})()`)
   assert.equal(created.due_date, b)
-  await evaluate(`(async()=>{await v112EnsureLegacy();baseEditTask(${JSON.stringify(created.id)})})()`)
+  await evaluate(`(async()=>{AppOverlays.closeAll();await v112EnsureLegacy();baseEditTask(${JSON.stringify(created.id)})})()`)
   assert.equal(await evaluate('!!document.getElementById("planningGenericDue")'), false)
   await evaluate('closeGenericAdd();DateContext.setScope("finance",true);goPage("finance")')
   await until(`!!V1112_DATA && V1112_DATA.date==='${b}'`)
