@@ -42,5 +42,5 @@
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='academic'){document.getElementById('crumb').textContent='تحصیل و یادگیری';await load();}};
   let timer;window.addEventListener('nova:data-changed',event=>{if(!document.getElementById('academic').classList.contains('hidden')&&/\/api\/(calendar|modules\/academic|projects|tasks)/.test(event.detail?.path||'')){clearTimeout(timer);timer=setTimeout(load,400);}});
   window.addEventListener('nova:date-changed',()=>{if(!document.getElementById('academic').classList.contains('hidden'))load();});
-  window.NoavaAcademic={load,openNew,get courses(){return courses;}};
+  window.NoavaAcademic={load,openNew,selectCourse(id){course=id;goPage('academic');},get courses(){return courses;}};
 })();

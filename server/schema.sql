@@ -442,3 +442,52 @@ END;
 $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER tasks_track_completion BEFORE INSERT OR UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION noava_track_completion();
 CREATE OR REPLACE TRIGGER projects_track_completion BEFORE INSERT OR UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION noava_track_completion();
+
+-- Explicit links to existing people and tasks; no demo members or assignments.
+CREATE TABLE IF NOT EXISTS project_members (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  person_id UUID NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  responsibility TEXT NOT NULL DEFAULT '',
+  due_date DATE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','done')),
+  notes TEXT NOT NULL DEFAULT '',
+  version INTEGER NOT NULL DEFAULT 1,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id,project_id,person_id)
+);
+CREATE INDEX IF NOT EXISTS project_members_person_idx ON project_members(user_id,person_id);
+CREATE TABLE IF NOT EXISTS task_responsibilities (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
+  person_id UUID NOT NULL,
+  PRIMARY KEY (user_id,task_id),
+  FOREIGN KEY (user_id,project_id,person_id) REFERENCES project_members(user_id,project_id,person_id) ON DELETE CASCADE
+);
+CREATE OR REPLACE FUNCTION noava_unassign_moved_task() RETURNS trigger AS $$
+BEGIN
+  DELETE FROM task_responsibilities
+  WHERE user_id=NEW.user_id AND task_id=NEW.id AND project_id IS DISTINCT FROM NEW.project_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE TRIGGER tasks_unassign_moved_project
+AFTER UPDATE OF project_id ON tasks FOR EACH ROW
+WHEN (OLD.project_id IS DISTINCT FROM NEW.project_id) EXECUTE FUNCTION noava_unassign_moved_task();
+
+ALTER TABLE tasks ADD COLUMN IF NOT EXISTS parent_task_id UUID REFERENCES tasks(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS task_parent_owner_idx ON tasks(user_id,parent_task_id);
+ALTER TABLE people ADD COLUMN IF NOT EXISTS birthday DATE;
+ALTER TABLE people ADD COLUMN IF NOT EXISTS links JSONB NOT NULL DEFAULT '[]'::jsonb;
+CREATE TABLE IF NOT EXISTS project_connections (
+  id UUID PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  target_type TEXT NOT NULL CHECK (target_type IN ('course','resource','outcome','event')),
+  target_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id,project_id,target_type,target_id)
+);

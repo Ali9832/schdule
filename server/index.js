@@ -21,6 +21,11 @@ import { registerProjectWorkspace } from './project-workspace.js'
 import { registerReading } from './reading.js'
 import { registerStatistics, completionMetadata } from './statistics.js'
 import { registerTaskSimilarity } from './task-similarity.js'
+import { registerProjectTeam } from './project-team.js'
+import { memoryProjectTeamStore, postgresProjectTeamStore } from './project-team-store.js'
+import { registerProjectNetwork } from './project-network.js'
+import { registerPeopleNetwork, personExtras, nextPersianAnniversary } from './people-network.js'
+import { validateTaskHierarchy } from './task-hierarchy.js'
 import { createUserRefreshGate } from './user-refresh-gate.js'
 import { registerCalendarCarryForward, memoryCarryForward, postgresCarryForward } from './calendar-carry-forward.js'
 
@@ -746,6 +751,7 @@ function normalizeTask(input = {}) {
     status: ['todo', 'in_progress', 'done'].includes(input.status) ? input.status : 'todo',
     estimate_minutes: Math.max(0, Number(input.estimate_minutes) || 0),
     project_id: input.project_id || null,
+    parent_task_id: input.parent_task_id || null,
     category: String(input.category || 'شخصی').trim() || 'شخصی',
     tags: Array.isArray(input.tags) ? input.tags.slice(0, 8) : []
   }
@@ -756,7 +762,7 @@ const taskBodySchema = {
     id: { type: 'string' }, title: { type: 'string', minLength: 1, maxLength: 200 },
     description: { type: 'string', maxLength: 4000 }, due_date: { type: ['string', 'null'], pattern: '^\\d{4}-\\d{2}-\\d{2}$' },
     priority: { type: 'string', enum: ['high', 'medium', 'low'] }, status: { type: 'string', enum: ['todo', 'in_progress', 'done'] },
-    estimate_minutes: { type: 'integer', minimum: 0, maximum: 1440 }, project_id: { type: ['string', 'null'] },
+    estimate_minutes: { type: 'integer', minimum: 0, maximum: 1440 }, project_id: { type: ['string', 'null'] },parent_task_id:{type:['string','null'],maxLength:100},
     category: { type: 'string', maxLength: 80 }, tags: { type: 'array', maxItems: 8, items: { type: 'string', maxLength: 40 } }
   }
 }
@@ -855,10 +861,11 @@ async function createTask(userId, payload) {
   const task = normalizeTask(payload)
   if (!task.title) throw new Error('عنوان تسک الزامی است.')
   if (task.project_id && !(await listProjects(userId)).some((project) => project.id === task.project_id)) throw new Error('پروژه مرتبط پیدا نشد.')
+  if(task.parent_task_id)validateTaskHierarchy(await listTasks(userId),task)
   const created = { ...task, ...completionMetadata(null,task), id: id(), created_at: new Date().toISOString(), updated_at: new Date().toISOString() }
   if (!hasDatabase) memory.tasks.push(created)
   else {
-    await app.pg.query('INSERT INTO tasks (id,user_id,title,description,due_date,priority,status,estimate_minutes,category,tags,project_id,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13)', [created.id, userId, created.title, created.description, created.due_date, created.priority, created.status, created.estimate_minutes, created.category, JSON.stringify(created.tags || []), created.project_id, created.created_at, created.updated_at])
+    await app.pg.query('INSERT INTO tasks (id,user_id,title,description,due_date,priority,status,estimate_minutes,category,tags,project_id,created_at,updated_at,parent_task_id) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12,$13,$14)', [created.id, userId, created.title, created.description, created.due_date, created.priority, created.status, created.estimate_minutes, created.category, JSON.stringify(created.tags || []), created.project_id, created.created_at, created.updated_at,created.parent_task_id])
   }
   await addActivity(userId, 'assistant', `تسک «${created.title}» به برنامه اضافه شد.`)
   return created
@@ -882,10 +889,12 @@ async function updateTask(userId, taskId, payload) {
   Object.assign(next,completionMetadata(current,next))
   if (!next.title) throw new Error('عنوان تسک الزامی است.')
   if (next.project_id && !(await listProjects(userId)).some((project) => project.id === next.project_id)) throw new Error('پروژه مرتبط پیدا نشد.')
+  validateTaskHierarchy(currentTasks,next,taskId)
   if (!hasDatabase) {
     const index = memory.tasks.findIndex((task) => task.id === taskId)
     memory.tasks[index] = next
-  } else await app.pg.query('UPDATE tasks SET title=$1,description=$2,due_date=$3,priority=$4,status=$5,estimate_minutes=$6,category=$7,tags=$8::jsonb,project_id=$9,updated_at=$10 WHERE id=$11 AND user_id=$12', [next.title, next.description, next.due_date, next.priority, next.status, next.estimate_minutes, next.category, JSON.stringify(next.tags || []), next.project_id, next.updated_at, taskId, userId])
+  } else await app.pg.query('UPDATE tasks SET title=$1,description=$2,due_date=$3,priority=$4,status=$5,estimate_minutes=$6,category=$7,tags=$8::jsonb,project_id=$9,updated_at=$10,parent_task_id=$11 WHERE id=$12 AND user_id=$13', [next.title, next.description, next.due_date, next.priority, next.status, next.estimate_minutes, next.category, JSON.stringify(next.tags || []), next.project_id, next.updated_at,next.parent_task_id, taskId, userId])
+  if(!hasDatabase&&current.project_id!==next.project_id)await projectTeamStore.cleanTask(userId,taskId)
   if (payload.status === 'done') await addActivity(userId, 'done', `تسک «${next.title}» انجام شد.`)
   return next
 }
@@ -1378,7 +1387,7 @@ function v11EntityMap(data,type){
 function v11Label(type){return ({task:'تسک',project:'پروژه',area:'حوزه',outcome:'هدف',routine:'روتین',event:'رویداد',meeting:'جلسه',resource:'منبع'})[type]||type}
 
 function v11Summary(data){
-  const activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active')
+  const activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active'&&p.status!=='done')
   const projectCoverage=activeProjects.length?Math.round(activeProjects.filter((p)=>p.next_action).length/activeProjects.length*100):100
   const staleCut=Date.now()-14*86400000
   const stale=activeProjects.filter((p)=>new Date(p.last_touched_at||p.created_at||0).getTime()<staleCut).length
@@ -1396,7 +1405,7 @@ function v11Summary(data){
 }
 
 app.get('/api/v11/bootstrap', async (request) => { const data=await getV11Canonical(request.user.id); return {...data,summary:v11Summary(data)} })
-app.get('/api/v11/dashboard', async (request) => { const data=await getV11Canonical(request.user.id); return {summary:v11Summary(data),projects:data.projects.filter((p)=>p.lifecycle_status==='active').slice(0,8),areas:data.areas,meetings:data.meetings.slice(0,8),resources:data.resources.slice(0,8)} })
+app.get('/api/v11/dashboard', async (request) => { const data=await getV11Canonical(request.user.id); return {summary:v11Summary(data),projects:data.projects.filter((p)=>p.lifecycle_status==='active'&&p.status!=='done').slice(0,8),areas:data.areas,meetings:data.meetings.slice(0,8),resources:data.resources.slice(0,8)} })
 
 
 // ===== V11.1 Reliability & Scale =====
@@ -1463,13 +1472,13 @@ function v112MeetingDecisionCount(details={}){
   return String(details.decisions||'').trim()?1:0
 }
 function v112ProjectLite(p){ return {id:p.id,name:p.name,description:p.description||'',outcome:p.outcome||'',lifecycle_status:p.lifecycle_status||'active',area_id:p.area_id||null,progress:Number(p.progress||0),next_action:p.next_action||'',due_date:p.due_date||null,last_touched_at:p.last_touched_at||p.updated_at||p.created_at||null} }
-function v112TaskLite(t){ return {id:t.id,title:t.title,description:t.description||'',status:t.status,priority:t.priority,project_id:t.project_id||null,area_id:t.area_id||null,category:t.category||'',context:t.context||'',energy:t.energy||'',estimate_minutes:Number(t.estimate_minutes||0),due_date:t.due_date||null,waiting_on:t.waiting_on||'',resume_note:t.resume_note||''} }
+function v112TaskLite(t){ return {id:t.id,title:t.title,description:t.description||'',status:t.status,priority:t.priority,project_id:t.project_id||null,parent_task_id:t.parent_task_id||null,area_id:t.area_id||null,category:t.category||'',context:t.context||'',energy:t.energy||'',estimate_minutes:Number(t.estimate_minutes||0),due_date:t.due_date||null,waiting_on:t.waiting_on||'',resume_note:t.resume_note||''} }
 function v112MeetingLite(m){ const d=m.details||{}; return {id:m.id,title:m.title,start_at:m.start_at,end_at:m.end_at,project_id:m.project_id||null,area_id:m.area_id||null,notes:m.notes||'',details:{participants:d.participants||[],agenda:d.agenda||'',summary:d.summary||'',decisions:d.decisions||[],action_items:v112ActionItems(d),waiting_items:d.waiting_items||[],next_meeting_at:d.next_meeting_at||null}} }
 function v112AreaSummaries(data){
   const now=Date.now()
   return data.areas.map((a)=>{
     const tasks=data.tasks.filter((t)=>t.area_id===a.id&&t.status!=='done')
-    const projects=data.projects.filter((p)=>p.area_id===a.id&&p.lifecycle_status==='active')
+    const projects=data.projects.filter((p)=>p.area_id===a.id&&p.lifecycle_status==='active'&&p.status!=='done')
     const routines=data.routines.filter((r)=>r.area_id===a.id&&r.status!=='paused')
     const events=data.events.filter((e)=>e.area_id===a.id&&new Date(e.end_at||e.start_at||0).getTime()>=now)
     return {id:a.id,name:a.name,icon:a.icon||'◫',description:a.description||'',standard:a.standard||'',status:a.status||'active',tasks_open:tasks.length,waiting:tasks.filter((t)=>String(t.waiting_on||'').trim()).length,projects_active:projects.length,routines_active:routines.length,events_upcoming:events.length}
@@ -1484,7 +1493,7 @@ async function v112DashboardData(userId, selectedDate){
   const todayOpen=open.filter((t)=>t.due_date===today)
   const overdue=open.filter((t)=>t.due_date&&t.due_date<today).sort((a,b)=>String(a.due_date).localeCompare(String(b.due_date)))
   const high=open.filter((t)=>['urgent','high'].includes(String(t.priority||'').toLowerCase())&&!overdue.includes(t))
-  const activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active')
+  const activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active'&&p.status!=='done')
   const noAction=activeProjects.filter((p)=>!p.next_action)
   const rankTask=(a,b)=>{
     const ad=a.due_date===today?0:a.due_date&&a.due_date<today?-1:1, bd=b.due_date===today?0:b.due_date&&b.due_date<today?-1:1
@@ -1567,7 +1576,7 @@ async function v113PlanningPayload(userId){
   const [data,life]=await Promise.all([getV11Canonical(userId),getLifeData(userId)])
   const planning=life.execution?.planning||{current_cycle:null,reviews:[]}
   const cycle=planning.current_cycle||v113DefaultCycle()
-  const active=data.projects.filter((p)=>p.lifecycle_status==='active')
+  const active=data.projects.filter((p)=>p.lifecycle_status==='active'&&p.status!=='done')
   const staleCut=Date.now()-14*86400000
   const stale=active.filter((p)=>new Date(p.last_touched_at||p.updated_at||p.created_at||0).getTime()<staleCut)
   const noAction=active.filter((p)=>!String(p.next_action||'').trim())
@@ -1613,7 +1622,7 @@ function v114DefaultPersonalization(){return {default_context:'',default_energy:
 function v114PrefsFromLife(life){return normalizeExecution(life.execution||{}).personalization||v114DefaultPersonalization()}
 async function v114SavePrefs(userId,prefs){const life=await getLifeData(userId);const execution=normalizeExecution({...life.execution,personalization:prefs});await persistLifeData(userId,{...life,execution});return execution.personalization}
 function v114TaskReasons(t,todayIso,activeProjectIds){const reasons=[];if(t.due_date&&t.due_date<todayIso)reasons.push('موعد گذشته');else if(t.due_date===todayIso)reasons.push('موعد امروز');if(['urgent','high'].includes(String(t.priority||'').toLowerCase()))reasons.push('اولویت بالا');if(t.project_id&&activeProjectIds.has(t.project_id))reasons.push('پروژه Active');if(t.context)reasons.push(`Context: ${t.context}`);if(t.energy)reasons.push(`Energy: ${t.energy}`);if(Number(t.estimate_minutes||0))reasons.push(`${Number(t.estimate_minutes)} دقیقه`);return reasons}
-async function v114Recommendations(userId,query={}){const [data,life]=await Promise.all([getV11Canonical(userId),getLifeData(userId)]);const prefs=v114PrefsFromLife(life),todayIso=v112DateIso(),ctx=String(query.context||prefs.default_context||''),energy=String(query.energy||prefs.default_energy||''),minutes=Math.max(0,Number(query.minutes||prefs.default_minutes||30)||30),activeProjectIds=new Set(data.projects.filter(p=>p.lifecycle_status==='active').map(p=>p.id));let rows=data.tasks.filter(t=>t.status!=='done'&&!String(t.waiting_on||'').trim());if(ctx)rows=rows.filter(t=>String(t.context||'')===ctx);if(energy)rows=rows.filter(t=>String(t.energy||'')===energy);if(minutes)rows=rows.filter(t=>!Number(t.estimate_minutes||0)||Number(t.estimate_minutes||0)<=minutes);const band=t=>t.due_date&&t.due_date<todayIso?0:t.due_date===todayIso?1:['urgent','high'].includes(String(t.priority||'').toLowerCase())?2:(t.project_id&&activeProjectIds.has(t.project_id)?3:4);rows.sort((a,b)=>band(a)-band(b)||v112PriorityRank(a.priority)-v112PriorityRank(b.priority)||String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'))||Number(a.estimate_minutes||999)-Number(b.estimate_minutes||999));const areas=new Map(data.areas.map(a=>[a.id,a.name])),projects=new Map(data.projects.map(p=>[p.id,p.name]));const staleDays=prefs.attention.stale_project_days,waitDays=prefs.attention.waiting_days,staleCut=Date.now()-staleDays*86400000,waitingCut=Date.now()-waitDays*86400000;const staleProjects=data.projects.filter(p=>p.lifecycle_status==='active'&&new Date(p.last_touched_at||p.updated_at||p.created_at||0).getTime()<staleCut).length;const longWaiting=data.tasks.filter(t=>t.status!=='done'&&String(t.waiting_on||'').trim()&&new Date(t.updated_at||t.created_at||0).getTime()<waitingCut).length;return {stage:'V11.4',criteria:{context:ctx,energy,minutes},items:rows.slice(0,5).map(t=>({...v112TaskLite(t),project_name:projects.get(t.project_id)||'',area_name:areas.get(t.area_id)||'',reasons:v114TaskReasons(t,todayIso,activeProjectIds)})),attention:{stale_projects:staleProjects,long_waiting:longWaiting,stale_project_days:staleDays,waiting_days:waitDays},generated_at:new Date().toISOString()}}
+async function v114Recommendations(userId,query={}){const [data,life]=await Promise.all([getV11Canonical(userId),getLifeData(userId)]);const prefs=v114PrefsFromLife(life),todayIso=v112DateIso(),ctx=String(query.context||prefs.default_context||''),energy=String(query.energy||prefs.default_energy||''),minutes=Math.max(0,Number(query.minutes||prefs.default_minutes||30)||30),activeProjectIds=new Set(data.projects.filter(p=>p.lifecycle_status==='active'&&p.status!=='done').map(p=>p.id));let rows=data.tasks.filter(t=>t.status!=='done'&&!String(t.waiting_on||'').trim());if(ctx)rows=rows.filter(t=>String(t.context||'')===ctx);if(energy)rows=rows.filter(t=>String(t.energy||'')===energy);if(minutes)rows=rows.filter(t=>!Number(t.estimate_minutes||0)||Number(t.estimate_minutes||0)<=minutes);const band=t=>t.due_date&&t.due_date<todayIso?0:t.due_date===todayIso?1:['urgent','high'].includes(String(t.priority||'').toLowerCase())?2:(t.project_id&&activeProjectIds.has(t.project_id)?3:4);rows.sort((a,b)=>band(a)-band(b)||v112PriorityRank(a.priority)-v112PriorityRank(b.priority)||String(a.due_date||'9999-12-31').localeCompare(String(b.due_date||'9999-12-31'))||Number(a.estimate_minutes||999)-Number(b.estimate_minutes||999));const areas=new Map(data.areas.map(a=>[a.id,a.name])),projects=new Map(data.projects.map(p=>[p.id,p.name]));const staleDays=prefs.attention.stale_project_days,waitDays=prefs.attention.waiting_days,staleCut=Date.now()-staleDays*86400000,waitingCut=Date.now()-waitDays*86400000;const staleProjects=data.projects.filter(p=>p.lifecycle_status==='active'&&p.status!=='done'&&new Date(p.last_touched_at||p.updated_at||p.created_at||0).getTime()<staleCut).length;const longWaiting=data.tasks.filter(t=>t.status!=='done'&&String(t.waiting_on||'').trim()&&new Date(t.updated_at||t.created_at||0).getTime()<waitingCut).length;return {stage:'V11.4',criteria:{context:ctx,energy,minutes},items:rows.slice(0,5).map(t=>({...v112TaskLite(t),project_name:projects.get(t.project_id)||'',area_name:areas.get(t.area_id)||'',reasons:v114TaskReasons(t,todayIso,activeProjectIds)})),attention:{stale_projects:staleProjects,long_waiting:longWaiting,stale_project_days:staleDays,waiting_days:waitDays},generated_at:new Date().toISOString()}}
 app.get('/api/v11.4/preferences', async (request)=>{const life=await getLifeData(request.user.id);return v114PrefsFromLife(life)})
 app.put('/api/v11.4/preferences', async (request)=>{const life=await getLifeData(request.user.id),current=v114PrefsFromLife(life),body=request.body||{};const next={...current,...body,attention:{...current.attention,...(body.attention||{})},dashboard:{...current.dashboard,...(body.dashboard||{})},saved_views:current.saved_views};return v114SavePrefs(request.user.id,next)})
 app.post('/api/v11.4/saved-views', async (request,reply)=>{const life=await getLifeData(request.user.id),current=v114PrefsFromLife(life),body=request.body||{},name=String(body.name||'').trim();if(!name)return reply.code(400).send({error:'نام نما الزامی است.'});const row={id:id(),name:name.slice(0,120),filters:body.filters&&typeof body.filters==='object'?body.filters:{},created_at:new Date().toISOString()};return v114SavePrefs(request.user.id,{...current,saved_views:[...(current.saved_views||[]),row]})})
@@ -1654,7 +1663,7 @@ registerCalendarAttachments(app,{canonical:getV11Canonical,store:{
   }
 }})
 registerCalendarCarryForward(app,(userId,items)=>hasDatabase ? postgresCarryForward(app.pg)(userId,items) : memoryCarryForward(()=>memory)(userId,items))
-registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
+const calendarService=registerCalendar(app,{canonical:getV11Canonical,life:getLifeData,saveLife:persistLifeData,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,
   removeAttachments:async(userId,source,entityId)=>{
     if(hasDatabase){await app.pg.query('DELETE FROM calendar_attachments WHERE user_id=$1 AND source=$2 AND entity_id=$3',[userId,source,entityId]);return}
     for(const [key,row] of Object.entries(memory.calendar_attachments||{}))if(row.user_id===userId&&row.source===source&&row.entity_id===entityId)delete memory.calendar_attachments[key]
@@ -1812,7 +1821,7 @@ function v117OutcomeLite(o,data){
 }
 function v117AreaLite(a,data,outcomes){
   const today=v117IsoToday(),openTasks=data.tasks.filter((t)=>t.area_id===a.id&&t.status!=='done'),overdue=openTasks.filter((t)=>t.due_date&&t.due_date<today),waiting=openTasks.filter((t)=>String(t.waiting_on||'').trim())
-  const activeProjects=data.projects.filter((p)=>p.area_id===a.id&&p.lifecycle_status==='active'),staleCut=Date.now()-14*86400000,staleProjects=activeProjects.filter((p)=>new Date(p.last_touched_at||p.updated_at||p.created_at||0).getTime()<staleCut),noNext=activeProjects.filter((p)=>!String(p.next_action||'').trim())
+  const activeProjects=data.projects.filter((p)=>p.area_id===a.id&&p.lifecycle_status==='active'&&p.status!=='done'),staleCut=Date.now()-14*86400000,staleProjects=activeProjects.filter((p)=>new Date(p.last_touched_at||p.updated_at||p.created_at||0).getTime()<staleCut),noNext=activeProjects.filter((p)=>!String(p.next_action||'').trim())
   const areaOutcomes=outcomes.filter((o)=>o.area_id===a.id&&!['done','archived'].includes(String(o.status||''))),atRisk=areaOutcomes.filter((o)=>o.control_state==='risk'),attention=areaOutcomes.filter((o)=>o.control_state==='attention')
   const routines=data.routines.filter((r)=>r.area_id===a.id&&r.status!=='paused')
   const reasons=[];if(overdue.length)reasons.push(`${overdue.length} کار عقب‌افتاده`);if(atRisk.length)reasons.push(`${atRisk.length} Outcome در ریسک`);if(noNext.length)reasons.push(`${noNext.length} پروژه بدون Next Action`);if(waiting.length)reasons.push(`${waiting.length} مورد Waiting`);if(attention.length)reasons.push(`${attention.length} Outcome نیازمند توجه`)
@@ -1820,7 +1829,7 @@ function v117AreaLite(a,data,outcomes){
   return {...a,control_state,control_reason:reasons.join(' • ')||'استثنای مهمی دیده نمی‌شود',tasks_open:openTasks.length,tasks_overdue:overdue.length,waiting:waiting.length,projects_active:activeProjects.length,projects_stale:staleProjects.length,projects_without_next_action:noNext.length,outcomes_active:areaOutcomes.length,outcomes_at_risk:atRisk.length,outcomes_attention:attention.length,routines_active:routines.length}
 }
 async function v117Payload(userId){
-  const data=await getV11Canonical(userId),outcomes=data.outcomes.map((o)=>v117OutcomeLite(o,data)),areas=data.areas.map((a)=>v117AreaLite(a,data,outcomes)),activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active'),links=v117ExplicitProjectOutcomeLinks(data),linkedActive=new Set(links.filter((l)=>activeProjects.some((p)=>p.id===l.source_id)).map((l)=>l.source_id))
+  const data=await getV11Canonical(userId),outcomes=data.outcomes.map((o)=>v117OutcomeLite(o,data)),areas=data.areas.map((a)=>v117AreaLite(a,data,outcomes)),activeProjects=data.projects.filter((p)=>p.lifecycle_status==='active'&&p.status!=='done'),links=v117ExplicitProjectOutcomeLinks(data),linkedActive=new Set(links.filter((l)=>activeProjects.some((p)=>p.id===l.source_id)).map((l)=>l.source_id))
   const activeOutcomes=outcomes.filter((o)=>!['done','archived','paused'].includes(String(o.status||'')))
   return {stage:'V11.7',summary:{active_outcomes:activeOutcomes.length,outcomes_at_risk:activeOutcomes.filter((o)=>o.control_state==='risk').length,outcomes_attention:activeOutcomes.filter((o)=>o.control_state==='attention').length,project_outcome_coverage:activeProjects.length?Math.round(linkedActive.size/activeProjects.length*100):100,projects_without_outcome:Math.max(0,activeProjects.length-linkedActive.size),areas_attention:areas.filter((a)=>a.control_state!=='stable').length,outcomes_without_project:activeOutcomes.filter((o)=>!o.linked_projects.length).length,outcomes_without_next_action:activeOutcomes.filter((o)=>!String(o.next_action||'').trim()).length},areas,outcomes,projects:activeProjects.map((p)=>({id:p.id,name:p.name,area_id:p.area_id||null,lifecycle_status:p.lifecycle_status||'active',next_action:p.next_action||'',progress:Number(p.progress||0),linked_outcome_ids:links.filter((l)=>l.source_id===p.id).map((l)=>l.target_id)})),generated_at:new Date().toISOString()}
 }
@@ -1874,7 +1883,7 @@ app.delete('/api/v11/links/:id', async (request, reply) => { if(!hasDatabase){en
 app.patch('/api/v11/tasks/:id', async (request, reply) => {
   const taskId=request.params.id, life=await getLifeData(request.user.id), meta=life.execution?.task_meta?.[taskId]||{}
   const taskPatch={}, metaPatch={}
-  for(const key of ['title','description','due_date','priority','status','estimate_minutes','project_id','category']) if(request.body?.[key]!==undefined) taskPatch[key]=request.body[key]
+  for(const key of ['title','description','due_date','priority','status','estimate_minutes','project_id','parent_task_id','category']) if(request.body?.[key]!==undefined) taskPatch[key]=request.body[key]
   for(const key of ['context','energy','waiting_on','resume_note','source_meeting_id','area_id']) if(request.body?.[key]!==undefined) metaPatch[key]=request.body[key]
   let updated=Object.keys(taskPatch).length?await updateTask(request.user.id,taskId,taskPatch):(await listTasks(request.user.id)).find((x)=>x.id===taskId)
   if(!updated)return reply.code(404).send({error:'تسک پیدا نشد.'})
@@ -1977,7 +1986,9 @@ app.delete('/api/tasks/:id', async (request, reply) => {
     const index = memory.tasks.findIndex((task) => task.id === taskId)
     if (index < 0) return reply.code(404).send({ error: 'تسک پیدا نشد.' })
     const [removed] = memory.tasks.splice(index, 1)
-    await addActivity('assistant', `تسک «${removed.title}» حذف شد.`)
+    for(const task of memory.tasks)if(task.parent_task_id===taskId)task.parent_task_id=null
+    await projectTeamStore.cleanTask(request.user.id,taskId)
+    await addActivity(request.user.id,'assistant', `تسک «${removed.title}» حذف شد.`)
     return { ok: true }
   }
   const result = await app.pg.query('DELETE FROM tasks WHERE id=$1 AND user_id=$2 RETURNING title', [taskId, request.user.id])
@@ -2047,10 +2058,11 @@ app.delete('/api/projects/:id', async (request, reply) => {
     const index = memory.projects.findIndex((project) => project.id === projectId)
     if (index < 0) return reply.code(404).send({ error: 'پروژه پیدا نشد.' })
     const [removed] = memory.projects.splice(index, 1)
+    await projectTeamStore.cleanProject(request.user.id,projectId)
     for(const [key,row] of Object.entries(memory.project_reports||{}))if(row.project_id===projectId)delete memory.project_reports[key]
     memory.tasks = memory.tasks.map((task) => task.project_id === projectId ? { ...task, project_id: null } : task)
     memory.events = memory.events.map((event) => event.project_id === projectId ? { ...event, project_id: null } : event)
-    await addActivity('project', `پروژه «${removed.name}» حذف شد.`)
+    await addActivity(request.user.id,'project', `پروژه «${removed.name}» حذف شد.`)
     return { ok: true }
   }
   const result = await app.pg.query('DELETE FROM projects WHERE id=$1 AND user_id=$2 RETURNING name', [projectId, request.user.id])
@@ -2618,10 +2630,10 @@ app.get('/api/v11.9/health',async()=>({ok:true,stage:'V11.9',storage:hasDatabase
 // People are not scored. The system tracks commitments, follow-up cadence,
 // waiting-on-person states and important dates as actionable exceptions.
 // ============================================================
-function v1110Date(){return new Date().toISOString().slice(0,10)}
+function v1110Date(){return tehranToday()}
 function v1110DateAdd(date,days){const d=new Date(`${date||v1110Date()}T12:00:00Z`);d.setUTCDate(d.getUTCDate()+Number(days||0));return d.toISOString().slice(0,10)}
 function v1110NextContact(last,cadence){return last&&Number(cadence)>0?v1110DateAdd(String(last).slice(0,10),Number(cadence)):null}
-function v1110PersonNormalized(x={}){const last=x.last_contact_at?String(x.last_contact_at).slice(0,10):null,cad=Math.max(0,Math.min(365,Number(x.cadence_days)||0));return {id:x.id||id(),name:String(x.name||'').trim().slice(0,160),relation_type:String(x.relation_type||'سایر').slice(0,80),organization:String(x.organization||'').slice(0,180),contact:String(x.contact||'').slice(0,300),tags:Array.isArray(x.tags)?x.tags.map(String).filter(Boolean).slice(0,12):[],cadence_days:cad,last_contact_at:last,next_contact_at:x.next_contact_at?String(x.next_contact_at).slice(0,10):v1110NextContact(last,cad),important_date:x.important_date?String(x.important_date).slice(0,10):null,important_date_label:String(x.important_date_label||'').slice(0,120),notes:String(x.notes||'').slice(0,5000),status:['active','archived'].includes(x.status)?x.status:'active',created_at:x.created_at||new Date().toISOString(),updated_at:x.updated_at||new Date().toISOString()}}
+function v1110PersonNormalized(x={}){const last=x.last_contact_at?String(x.last_contact_at).slice(0,10):null,cad=Math.max(0,Math.min(365,Number(x.cadence_days)||0));return {id:x.id||id(),name:String(x.name||'').trim().slice(0,160),relation_type:String(x.relation_type||'سایر').slice(0,80),organization:String(x.organization||'').slice(0,180),contact:String(x.contact||'').slice(0,300),tags:Array.isArray(x.tags)?x.tags.map(String).filter(Boolean).slice(0,12):[],cadence_days:cad,last_contact_at:last,next_contact_at:x.next_contact_at?String(x.next_contact_at).slice(0,10):v1110NextContact(last,cad),important_date:x.important_date?String(x.important_date).slice(0,10):null,important_date_label:String(x.important_date_label||'').slice(0,120),notes:String(x.notes||'').slice(0,5000),status:['active','archived'].includes(x.status)?x.status:'active',...personExtras(x),created_at:x.created_at||new Date().toISOString(),updated_at:x.updated_at||new Date().toISOString()}}
 function v1110CommitmentNormalized(x={}){return {id:x.id||id(),person_id:x.person_id||null,title:String(x.title||'').trim().slice(0,240),direction:['i_owe','waiting_on_them','mutual'].includes(x.direction)?x.direction:'i_owe',kind:String(x.kind||'commitment').slice(0,50),status:['open','done','cancelled'].includes(x.status)?x.status:'open',due_date:x.due_date?String(x.due_date).slice(0,10):null,task_id:x.task_id||null,meeting_event_id:x.meeting_event_id||null,note:String(x.note||'').slice(0,4000),created_at:x.created_at||new Date().toISOString(),updated_at:x.updated_at||new Date().toISOString()}}
 function v1110EnsureMemory(){
   ensureMemoryV11();
@@ -2633,14 +2645,14 @@ function v1110EnsureMemory(){
 }
 async function v1110People(userId){if(!hasDatabase){v1110EnsureMemory();return memory.v11.people.filter(p=>p.status!=='archived').map(v1110PersonNormalized)}const {rows}=await app.pg.query("SELECT * FROM people WHERE user_id=$1 AND status <> 'archived' ORDER BY name",[userId]);return rows.map(v1110PersonNormalized)}
 async function v1110Commitments(userId){if(!hasDatabase){v1110EnsureMemory();return memory.v11.relationship_commitments.map(v1110CommitmentNormalized)}const {rows}=await app.pg.query('SELECT * FROM relationship_commitments WHERE user_id=$1 ORDER BY due_date NULLS LAST, created_at DESC',[userId]);return rows.map(v1110CommitmentNormalized)}
-function v1110NextAnnual(raw){if(!raw)return null;const src=new Date(`${String(raw).slice(0,10)}T12:00:00Z`);if(Number.isNaN(src.getTime()))return null;const now=new Date(`${v1110Date()}T12:00:00Z`);let d=new Date(Date.UTC(now.getUTCFullYear(),src.getUTCMonth(),src.getUTCDate(),12));if(d<now)d=new Date(Date.UTC(now.getUTCFullYear()+1,src.getUTCMonth(),src.getUTCDate(),12));return {date:d.toISOString().slice(0,10),days_until:Math.round((d-now)/86400000)}}
+function v1110NextAnnual(raw){return nextPersianAnniversary(raw,v1110Date())}
 async function v1110Payload(userId){const [people,storedCommitments,events,tasks]=await Promise.all([v1110People(userId),v1110Commitments(userId),listEvents(userId),listTasks(userId)]);const commitments=storedCommitments.map(commitment=>{const task=tasks.find(task=>task.id===commitment.task_id);return task&&commitment.status!=='cancelled'?{...commitment,status:task.status==='done'?'done':'open'}:commitment});const today=v1110Date(),open=commitments.filter(c=>c.status==='open');const followups=people.filter(p=>p.next_contact_at&&p.next_contact_at<=today).map(p=>({person_id:p.id,name:p.name,next_contact_at:p.next_contact_at,days_overdue:Math.max(0,Math.round((new Date(`${today}T12:00:00Z`)-new Date(`${p.next_contact_at}T12:00:00Z`))/86400000))})).sort((a,b)=>b.days_overdue-a.days_overdue);const upcoming=people.map(p=>{const n=v1110NextAnnual(p.important_date);return n?{person_id:p.id,name:p.name,label:p.important_date_label||'مناسبت',date:n.date,days_until:n.days_until}:null}).filter(Boolean).filter(x=>x.days_until<=45).sort((a,b)=>a.days_until-b.days_until);const recentMeetings=events.filter(e=>e.type==='meeting').slice(-20);const enriched=people.map(p=>({...p,recent_meeting_count:recentMeetings.filter(e=>String(e.notes||'').includes(p.name)).length}));return {stage:'V11.10',today,people:enriched,commitments,followups,upcoming_dates:upcoming,summary:{people_active:people.length,followups_due:followups.length,promises_open:open.filter(c=>c.direction==='i_owe').length,waiting_on_people:open.filter(c=>c.direction==='waiting_on_them').length,commitments_overdue:open.filter(c=>c.due_date&&c.due_date<today).length,important_dates_45:upcoming.length},generated_at:new Date().toISOString()}}
-async function v1110SavePerson(userId,p){if(!hasDatabase){v1110EnsureMemory();const i=memory.v11.people.findIndex(x=>x.id===p.id);if(i>=0)memory.v11.people[i]=p;else memory.v11.people.push(p);return p}await app.pg.query(`INSERT INTO people (id,user_id,name,relation_type,organization,contact,tags,cadence_days,last_contact_at,next_contact_at,important_date,important_date_label,notes,status,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,relation_type=EXCLUDED.relation_type,organization=EXCLUDED.organization,contact=EXCLUDED.contact,tags=EXCLUDED.tags,cadence_days=EXCLUDED.cadence_days,last_contact_at=EXCLUDED.last_contact_at,next_contact_at=EXCLUDED.next_contact_at,important_date=EXCLUDED.important_date,important_date_label=EXCLUDED.important_date_label,notes=EXCLUDED.notes,status=EXCLUDED.status,updated_at=NOW()`,[p.id,userId,p.name,p.relation_type,p.organization,p.contact,JSON.stringify(p.tags||[]),p.cadence_days,p.last_contact_at,p.next_contact_at,p.important_date,p.important_date_label,p.notes,p.status,p.created_at,p.updated_at]);return p}
+async function v1110SavePerson(userId,p){if(!hasDatabase){v1110EnsureMemory();const i=memory.v11.people.findIndex(x=>x.id===p.id);if(i>=0)memory.v11.people[i]=p;else memory.v11.people.push(p);return p}await app.pg.query(`INSERT INTO people (id,user_id,name,relation_type,organization,contact,tags,cadence_days,last_contact_at,next_contact_at,important_date,important_date_label,notes,status,created_at,updated_at,birthday,links) VALUES ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18::jsonb) ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name,relation_type=EXCLUDED.relation_type,organization=EXCLUDED.organization,contact=EXCLUDED.contact,tags=EXCLUDED.tags,cadence_days=EXCLUDED.cadence_days,last_contact_at=EXCLUDED.last_contact_at,next_contact_at=EXCLUDED.next_contact_at,important_date=EXCLUDED.important_date,important_date_label=EXCLUDED.important_date_label,notes=EXCLUDED.notes,status=EXCLUDED.status,birthday=EXCLUDED.birthday,links=EXCLUDED.links,updated_at=NOW()`,[p.id,userId,p.name,p.relation_type,p.organization,p.contact,JSON.stringify(p.tags||[]),p.cadence_days,p.last_contact_at,p.next_contact_at,p.important_date,p.important_date_label,p.notes,p.status,p.created_at,p.updated_at,p.birthday||null,JSON.stringify(p.links||[])]);return p}
 async function v1110SaveCommitment(userId,c){if(!hasDatabase){v1110EnsureMemory();const i=memory.v11.relationship_commitments.findIndex(x=>x.id===c.id);if(i>=0)memory.v11.relationship_commitments[i]=c;else memory.v11.relationship_commitments.push(c);return c}await app.pg.query(`INSERT INTO relationship_commitments (id,user_id,person_id,title,direction,kind,status,due_date,task_id,meeting_event_id,note,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT (id) DO UPDATE SET person_id=EXCLUDED.person_id,title=EXCLUDED.title,direction=EXCLUDED.direction,kind=EXCLUDED.kind,status=EXCLUDED.status,due_date=EXCLUDED.due_date,task_id=EXCLUDED.task_id,meeting_event_id=EXCLUDED.meeting_event_id,note=EXCLUDED.note,updated_at=NOW()`,[c.id,userId,c.person_id,c.title,c.direction,c.kind,c.status,c.due_date,c.task_id,c.meeting_event_id,c.note,c.created_at,c.updated_at]);return c}
 async function v1110SetTaskWaiting(userId,taskId,personName){if(!taskId||!personName)return;if(hasDatabase){await app.pg.query('UPDATE tasks SET waiting_on=$1,updated_at=NOW() WHERE id=$2 AND user_id=$3',[personName,taskId,userId]);return}const life=await getLifeData(userId);life.execution.task_meta ||= {};const cur=life.execution.task_meta[taskId]||{};life.execution.task_meta[taskId]={...cur,waiting_on:personName,updated_at:new Date().toISOString()};await persistLifeData(userId,life)}
 app.get('/api/v11.10/relationships',async(request)=>v1110Payload(request.user.id))
 app.post('/api/v11.10/people',async(request,reply)=>{const body=request.body||{},p=v1110PersonNormalized({...body,id:id()});if(!p.name)return reply.code(400).send({error:'نام فرد الزامی است.'});await v1110SavePerson(request.user.id,p);return reply.code(201).send(await v1110Payload(request.user.id))})
-app.patch('/api/v11.10/people/:id',async(request,reply)=>{const rows=await v1110People(request.user.id),cur=rows.find(x=>x.id===request.params.id);if(!cur)return reply.code(404).send({error:'فرد پیدا نشد.'});const p=v1110PersonNormalized({...cur,...(request.body||{}),id:cur.id,updated_at:new Date().toISOString()});await v1110SavePerson(request.user.id,p);return v1110Payload(request.user.id)})
+app.patch('/api/v11.10/people/:id',async(request,reply)=>{const rows=await v1110People(request.user.id),cur=rows.find(x=>x.id===request.params.id);if(!cur)return reply.code(404).send({error:'فرد پیدا نشد.'});const p=v1110PersonNormalized({...cur,...(request.body||{}),...((Object.hasOwn(request.body||{},'last_contact_at')||Object.hasOwn(request.body||{},'cadence_days'))?{next_contact_at:null}:{}),id:cur.id,updated_at:new Date().toISOString()});await v1110SavePerson(request.user.id,p);return v1110Payload(request.user.id)})
 app.post('/api/v11.10/people/:id/touch',async(request,reply)=>{const rows=await v1110People(request.user.id),cur=rows.find(x=>x.id===request.params.id);if(!cur)return reply.code(404).send({error:'فرد پیدا نشد.'});const date=String(request.body?.date||v1110Date()).slice(0,10),p=v1110PersonNormalized({...cur,last_contact_at:date,next_contact_at:v1110NextContact(date,cur.cadence_days),updated_at:new Date().toISOString()});await v1110SavePerson(request.user.id,p);return v1110Payload(request.user.id)})
 app.post('/api/v11.10/people/:id/follow-up-task',async(request,reply)=>{const rows=await v1110People(request.user.id),p=rows.find(x=>x.id===request.params.id);if(!p)return reply.code(404).send({error:'فرد پیدا نشد.'});const task=await createTask(request.user.id,{title:String(request.body?.title||`پیگیری با ${p.name}`),description:String(request.body?.description||`پیگیری ارتباط با ${p.name}`),due_date:request.body?.due_date||p.next_contact_at||v1110Date(),priority:request.body?.priority||'medium',estimate_minutes:Number(request.body?.estimate_minutes||15),category:'روابط'});const c=v1110CommitmentNormalized({person_id:p.id,title:task.title,direction:'i_owe',kind:'follow_up',due_date:task.due_date,task_id:task.id,status:'open'});await v1110SaveCommitment(request.user.id,c);return reply.code(201).send({task,commitment:c,payload:await v1110Payload(request.user.id)})})
 app.post('/api/v11.10/people/:id/calendar-event',async(request,reply)=>{const rows=await v1110People(request.user.id),p=rows.find(x=>x.id===request.params.id);if(!p)return reply.code(404).send({error:'فرد پیدا نشد.'});const next=v1110NextAnnual(p.important_date);if(!next)return reply.code(400).send({error:'مناسبت مهم برای این فرد ثبت نشده است.'});const start=`${next.date}T09:00:00`,end=`${next.date}T09:30:00`,event=await createEvent(request.user.id,{title:`${p.important_date_label||'مناسبت'} — ${p.name}`,type:'personal',start_at:start,end_at:end,color:'#7a65a5',notes:`NOVA_PERSON_EVENT::${JSON.stringify({person_id:p.id,label:p.important_date_label||'مناسبت'})}`});return reply.code(201).send({event})})
@@ -2877,6 +2889,15 @@ app.post('/api/assistant', async (request, reply) => {
     request.log.error(error)
     return reply.code(502).send({ error: 'دستیار موقتاً در دسترس نیست.' })
   }
+})
+
+const projectTeamStore=hasDatabase?postgresProjectTeamStore(app.pg):memoryProjectTeamStore(memory)
+registerProjectNetwork(app,{canonical:getV11Canonical,life:getLifeData,store:projectTeamStore,calendar:(userId,from,to)=>calendarService.list(userId,from,to)})
+registerPeopleNetwork(app,{canonical:getV11Canonical,relationships:v1110Payload,store:projectTeamStore})
+registerProjectTeam(app,{
+  canonical:getV11Canonical,
+  people:async userId=>{if(hasDatabase)return (await app.pg.query('SELECT id,name,status,organization FROM people WHERE user_id=$1 ORDER BY name',[userId])).rows;v1110EnsureMemory();return memory.v11.people;},
+  store:projectTeamStore
 })
 
 const readingEmpty = () => ({ books: [], sessions: [], timer: null })

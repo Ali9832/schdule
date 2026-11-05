@@ -1821,7 +1821,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </div>
 </section>
 <section class="v1110-panel">
-<div class="v1110-panel-head"><div><h2>پیگیری و مناسبت‌ها</h2><span>موارد نیازمند پیگیری؛ فقط چیزهایی که نزدیک یا عقب‌افتاده‌اند</span></div><button class="v1110-ghost" onclick="goPage('schedule')">تقویم</button></div>
+<div class="v1110-panel-head"><div><h2>پیگیری و مناسبت‌ها</h2><span>موارد نیازمند پیگیری؛ فقط چیزهایی که نزدیک یا عقب‌افتاده‌اند</span></div><button class="v1110-ghost" onclick="goPage('calendar')">تقویم</button></div>
 <h3 class="v1110-section-title">پیگیری‌های موعددار</h3><div class="v1110-list" id="v1110Followups"></div>
 <h3 class="v1110-section-title">مناسبت‌های پیش‌رو</h3><div class="v1110-upcoming" id="v1110Dates"></div>
 </section>
@@ -1849,7 +1849,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>چرخه <span>هفتگی</span></h1><p>موضوع هفته، ظرفیت انجام کارها و اولویت‌های این دوره را مشخص کنید.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('reports')">مرور سیستم</button><button class="primary" onclick="saveV113Cycle()">ذخیره چرخه</button></div></div>
 <div class="v113-cycle-shell" id="v113CycleRoot"></div>
 </section>
-<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>P0 / P1</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>نمای پروژه‌محور از بانک آیتم‌های اکسل</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه یا اقدام')">＋ پروژه / اقدام</button></div></div><div class="functional-grid" id="projectsPageBody"></div><details class="integrated-tools " id="projectAreasTools"><summary>دسته‌بندی حوزه‌ها و مسئولیت‌ها</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
+<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>پروژه و مسئولیت</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>افراد، مسئولیت‌ها، مهلت‌ها و پیشرفت کارهای هر پروژه را یک‌جا ببینید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه')">＋ پروژه</button></div></div><div class="functional-grid" id="projectsPageBody"></div><details class="integrated-tools " id="projectAreasTools"><summary>دسته‌بندی حوزه‌ها و مسئولیت‌ها</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
 <div class="v117-hero-actions"><input id="v117NewArea" placeholder="نام حوزه جدید"/><button onclick="v117CreateArea()">＋ حوزه</button></div>
 
 <div class="v117-summary" id="v117AreaSummary"></div>
@@ -1866,7 +1866,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.8.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.9.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -3655,7 +3655,7 @@ function setMobileMenu(open){
 <script defer src="/assets/drafts.js"></script>
 <script defer src="/assets/money-input.js"></script>
 <link rel="stylesheet" href="/assets/editing.css"/>
-<script defer src="/assets/editing.js?v=2.7.0"></script>
+<script defer src="/assets/editing.js?v=2.7.0&rev=project-window"></script>
 <link rel="stylesheet" href="/assets/task-list.css"/>
 <script defer src="/assets/task-list.js"></script>
 
@@ -3663,7 +3663,7 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/calendar.css"/>
 <link rel="stylesheet" href="/assets/calendar-form.css?v=2.1.0"/>
 <script defer src="/assets/calendar-extras.js?v=2.1.0"></script>
-<script defer src="/assets/calendar.js?v=2.1.0&rev=shared-composer"></script>
+<script defer src="/assets/calendar.js?v=2.1.0&rev=project-subtasks"></script>
 <link rel="stylesheet" href="/assets/finance-editor.css"/>
 <script defer src="/assets/finance-editor.js"></script>
 <link rel="stylesheet" href="/assets/habit-layout.css?rev=compact-matrix"/>
@@ -3674,8 +3674,8 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/today-tasks.css"/>
 <script defer src="/assets/today-tasks.js"></script>
 <link rel="stylesheet" href="/assets/project-workspace.css?v=2.7.0"/>
-<script defer src="/assets/project-workspace.js?v=2.7.0"></script>
-<script defer src="/assets/academic.js?v=2.3.0"></script>
+<script defer src="/assets/project-workspace.js?v=2.7.0&rev=project-network"></script>
+<script defer src="/assets/academic.js?v=2.3.0&rev=project-links"></script>
 <script defer src="/assets/noava-workspace.js?v=2.1.2&rev=clock-draft"></script>
 <script defer src="/assets/keyboard-submit.js?v=2.1.1"></script>
 <link rel="stylesheet" href="/assets/integrated-tools.css"/>
@@ -3686,7 +3686,13 @@ function setMobileMenu(open){
 <script defer src="/assets/reading.js?rev=page-log"></script>
 <script defer src="/assets/statistics.js"></script>
 <link rel="stylesheet" href="/assets/task-suggestions.css"/>
-<script defer src="/assets/task-suggestions.js"></script>
+<script defer src="/assets/task-suggestions.js?rev=people-tasks"></script>
+<link rel="stylesheet" href="/assets/project-team.css"/>
+<script defer src="/assets/project-team.js"></script>
+<link rel="stylesheet" href="/assets/project-network.css"/>
+<script defer src="/assets/project-network.js"></script>
+<link rel="stylesheet" href="/assets/relationships-network.css"/>
+<script defer src="/assets/relationships-network.js"></script>
 <link rel="stylesheet" href="/assets/mobile-layout.css"/>
 <script defer src="/assets/ui-ready.js"></script>
 </body>

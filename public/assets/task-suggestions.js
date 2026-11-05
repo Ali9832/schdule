@@ -56,7 +56,7 @@
   }
   window.apiFetch=async function(path,options={}){
     const method=(options.method||'GET').toUpperCase();let body;try{body=JSON.parse(options.body||'null');}catch{}
-    const createsTask=method==='POST'&&(path.split('?')[0]==='/api/tasks'||path.split('?')[0]==='/api/calendar'&&['task','homework'].includes(body?.kind));
+    const createsTask=method==='POST'&&(path.split('?')[0]==='/api/tasks'||path.split('?')[0]==='/api/calendar'&&['task','homework'].includes(body?.kind)||/^\/api\/v11\.10\/(people\/[^/]+\/follow-up-task|commitments\/[^/]+\/create-task)$/.test(path.split('?')[0]));
     if(!createsTask||!body?.title)return request(path,options);
     const key=path+'\n'+body.title;if(pendingCreates.has(key))throw Error('بررسی کار قبلی هنوز تمام نشده است.');pendingCreates.add(key);
     const activeTitle=[...document.querySelectorAll('#genericTitleInput,#calendarInput-title,#qaTitle')].find(input=>taskInput(input)&&input.getClientRects().length&&input.value.trim()===body.title.trim());

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 const base=process.env.NOVA_BASE_URL||'http://127.0.0.1:3016'
-const tabs=await(await fetch('http://127.0.0.1:9228/json/list')).json()
+const tabs=await(await fetch(`http://127.0.0.1:${process.env.NOVA_CDP_PORT||9228}/json/list`)).json()
 const socket=new WebSocket(tabs.find(tab=>tab.type==='page').webSocketDebuggerUrl)
 await new Promise((resolve,reject)=>{socket.onopen=resolve;socket.onerror=reject})
 let sequence=0;const pending=new Map(),errors=[],projects=[]
@@ -17,8 +17,8 @@ try{
  for(const suffix of [' one',' two'])projects.push(await evaluate(`apiFetch('/api/projects',{method:'POST',body:JSON.stringify({name:${JSON.stringify(title+suffix)},description:'Original description',status:'in_progress'})})`))
  await evaluate(`goPage('projects');openV11Inspector('project',${JSON.stringify(projects[0].id)})`)
  await until('!!document.querySelector("#v11InspectorBody .project-workspace") && !document.querySelector(".pw-report-form button[type=submit]").disabled')
- assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .project-workspace > .pw-box").length'),2)
- assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .pw-box").length'),3)
+ assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .project-workspace > .pw-box:not(.pt-team)").length'),2)
+ assert.equal(await evaluate('document.querySelectorAll("#v11InspectorBody .pw-box:not(.pt-team)").length'),3)
  // Project details edit in their own box; report and meeting forms stay mounted.
  await evaluate(`window.__reportForm=document.querySelector('.pw-report-form');__reportForm.elements.text.value='Keep report while editing details';__reportForm.elements.text.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('[data-edit-project-details]').click()`)
  assert.equal(await evaluate('document.querySelector(".pw-details-content select[name=lifecycle_status]").tagName'),'SELECT')
@@ -61,7 +61,7 @@ try{
  assert.equal(meeting.project_id,projects[0].id);assert.equal(meeting.status,'scheduled')
  const calendar=await evaluate(`apiFetch('/api/calendar?from=2099-01-01&to=2099-01-02')`)
  assert.ok(calendar.entries.some(row=>row.id===meeting.id))
- await evaluate('document.querySelector(".pw-meeting-row button").click()')
+ await evaluate('document.querySelector(".pw-meeting-row input[type=checkbox]").click()')
  await until('document.querySelectorAll(".pw-meeting-group")[1].querySelectorAll(".pw-meeting-row").length===1')
  meeting=await evaluate(`(async()=>{const data=await apiFetch('/api/projects/${projects[0].id}/workspace');return data.meetings[0]})()`);assert.equal(meeting.status,'held')
  // Reopening restores a draft without overwriting persisted reports.

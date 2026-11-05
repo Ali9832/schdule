@@ -29,7 +29,7 @@
   function fieldsFor(type,e){
     const areas=[['','بدون حوزه'],...(V11_DATA?.areas||[]).map(a=>[a.id,a.name])];
     const shared=[field('area_id','حوزه','select',areas)];
-    if(type==='project')return [field('name','نام پروژه'),field('lifecycle_status','وضعیت پروژه','select',states),field('description','توضیحات','textarea'),field('outcome','نتیجهٔ مورد انتظار','textarea'),...shared,field('due_date','موعد','date'),field('review_at','مرور بعدی','date')];
+    if(type==='project')return [field('name','نام پروژه'),field('status','انجام پروژه','select',[['in_progress','در حال انجام'],['paused','متوقف'],['done','انجام‌شده']]),field('lifecycle_status','مرحلهٔ پروژه','select',states),field('description','توضیحات','textarea'),field('outcome','نتیجهٔ مورد انتظار','textarea'),...shared,field('due_date','موعد','date'),field('review_at','مرور بعدی','date')];
     if(type==='task')return [field('title','عنوان کار'),field('status','وضعیت','select',[['todo','باز'],['in_progress','در دست اقدام'],['done','انجام‌شده']]),field('priority','اولویت','select',[['low','کم'],['medium','متوسط'],['high','بالا']]),field('description','توضیحات','textarea'),field('project_id','پروژه','select',[['','بدون پروژه'],...(V11_DATA?.projects||[]).map(p=>[p.id,p.name])]),...shared,field('due_date','موعد','date'),field('estimate_minutes','زمان تخمینی (دقیقه)','number'),field('context','موقعیت انجام کار'),field('waiting_on','در انتظار پاسخ از'),field('resume_note','یادداشت ادامهٔ کار','textarea')];
     if(type==='area')return [field('name','نام حوزه'),field('description','توضیحات','textarea'),field('standard','انتظار از این حوزه','textarea'),field('status','وضعیت','select',[['active','فعال'],['archived','بایگانی‌شده']])];
     if(type==='resource')return [field('title','عنوان منبع'),field('resource_type','نوع','select',[['note','یادداشت'],['article','مقاله'],['book','کتاب'],['course','دوره'],['video','ویدئو'],['podcast','پادکست'],['website','وب‌سایت']]),field('status','وضعیت','select',[['inbox','ورودی'],['backlog','برای بعد'],['in_progress','در حال مطالعه'],['done','تکمیل‌شده'],['archived','بایگانی‌شده']]),...shared,field('url','پیوند','url'),field('note','یادداشت','textarea')];
@@ -44,9 +44,9 @@
     const content=document.createElement('div');content.className='pw-details-content';heading.append(title,edit);box.append(heading,content);body.prepend(box);
     box.render=()=>{
       edit.disabled=false;content.replaceChildren();const grid=document.createElement('div');grid.className='v11-inspector-grid pw-details-grid';
-      const fields=fieldsFor('project',entity).map(f=>[f.label,f.options?.find(([value])=>value===(entity[f.key]||''))?.[1]??entity[f.key]??'—']);fields.push(['پیشرفت (محاسبه‌شده)',`${entity.progress||0}٪`],['قدم بعدی',entity.next_action||'—']);
+      const fields=fieldsFor('project',entity).filter(f=>f.key!=='area_id').map(f=>[f.label,f.options?.find(([value])=>value===(entity[f.key]||''))?.[1]??entity[f.key]??'—']);fields.push(['پیشرفت (محاسبه‌شده)',`${entity.progress||0}٪`],['قدم بعدی',entity.next_action||'—']);
       for(const [caption,value]of fields){const cell=document.createElement('div');cell.className='v11-inspector-field';const label=document.createElement('span'),text=document.createElement('b');label.textContent=caption;text.textContent=String(value||'—');cell.append(label,text);grid.append(cell);}content.append(grid);
-      const related=document.createElement('div');related.innerHTML=v11InspectorHtml('project',entity,links);content.append(related.lastElementChild);window.PersianUI?.scan(content);
+      const related=document.createElement('div');related.innerHTML=v11InspectorHtml('project',entity,links.filter(link=>link.other_type!=='area'&&link.type!=='area'&&link.entity_type!=='area'));const section=related.lastElementChild;if(section)content.append(section);window.PersianUI?.scan(content);
       document.getElementById('v11InspectorType').textContent='پروژه · جزئیات';
     };
     edit.onclick=()=>{if(!edit.disabled)window.v11EditCurrent('project',entity);};box.render();return box;
@@ -55,6 +55,7 @@
     closeAll();
     const request=++inspectorRequest,owner=generation,shell=document.getElementById('v11Inspector'),body=document.getElementById('v11InspectorBody'),edit=document.getElementById('v11InspectorEditBtn');
     V11_INSPECTOR={type,id};shell.inert=false;shell.classList.add('open');shell.setAttribute('aria-hidden','false');shell.setAttribute('role','region');shell.setAttribute('aria-label','جزئیات مورد');edit.hidden=false;edit.disabled=true;body.innerHTML='<div class="v11-empty">در حال دریافت اطلاعات…</div>';
+    shell.classList.toggle('project-mode',type==='project');
     try{let data;try{data=await apiFetch(`/api/v11/inspector/${encodeURIComponent(type)}/${encodeURIComponent(id)}`)}catch(error){data=v11LocalInspectorData(type,id);if(!data)throw error}
       if(request!==inspectorRequest||owner!==generation)return;
       const entity=data.entity;document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);document.getElementById('v11InspectorType').textContent=(names[type]||'مورد')+' · جزئیات';body.innerHTML=v11InspectorHtml(type,entity,data.linked||[]);body.scrollTop=0;edit.disabled=false;edit.onclick=()=>window.v11EditCurrent(type,entity);

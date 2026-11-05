@@ -31,7 +31,7 @@ export function registerCalendar(app,deps){
       entries.push(...expandCalendarEntry(entry,{...meta,priority:source==='task'?entity.priority||meta.priority:meta.priority||entity.priority},shiftDays(from,-offset),shiftDays(to,-offset)))
     }
     for(const event of data.events)add('event',event,calendarKinds.includes(event.type)?event.type:'personal',String(event.start_at).slice(0,10),String(event.end_at||event.start_at).slice(0,10),structuredNotes(event.notes)?'':event.notes)
-    for(const task of data.tasks)add('task',task,'task',task.due_date,task.due_date,task.description)
+    for(const task of data.tasks)add('task',task,'task',task.due_date,task.due_date,task.description,{parent_task_id:task.parent_task_id||null})
     for(const project of data.projects)add('project',project,'project',project.due_date,project.due_date,project.description)
     for(const outcome of data.outcomes||[])add('outcome',outcome,'goal',outcome.due_date,outcome.due_date,outcome.note)
     entries.sort((a,b)=>a.date.localeCompare(b.date)||Number(b.all_day)-Number(a.all_day)||a.start_time.localeCompare(b.start_time)||a.title.localeCompare(b.title,'fa'))
@@ -54,10 +54,11 @@ export function registerCalendar(app,deps){
     if(end&&start&&end<start)fail('پایان نمی‌تواند قبل از شروع باشد.')
     if(body.all_day===false&&end===start&&(body.end_time||'10:00')<=(body.start_time||'09:00'))fail('ساعت پایان باید بعد از شروع باشد.')
   }
+  schema.properties.parent_task_id={type:['string','null'],maxLength:100}
   app.post('/api/calendar',{schema:{body:{...schema,required:['title','date','kind']}}},async(request,reply)=>{
     const body=request.body,userId=request.user.id;validate(body);const kind=body.kind;let entity,source;
     await validateLinks(userId,body);
-    if(['task','homework'].includes(kind)){source='task';entity=await createTask(userId,{title:body.title.trim(),description:body.description||'',due_date:body.date,priority:body.priority||'medium',status:body.done?'done':'todo',project_id:body.project_id||null,category:kind==='homework'?'تکالیف':'شخصی'})}
+    if(['task','homework'].includes(kind)){source='task';entity=await createTask(userId,{title:body.title.trim(),description:body.description||'',due_date:body.date,priority:body.priority||'medium',status:body.done?'done':'todo',project_id:body.project_id||null,parent_task_id:body.parent_task_id||null,category:kind==='homework'?'تکالیف':'شخصی'})}
     else if(kind==='project'){source='project';entity=await createProject(userId,{name:body.title.trim(),description:body.description||'',due_date:body.date,status:body.done?'done':'in_progress'})}
     else if(kind==='goal'){source='outcome';entity=await createOutcome(userId,{title:body.title.trim(),note:body.description||'',due_date:body.date,status:body.done?'done':'active'})}
     else{source='event';entity=await createEvent(userId,{title:body.title.trim(),project_id:body.project_id||null,type:['meeting','religious','appointment','focus','review'].includes(kind)?kind:'personal',start_at:`${body.date}T${body.all_day!==false?'00:00':body.start_time||'09:00'}:00`,end_at:`${body.end_date||body.date}T${body.all_day!==false?'23:59':body.end_time||'10:00'}:00`,notes:body.description||'',color:body.color||'#268874'})}
@@ -86,6 +87,7 @@ export function registerCalendar(app,deps){
     }else{
       if(body.date!==undefined)patch.due_date=body.date;
       if(source==='task'&&body.priority)patch.priority=body.priority;
+      if(source==='task'&&body.parent_task_id!==undefined)patch.parent_task_id=body.parent_task_id;
       if(body.done!==undefined)patch.status=body.done?'done':old.previous_status&&old.previous_status!=='done'?old.previous_status:source==='project'?'in_progress':source==='outcome'?'active':'todo';
       if(Object.keys(patch).length)await({task:updateTask,project:updateProject,outcome:updateOutcome}[source])(userId,id,patch)
     }
@@ -130,4 +132,5 @@ export function registerCalendar(app,deps){
     if(source==='event'){await deleteEvent(userId,id);await deps.removeAttachments?.(userId,source,id)}else await({task:updateTask,project:updateProject,outcome:updateOutcome}[source])(userId,id,{due_date:null})
     await saveState(userId,source+':'+id,null);return {ok:true,mode:source==='event'?'deleted':'unscheduled'}
   })
+  return {list}
 }

@@ -2,6 +2,20 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## Unreleased
+
+## [2.9.0] - 2026-11-05
+
+Upgrade: **2.8.0 -> 2.9.0**. Project teams and connected project workspaces. Database changes are additive; existing records are preserved and local/test records are excluded.
+
+- Show tasks first beside project team members, with responsibilities, deadlines, notes and inline editing inside each person card; display meetings next with held-status checkboxes. Use compact responsive cards and accessible project action icons.
+- Add account-scoped project membership, task assignees, actual progress and two-way allocation from Relationships. Support canonical nested subtasks with project and cycle validation, and show project selection in the shared creation form.
+- Link courses, classes, resources, goals and events to project details; filter meetings by project ID and display zoned timestamps in Tehran time.
+- Redesign Relationships with a top creation form, person details, assigned-work checklists, separate personal commitments, follow-up dates, Persian birthdays, tags, notes and validated links.
+- Preserve tasks and people when unlinking project assignments; expose request errors without substituting demonstration data. Point the Relationships calendar action to Overview.
+
+Validation: production build, QA and isolated browser checks for projects, team assignments, subtasks, relationships, reports and mobile layouts. Deployment and signed-in PostgreSQL data require separate runtime verification.
+
 ## [2.8.0] - 2026-11-02
 
 - Add a Tasks shortcut under the comprehensive calendar, sharing the original task list and live count while retaining navigation at the clicked menu group. Published as a follow-up commit with version 2.8.0 unchanged, as requested.

@@ -21,14 +21,15 @@
   }
   function mount(body, project) {
     const root = node('div', null, 'project-workspace'); root.dataset.projectId = project.id;
-    body.children[0]?.after(root); if (!root.isConnected) body.append(root);
+    (body.querySelector('.pw-details-box') || body).append(root);
     const current = () => root.isConnected && document.getElementById('v11Inspector').classList.contains('open') && V11_INSPECTOR?.type === 'project' && V11_INSPECTOR.id === project.id && controllers.get(project.id) === controller;
     const base = `/api/projects/${encodeURIComponent(project.id)}`;
     let data = { meetings: [], reports: [] }, editing = null, savingReport = false, savingMeeting = false;
-    const meetingBox = node('section', null, 'pw-box'), reportBox = node('section', null, 'pw-box');
+    const meetingBox = node('section', null, 'pw-box'), reportBox = node('section', null, 'pw-box');meetingBox.dataset.projectSection='meetings';reportBox.dataset.projectSection='reports';
     const meetingHeading = node('div', null, 'pw-row-heading'); meetingHeading.append(node('h3', 'جلسات پروژه'));
     const meetingForm = node('form', null, 'record-edit-form pw-meeting-form'); meetingForm.hidden = true;
     meetingHeading.append(button('＋ جلسه', () => { meetingForm.hidden = !meetingForm.hidden; if (!meetingForm.hidden) meetingTitle.focus(); }));
+    meetingHeading.append(button('بازکردن بخش جلسات',()=>ProjectNetwork.openMeetings(project.id,project.name)));
     const meetingTitle = field(meetingForm, 'title', 'عنوان جلسه'); meetingTitle.required = true; meetingTitle.maxLength = 300;
     const meetingDate = field(meetingForm, 'date', 'تاریخ', 'date'); meetingDate.required = true; meetingDate.value = day();
     const meetingTime = field(meetingForm, 'time', 'ساعت شروع', 'time'); meetingTime.required = true; meetingTime.value = '09:00';
@@ -81,12 +82,13 @@
           row.append(node('strong', meeting.title), node('small', stamp(meeting.start_at)), node('small', meeting.status === 'held' ? 'برگزار شده' : meeting.status === 'past' ? 'موعد گذشته؛ برگزاری تأیید نشده' : 'باید برگزار شود'));
           if (meeting.summary) row.append(node('p', meeting.summary));
           const rowActions = node('div', null, 'pw-form-actions');
-          const toggle = button(held ? 'بازگشت به برنامه‌ریزی' : '✓ برگزار شد', async () => {
+          const completion = node('label', null, 'pw-meeting-complete'), toggle = node('input');toggle.type='checkbox';toggle.checked=held;toggle.setAttribute('aria-label','برگزاری جلسه: '+meeting.title);completion.append(toggle,node('span','برگزار شد'));
+          toggle.onchange = async () => {
             toggle.disabled = true;
             try { const next = await apiFetch(`${base}/meetings/${encodeURIComponent(meeting.id)}`, { method: 'PATCH', body: JSON.stringify({ status: held ? 'scheduled' : 'held' }) }); data.meetings = data.meetings.map(row => row.id === next.id ? next : row); if(current())renderMeetings(); }
-            catch(error) { if(current())meetingError.textContent = error.message; } finally { toggle.disabled = false; }
-          });
-          rowActions.append(toggle, button('جزئیات / ویرایش جلسه', async () => { goPage('meetings'); await loadV116(true); v116Edit(meeting.id); }));
+            catch(error) { toggle.checked=held;if(current())meetingError.textContent = error.message; } finally { toggle.disabled = false; }
+          };
+          rowActions.append(completion, button('جزئیات / ویرایش جلسه', async () => { await ProjectNetwork.openMeetings(project.id);v116Edit(meeting.id); }));
           row.append(rowActions); group.append(row);
         }
         if (!rows.length) group.append(node('p', 'موردی ثبت نشده است.', 'pw-empty'));
