@@ -1,0 +1,20 @@
+.sidebar .brand{position:sticky;top:0;z-index:4;flex:0 0 auto;min-height:0;isolation:isolate;margin-bottom:10px;border-bottom:1px solid #91d6df2e;background:#06284a}
+.sidebar .brand .brand-mark{flex:none}
+.sidebar .brand .sidebar-toggle{position:static;inset:auto;display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;flex:0 0 36px;margin:0;padding:8px;border:1px solid #9cd6df52;border-radius:9px;background:#8bcfdc12;color:#c4e9ee;line-height:1;cursor:pointer}
+.sidebar .brand .sidebar-toggle::before{content:none}
+.sidebar-toggle svg{width:20px;height:20px;pointer-events:none}.sidebar-toggle[aria-expanded=false] .sidebar-chevron{transform:rotate(180deg);transform-origin:15px 12px}
+.sidebar .brand .sidebar-toggle:hover{background:#8bcfdc2e;color:#fff}.sidebar .brand .sidebar-toggle:focus-visible{outline:3px solid #f29455;outline-offset:3px}
+@media(min-width:901px){
+ .app.sidebar-collapsed{--sidebar-w:84px}.app.sidebar-collapsed .sidebar{padding-inline:12px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#538897 transparent}
+ .app.sidebar-collapsed .sidebar .brand{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:9px;min-height:0;padding:0 0 13px;flex:0 0 auto;margin-bottom:10px}
+ .app.sidebar-collapsed .sidebar .brand-mark{width:32px;height:32px;margin:0;border-radius:10px}
+ .app.sidebar-collapsed .sidebar .brand .sidebar-toggle{position:static;inset:auto;width:32px;height:32px;flex:0 0 32px;padding:6px;margin:0}
+ .app.sidebar-collapsed .sidebar .nav-group{margin:4px 0;flex:none}.app.sidebar-collapsed .sidebar .nav-group>summary{min-height:42px;padding:8px;gap:0}
+ .app.sidebar-collapsed .sidebar .nav-item{min-height:42px;padding:8px;gap:0;margin-block:3px}.app.sidebar-collapsed .sidebar .nav-icon{display:inline-grid;place-items:center;flex:0 0 24px;width:24px;margin:0}
+}
+@media(max-width:900px){body.mobile-menu-open .app .sidebar{visibility:visible;transform:translateX(0)}.sidebar .brand{min-height:54px;padding-bottom:12px}.sidebar .brand .sidebar-toggle{width:40px;height:40px;flex-basis:40px}}
+.sidebar .nav-group>summary::after{border-color:#7dcbd65c;background:linear-gradient(145deg,#2b6277,#123d59);box-shadow:inset 0 1px 0 #ffffff14,0 2px 5px #00142540;transition:background .16s,border-color .16s}
+.sidebar .nav-group>summary::before{width:7px;height:7px;border-right-width:2.2px;border-bottom-width:2.2px;color:#bceeed}
+.sidebar .nav-group>summary:hover::after{border-color:#81d9df;background:linear-gradient(145deg,#358496,#19506c)}
+.sidebar .nav-group[open]>summary::after{border-color:#f09b66;background:linear-gradient(145deg,#fba76c,#ef783c);box-shadow:inset 0 1px 0 #fff5,0 2px 6px #0003}
+.sidebar .nav-group[open]>summary::before{color:#06284a}

@@ -20,7 +20,7 @@
   function openCalendar(entry){AppOverlays.closeAll();goPage('calendar');return UnifiedCalendar.openDay(entry.date);}
   function mount(body,project){
     const parent=body.querySelector('.project-workspace'),overview=n('section',null,'pn-overview'),sectionNav=n('nav',null,'pn-section-nav'),links=n('section',null,'pn-panel');sectionNav.setAttribute('aria-label','بخش‌های پروژه');overview.dataset.projectId=project.id;links.dataset.projectSection='learning';body.prepend(overview,sectionNav);parent.querySelector('.pt-team')?.after(links);let turn=0,timer,data;
-    const current=()=>overview.isConnected&&V11_INSPECTOR?.type==='project'&&V11_INSPECTOR.id===project.id;
+    const current=()=>overview.isConnected&&window.ProjectPage?.isCurrent(project.id);
     async function load(){const revision=++turn;try{const next=await apiFetch('/api/projects/'+project.id+'/network');if(!current()||turn!==revision)return;data=next;render();}catch(error){if(current()){overview.replaceChildren(n('p',error.message,'record-edit-error'),button('تلاش دوباره',load));links.replaceChildren();}}}
     function render(){
       overview.replaceChildren();const heading=n('div',null,'pn-title');heading.append(n('span','فضای پروژه','pn-eyebrow'),n('h2',data.project.name));const badges=n('div',null,'pn-badges');badges.append(n('span','مرحله: '+(phases[data.project.lifecycle_status]||'در جریان')),n('span',statuses[data.project.status]||'در حال انجام'),n('span','مهلت: '+date(data.project.due_date)));heading.append(badges);overview.append(heading);

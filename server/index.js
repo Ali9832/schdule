@@ -26,6 +26,7 @@ import { memoryProjectTeamStore, postgresProjectTeamStore } from './project-team
 import { registerProjectNetwork } from './project-network.js'
 import { registerPeopleNetwork, personExtras, nextPersianAnniversary } from './people-network.js'
 import { validateTaskHierarchy } from './task-hierarchy.js'
+import { startupFailure } from './startup-errors.js'
 import { createUserRefreshGate } from './user-refresh-gate.js'
 import { registerCalendarCarryForward, memoryCarryForward, postgresCarryForward } from './calendar-carry-forward.js'
 
@@ -52,9 +53,9 @@ let openaiClient
 const scrypt = promisify(crypto.scrypt)
 const deployedRuntime=process.env.NODE_ENV==='production'||Boolean(process.env.VERCEL)
 if (deployedRuntime && !process.env.AUTH_SECRET) {
-  throw new Error('AUTH_SECRET must be set in production.')
+  throw startupFailure('AUTH_SECRET_MISSING','AUTH_SECRET must be set in production.')
 }
-if(deployedRuntime&&!hasDatabase)throw new Error('DATABASE_URL must be set for persistent production storage.')
+if(deployedRuntime&&!hasDatabase)throw startupFailure('DATABASE_URL_MISSING','DATABASE_URL must be set for persistent production storage.')
 const authSecret = process.env.AUTH_SECRET || crypto.randomBytes(32).toString('hex')
 const currentDir = path.dirname(fileURLToPath(import.meta.url))
 const distDir = path.join(currentDir, '..', 'dist')
@@ -374,7 +375,7 @@ async function initDatabase() {
   try {
     await app.pg.query('SELECT 1')
   } catch (error) {
-    if(deployedRuntime)throw new Error('PostgreSQL connection failed; refusing temporary production storage.',{cause:error})
+    if(deployedRuntime)throw startupFailure('DATABASE_CONNECTION_FAILED','PostgreSQL connection failed; refusing temporary production storage.',error)
     app.log.warn({ err: error }, 'PostgreSQL unavailable; using memory fallback')
     hasDatabase = false
     const saved = localStore?.load()
@@ -383,7 +384,8 @@ async function initDatabase() {
     localStore?.save(memory)
     return
   }
-  await app.pg.query(fs.readFileSync(path.join(currentDir, 'schema.sql'), 'utf8'))
+  const schemaSql=fs.readFileSync(path.join(currentDir,'schema.sql'),'utf8')
+  try{await app.pg.query(schemaSql)}catch(error){if(deployedRuntime)throw startupFailure('DATABASE_SCHEMA_FAILED','PostgreSQL schema initialization failed.',error);throw error}
   if(deployedRuntime)return
   const { rows } = await app.pg.query('SELECT COUNT(*)::int AS count FROM tasks')
   if (!rows[0].count) {

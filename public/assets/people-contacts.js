@@ -1,0 +1,12 @@
+(() => {
+  'use strict';
+  const platforms=[['eitaa','ایتا'],['bale','بله'],['telegram','تلگرام']];
+  const aliases={eitaa:'eitaa',eita:'eitaa','ایتا':'eitaa',bale:'bale','بله':'bale',telegram:'telegram','تلگرام':'telegram'};
+  const key=link=>aliases[String(link.label||'').trim().toLowerCase()];
+  const safe=url=>{try{return ['https:','http:'].includes(new URL(url).protocol);}catch{return false;}};
+  function fields(container,links=[]){const box=document.createElement('fieldset');box.className='person-contact-fields';const title=document.createElement('legend');title.textContent='لینک گفت‌وگو در پیام‌رسان‌ها';box.append(title);for(const [id,name] of platforms){const label=document.createElement('label'),input=document.createElement('input');label.textContent=name;input.name='messenger_'+id;input.type='url';input.pattern='https?://.+';input.maxLength=2000;input.dir='ltr';input.placeholder='لینک کامل گفت‌وگو';input.value=links.find(link=>key(link)===id)?.url||'';label.append(input);box.append(label);}container.append(box);return box;}
+  function merge(links,container){return [...links.filter(link=>!key(link)),...platforms.flatMap(([id,label])=>{const url=container.querySelector(`[name="messenger_${id}"]`)?.value.trim();return url?[{label,url}]:[];})];}
+  async function edit(personId){try{const people=await apiFetch('/api/people-network'),person=people.people.find(p=>p.id===personId);if(person)RelationshipsNetwork.editPerson(person);else showToast('فرد پیدا نشد','فهرست افراد را تازه کنید.');}catch(error){showToast('دریافت نشد',error.message);}}
+  function render(person,{edit:canEdit=true}={}){const box=document.createElement('div');box.className='person-contact-links';box.setAttribute('aria-label','پیگیری مستقیم با '+person.name);for(const [id,name] of platforms){const link=(person.links||[]).find(link=>key(link)===id&&safe(link.url));if(!link)continue;const a=document.createElement('a');a.href=link.url;a.target='_blank';a.rel='noopener noreferrer';a.dataset.messenger=id;a.className='person-messenger person-messenger-'+id;a.textContent=name;a.title='بازکردن گفت‌وگو با '+person.name+' در '+name;a.setAttribute('aria-label',a.title);box.append(a);}if(canEdit){const b=document.createElement('button');b.type='button';b.className='person-contact-edit';b.textContent='ویرایش راه‌های ارتباطی';b.onclick=()=>edit(person.id);box.append(b);}return box;}
+  window.PeopleContacts={platforms,fields,merge,render,isMessenger:link=>!!key(link)};
+})();

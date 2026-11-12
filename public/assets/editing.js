@@ -41,17 +41,19 @@
     const box=document.createElement('section');box.className='pw-box pw-details-box';
     const heading=document.createElement('div');heading.className='pw-row-heading';const title=document.createElement('h3');title.textContent='جزئیات پروژه';
     const edit=document.createElement('button');edit.type='button';edit.textContent='✎ ویرایش جزئیات';edit.dataset.editProjectDetails='';
-    const content=document.createElement('div');content.className='pw-details-content';heading.append(title,edit);box.append(heading,content);body.prepend(box);
+    const content=document.createElement(body.id==='projectPageBody'?'details':'div');content.className='pw-details-content';heading.append(title,edit);box.append(heading,content);body.prepend(box);
     box.render=()=>{
-      edit.disabled=false;content.replaceChildren();const grid=document.createElement('div');grid.className='v11-inspector-grid pw-details-grid';
+      edit.disabled=false;content.replaceChildren();if(content.tagName==='DETAILS'){const summary=document.createElement('summary');summary.textContent='مشخصات، توضیحات و ارتباط‌های پروژه';content.append(summary);}const grid=document.createElement('div');grid.className='v11-inspector-grid pw-details-grid';
       const fields=fieldsFor('project',entity).filter(f=>f.key!=='area_id').map(f=>[f.label,f.options?.find(([value])=>value===(entity[f.key]||''))?.[1]??entity[f.key]??'—']);fields.push(['پیشرفت (محاسبه‌شده)',`${entity.progress||0}٪`],['قدم بعدی',entity.next_action||'—']);
       for(const [caption,value]of fields){const cell=document.createElement('div');cell.className='v11-inspector-field';const label=document.createElement('span'),text=document.createElement('b');label.textContent=caption;text.textContent=String(value||'—');cell.append(label,text);grid.append(cell);}content.append(grid);
       const related=document.createElement('div');related.innerHTML=v11InspectorHtml('project',entity,links.filter(link=>link.other_type!=='area'&&link.type!=='area'&&link.entity_type!=='area'));const section=related.lastElementChild;if(section)content.append(section);window.PersianUI?.scan(content);
-      document.getElementById('v11InspectorType').textContent='پروژه · جزئیات';
+      if(body.id!=='projectPageBody')document.getElementById('v11InspectorType').textContent='پروژه · جزئیات';
     };
     edit.onclick=()=>{if(!edit.disabled)window.v11EditCurrent('project',entity);};box.render();return box;
   }
+  window.ProjectDetailsUI={render:projectDetails};
   window.openV11Inspector=async function(type,id){
+    if(type==='project'&&window.ProjectPage)return ProjectPage.open(id);
     closeAll();
     const request=++inspectorRequest,owner=generation,shell=document.getElementById('v11Inspector'),body=document.getElementById('v11InspectorBody'),edit=document.getElementById('v11InspectorEditBtn');
     V11_INSPECTOR={type,id};shell.inert=false;shell.classList.add('open');shell.setAttribute('aria-hidden','false');shell.setAttribute('role','region');shell.setAttribute('aria-label','جزئیات مورد');edit.hidden=false;edit.disabled=true;body.innerHTML='<div class="v11-empty">در حال دریافت اطلاعات…</div>';
@@ -64,37 +66,38 @@
   };
   window.v11EditCurrent=function(type,entity){
     if(type==='project'&&document.querySelector('.pw-details-box form[data-entity-type=project]'))return;
-    const shell=document.getElementById('v11Inspector'),body=document.getElementById('v11InspectorBody'),owner=generation,page=activePage(),request=++inspectorRequest;
-    shell.inert=false;shell.classList.add('open');shell.setAttribute('aria-hidden','false');document.getElementById('v11InspectorEditBtn').hidden=true;document.getElementById('v11InspectorType').textContent='ویرایش '+(names[type]||'مورد');
+    const inPage=type==='project'&&window.ProjectPage?.isCurrent(entity.id),shell=document.getElementById('v11Inspector'),body=inPage?ProjectPage.body:document.getElementById('v11InspectorBody'),owner=generation,page=activePage(),request=inPage?null:++inspectorRequest;
+    if(!inPage){shell.inert=false;shell.classList.add('open');shell.setAttribute('aria-hidden','false');document.getElementById('v11InspectorEditBtn').hidden=true;document.getElementById('v11InspectorType').textContent='ویرایش '+(names[type]||'مورد');}
     const details=type==='project'?body.querySelector('.pw-details-box'):null,target=details?.querySelector('.pw-details-content')||body;
-    if(details)details.querySelector('[data-edit-project-details]').disabled=true;
+    if(details){details.querySelector('[data-edit-project-details]').disabled=true;if(target.tagName==='DETAILS')target.open=true;}
     const form=document.createElement('form');form.className='record-edit-form';form.dataset.entityType=type;const controls=new Map();
     for(const f of fieldsFor(type,entity)){
       const label=document.createElement('label');label.textContent=f.label;const input=document.createElement(f.type==='textarea'?'textarea':f.type==='select'?'select':'input');
       if(f.options){for(const [value,text] of f.options)input.add(new Option(text,value));if(entity[f.key]&&!f.options.some(x=>x[0]===entity[f.key]))input.add(new Option(entity[f.key],entity[f.key]))}else if(input.tagName==='INPUT')input.type=f.type;
-      input.name=f.key;input.id='recordEdit-'+f.key;input.value=entity[f.key]??'';if(['title','name'].includes(f.key))input.required=true;if(f.type==='number'){input.step='any';input.min='0';if(f.key==='target_weekly'){input.min='1';input.max='7'}}
+      input.name=f.key;input.id=(inPage?'projectEdit-':'recordEdit-')+f.key;input.value=entity[f.key]??'';if(['title','name'].includes(f.key))input.required=true;if(f.type==='number'){input.step='any';input.min='0';if(f.key==='target_weekly'){input.min='1';input.max='7'}}
       label.append(input);form.append(label);controls.set(f.key,input);
     }
     const error=document.createElement('p');error.className='record-edit-error';error.setAttribute('role','status');error.setAttribute('aria-live','polite');
     const actions=document.createElement('div');actions.className='record-edit-actions';const save=document.createElement('button'),cancel=document.createElement('button');save.type='submit';save.textContent='ذخیره تغییرات';cancel.type='button';cancel.textContent='لغو ویرایش';actions.append(save,cancel);form.append(error,actions);target.replaceChildren(form);if(!details)body.scrollTop=0;window.PersianUI?.scan(form);controls.values().next().value?.focus();
     const draft=window.NoavaDrafts?.bind(form,`inspector:${type}:${entity.id}`);
     cancel.onclick=()=>{if(cancel.disabled)return;draft?.clear();if(details)details.render();else openV11Inspector(type,entity.id)};
+    const valid=()=>inPage?form.isConnected&&ProjectPage.isCurrent(entity.id):owner===generation&&request===inspectorRequest;
     form.onsubmit=async event=>{
-      event.preventDefault();if(save.disabled||owner!==generation||request!==inspectorRequest)return;if(!form.reportValidity())return;
+      event.preventDefault();if(save.disabled||!valid())return;if(!form.reportValidity())return;
       const patch={};for(const [key,input] of controls){const value=input.value;patch[key]=input.type==='number'?Number(value||0):key.endsWith('_id')||input.dataset.persianType?value||null:value.trim()}
       if(patch.start_at&&patch.end_at&&patch.end_at<=patch.start_at){error.textContent='پایان باید بعد از شروع باشد.';return}
       const route={project:'v11/projects',task:'v11/tasks',area:'v11/areas',resource:'v11/resources',outcome:'v11.7/outcomes',routine:entity.routine_type==='spiritual'?'v11.11/spiritual-routines':'habits',event:'events',meeting:'events'}[type];if(!route){error.textContent='ویرایش این مورد در دسترس نیست.';return}
       save.disabled=cancel.disabled=true;error.textContent='در حال ذخیره…';
       try{const saved=await apiFetch(`/api/${route}/${encodeURIComponent(type==='meeting'?entity.event_id||entity.id:entity.id)}`,{method:'PATCH',body:JSON.stringify(patch)});
         draft?.clear();
-        if(owner!==generation||request!==inspectorRequest)return;
+        if(!valid())return;
         showToast('ذخیره شد','تغییرات ثبت شد.');
-        if(details){Object.assign(entity,saved);document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);details.render();window.NovaFastUI?.scheduleVisibleRefresh();return;}
+        if(details){Object.assign(entity,saved);if(inPage)ProjectPage.updateTitle(v11EntityTitle(type,entity));else document.getElementById('v11InspectorTitle').textContent=v11EntityTitle(type,entity);details.render();window.NovaFastUI?.scheduleVisibleRefresh();return;}
         if(window.NovaFastUI)NovaFastUI.scheduleVisibleRefresh();
         else await window.handleFunctionalPageOpen?.(page);
         if(owner!==generation||request!==inspectorRequest)return;
         await openV11Inspector(type,entity.id);
-      }catch(failure){if(owner===generation&&request===inspectorRequest)error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=cancel.disabled=false}
+      }catch(failure){if(valid())error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=cancel.disabled=false}
     };
   };
   hideInspector();

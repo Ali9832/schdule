@@ -22,7 +22,7 @@
   function mount(body, project) {
     const root = node('div', null, 'project-workspace'); root.dataset.projectId = project.id;
     (body.querySelector('.pw-details-box') || body).append(root);
-    const current = () => root.isConnected && document.getElementById('v11Inspector').classList.contains('open') && V11_INSPECTOR?.type === 'project' && V11_INSPECTOR.id === project.id && controllers.get(project.id) === controller;
+    const current = () => root.isConnected && window.ProjectPage?.isCurrent(project.id) && controllers.get(project.id) === controller;
     const base = `/api/projects/${encodeURIComponent(project.id)}`;
     let data = { meetings: [], reports: [] }, editing = null, savingReport = false, savingMeeting = false;
     const meetingBox = node('section', null, 'pw-box'), reportBox = node('section', null, 'pw-box');meetingBox.dataset.projectSection='meetings';reportBox.dataset.projectSection='reports';
@@ -49,7 +49,7 @@
     const actions = node('div', null, 'pw-form-actions'), save = node('button', 'ثبت گزارش'); save.type = 'submit'; save.disabled = true;
     const cancel = button('انصراف از ویرایش', () => {reportDraft?.clear();drafts.delete(draftKey());resetReport();}); cancel.hidden = true; actions.append(save, cancel);
     reportForm.append(reportError, actions); const reportList = node('div', 'در حال دریافت…', 'pw-report-list');
-    reportBox.append(reportForm, node('h4', 'گزارش‌های ثبت‌شده (۱۰۰ گزارش اخیر)'), reportList); root.append(meetingBox, reportBox);
+    const reportCompose=node('details',null,'pw-report-compose');reportCompose.append(node('summary','＋ ثبت گزارش پیشرفت'),reportForm);reportBox.append(reportCompose, node('h4', 'گزارش‌های ثبت‌شده (۱۰۰ گزارش اخیر)'), reportList); root.append(meetingBox, reportBox);
     let reportDraft;
     function draftKey() { return `${project.id}:${editing?.id || 'new'}`; }
     function remember() { drafts.set(draftKey(), { text: reportText.value, date: reportDate.value }); }
@@ -61,6 +61,7 @@
     }
     function editReport(report) {
       if (savingReport || !current()) return;
+      reportCompose.open=true;
       remember(); editing = data.reports.find(row => row.id === report.id) || report;
       const draft = drafts.get(draftKey()); reportText.value = draft?.text ?? editing.text; reportDate.value = draft?.date || editing.report_date;
       save.textContent = 'ثبت تغییرات گزارش'; cancel.hidden = false; reportError.textContent = '';

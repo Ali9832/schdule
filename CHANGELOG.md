@@ -2,8 +2,23 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
-## Unreleased
+## [2.10.0] - 2026-11-12
 
+Upgrade: **2.9.0 -> 2.10.0**. Project pages, shared contacts, coastal theme and stable calendars. Existing production records are preserved; local/test data is excluded.
+
+- Unify calendar/date navigation, numeric picker arrows and panel disclosures with the sidebar's framed chevron style; preserve direction, labels, hit areas and existing actions.
+- Replace date/time picker text arrows with crisp SVG chevrons, add raised navigation/action styling and a distinct warm close button, and strengthen sidebar disclosure arrows without changing control geometry.
+- Use a fixed six-week date-picker grid and equal-size day/month/year views with stable headers, numeric fields and action rows. Apply stable placement to time/Gregorian budget-month pickers and fixed monthly cells to the main and legacy calendars; preserve full event details on opening a day.
+- Anchor the Persian date picker to a stable top position and reserve its scrollbar gutter so month-length changes only extend the lower edge. Keep initial date focus from scrolling the navigation out of view.
+- Keep the collapsed sidebar brand and expand control in separate non-shrinking rows, replace the chevron with a clear panel icon, and preserve collapsed navigation state. Return safe, distinct startup codes for missing auth/database settings, database connection failures and schema initialization failures in Vercel.
+- Apply a shared navy/turquoise/ice/orange palette inspired by the supplied reference across navigation, primary actions, forms, calendar, projects, relationships, reading, statistics and sign-in. Coordinate light/dark surfaces and browser/PWA branding without changing data or page layout.
+- Add stronger indigo/cyan/rose person outlines, teal project sections, amber commitment sections and blue contact accents, with coordinated light and dark palettes.
+- Widen Relationships to fill the content area, compact desktop avatars/buttons and spacing, and place person actions and chat links in one right-aligned toolbar while retaining mobile touch targets.
+- Reorganize Relationships with a compact add-person disclosure, a quiet summary/filter strip, clear person headers and distinct assignment/commitment sections. Flatten repeated card borders, consolidate contact editing, remove duplicate displayed contact URLs and group secondary personal details.
+- Open projects as dedicated pages with shareable URLs, browser back/forward and reload support. Keep task inspectors separate, reduce project typography and visual density, and move secondary details/report composition into disclosures while preserving drafts and connected project data.
+- Stack person cards and project task/team/meeting records vertically, reduce panel widths and spacing, and retain readable text and mobile touch targets.
+- Group each person's assigned tasks by project, show the same work in project team cards, and add distinct bordered sections for contacts, assignments and commitments. Add editable Eitaa/Bale/Telegram chat links shared by Relationships and project/task cards using existing stored person links. Remove the optional deadline control from new personal commitments without changing existing deadlines.
+- Standardize window closing with accessible top-left cross icons across project inspectors, native dialogs, composers, modals and reading reminders; preserve existing close/cancel behavior and remove redundant footer close buttons.
 ## [2.9.0] - 2026-11-05
 
 Upgrade: **2.8.0 -> 2.9.0**. Project teams and connected project workspaces. Database changes are additive; existing records are preserved and local/test records are excluded.

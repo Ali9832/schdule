@@ -1,0 +1,27 @@
+/* The sidebar's framed chevron is shared by navigation and disclosure controls. */
+body button.menu-arrow-control,
+body dialog.persian-calendar button.menu-arrow-control,
+body .module-toggle,
+body .nova-master-bank .category-header .toggle,
+body .workspace .workspace-chevron{
+  border:1px solid #7dcbd65c!important;border-radius:11px;
+  background:linear-gradient(145deg,#2b6277,#123d59)!important;color:#bceeed!important;
+  box-shadow:inset 0 1px 0 #ffffff14,0 2px 5px #00142540!important;
+  transition:background .16s,border-color .16s,box-shadow .16s;
+}
+body button.menu-arrow-control,
+body dialog.persian-calendar button.menu-arrow-control{display:inline-grid;place-items:center;font-size:0;line-height:0}
+.menu-arrow-control>.picker-arrow{display:none}
+.menu-arrow-control::before{content:'';display:block;width:7px;height:7px;border-right:2.2px solid currentColor;border-bottom:2.2px solid currentColor;pointer-events:none;transform:rotate(45deg)}
+.menu-arrow-control[data-arrow-direction=right]::before{transform:rotate(-45deg)}
+.menu-arrow-control[data-arrow-direction=left]::before{transform:rotate(135deg)}
+.menu-arrow-control[data-arrow-direction=up]::before{transform:rotate(225deg)}
+body .module-toggle::before,body .nova-master-bank .category-header .toggle::before,body .workspace .workspace-chevron::before{width:7px;height:7px;border-right-width:2.2px;border-bottom-width:2.2px}
+body button.menu-arrow-control:hover,
+body dialog.persian-calendar button.menu-arrow-control:hover,
+body .module-toggle:hover,body .nova-master-bank .category-header .toggle:hover,body .workspace .workspace-chevron:hover{
+  border-color:#81d9df!important;background:linear-gradient(145deg,#358496,#19506c)!important;color:#fff!important;box-shadow:inset 0 1px 0 #ffffff14,0 2px 5px #00142540!important;
+}
+body button.menu-arrow-control:focus-visible{outline:3px solid #ef9b66;outline-offset:2px}
+body button.menu-arrow-control:disabled{opacity:.4;box-shadow:none;cursor:default}
+@media(prefers-reduced-motion:reduce){body button.menu-arrow-control{transition:none}}

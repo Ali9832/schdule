@@ -28,7 +28,7 @@
   }
   async function load(){
     const request=++state.request,{from,to}=range();root.setAttribute('aria-busy','true');state.error='';
-    try{const result=await apiFetch(`/api/calendar?from=${add(from,-7)}&to=${add(to,7)}`);if(request!==state.request)return;state.entries=result.entries;state.from=result.from;state.to=result.to;render();if(state.dialog?.open)renderDay()}
+    try{const result=await apiFetch(`/api/calendar?from=${add(from,-7)}&to=${add(to,['day','week'].includes(state.view)?7:14)}`);if(request!==state.request)return;state.entries=result.entries;state.from=result.from;state.to=result.to;render();if(state.dialog?.open)renderDay()}
     catch(error){if(request===state.request){state.error=error.message||'دریافت تقویم انجام نشد.';render()}}
     finally{if(request===state.request)root.setAttribute('aria-busy','false')}
   }
@@ -39,13 +39,13 @@
     cell.dataset.date=value;cell.setAttribute('aria-label',`${dayName(value)}، ${num(items.length)} آیتم`);if(value===today())cell.setAttribute('aria-current','date');if(prefs.weekend&&date(value).getUTCDay()===5)cell.classList.add('weekend');
     cell.append(el('span','uc-day-number',num(jalali(value).day)));
     if(mini){if(items.length)cell.append(el('span','uc-mini-count',num(items.length)))}
-    else{items.slice(0,prefs.compact?2:3).forEach(item=>{const chip=el('span','uc-event'+(item.done?' done':''));chip.style.setProperty('--item-color',color(item));chip.append(el('span','',`${item.done?'✓ ':''}${item.all_day?'':num(item.start_time)+' '}${item.title}`));cell.append(chip)});if(items.length>(prefs.compact?2:3))cell.append(el('small','uc-more',`${num(items.length-(prefs.compact?2:3))} مورد دیگر`))}
+    else{items.slice(0,prefs.compact?2:3).forEach(item=>{const chip=el('span','uc-event'+(item.done?' done':''));chip.style.setProperty('--item-color',color(item));chip.title=item.title;chip.append(el('span','',`${item.done?'✓ ':''}${item.all_day?'':num(item.start_time)+' '}${item.title}`));cell.append(chip)});if(items.length>(prefs.compact?2:3))cell.append(el('small','uc-more',`${num(items.length-(prefs.compact?2:3))} مورد دیگر`))}
     return cell;
   }
   function monthGrid(year,month,mini=false){
     const start=first(year,month),offset=(date(start).getUTCDay()+1)%7,grid=el('div','uc-month-grid'+(mini?' mini':''));
     for(const name of ['شنبه','یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه'])grid.append(el('span','uc-weekday',mini?name.slice(0,1):name));
-    const days=Math.ceil((offset+(jalali(add(nextMonth(year,month),-1)).day))/7)*7;
+    const days=42;
     for(let i=0;i<days;i++){const value=add(start,i-offset);grid.append(dayButton(value,mini,jalali(value).month!==month))}return grid;
   }
   function preferences(){

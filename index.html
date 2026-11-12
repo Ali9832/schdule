@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="/assets/auth.css"/>
 <script src="/assets/auth.js"></script>
 <link href="/manifest.webmanifest" rel="manifest"/>
-<meta content="#171b33" name="theme-color"/>
+<meta content="#06284a" name="theme-color"/>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 <!-- نوا • فضای شخصی Production Release -->
 <title>NOAVA — آوای نو</title>
@@ -894,7 +894,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <body>
 <div class="app">
 <aside class="sidebar" id="mainSidebar">
-<div class="brand"><div class="brand-mark">N</div><div><strong>NOAVA</strong><small>آوای نو</small></div><button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="جمع کردن منو" aria-label="جمع کردن منو" aria-controls="mainSidebar" aria-expanded="true">‹</button></div>
+<div class="brand"><div class="brand-mark">N</div><div><strong>NOAVA</strong><small>آوای نو</small></div><button type="button" class="sidebar-toggle" id="sidebarToggle" onclick="toggleSidebar()" title="جمع کردن منو" aria-label="جمع کردن منو" aria-controls="mainSidebar" aria-expanded="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M9 4v16M9 4h10a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9"/><path class="sidebar-chevron" d="m13 8 4 4-4 4"/></svg></button></div>
 <details class="nav-group calendar-nav-group" data-nav-group="calendar"><summary class="calendar-primary-nav" title="تقویم جامع"><span class="nav-icon" aria-hidden="true">▦</span><span class="nav-group-title">تقویم جامع</span></summary><div class="nav-group-items">
 <button class="nav-item active" data-page="calendar"><span class="nav-icon">▦</span>نمای کلی</button>
 <button class="nav-item" data-page="workspace"><span class="nav-icon">☷</span>فهرست کارها<span class="nav-badge" data-nav-count="v11TaskBadge">—</span></button>
@@ -1721,7 +1721,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <label class="wide">یادداشت پیگیری<textarea id="v116FollowNote" placeholder="ریسک، شرط تصمیم، موضوع جلسه بعدی یا یادآوری پیگیری"></textarea></label>
 </div>
 </div>
-<div class="v116-composer-actions"><button class="ghost" onclick="v116CloseComposer()">بستن</button><button class="save" onclick="v116Save()">ذخیره جلسه و خروجی‌ها</button></div>
+<div class="v116-composer-actions"><button class="save" onclick="v116Save()">ذخیره جلسه و خروجی‌ها</button></div>
 </aside>
 </div>
 </section>
@@ -1866,7 +1866,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.9.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.10.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -1914,6 +1914,10 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </div>
 </div>
 </section>
+<section class="page hidden" id="project-detail" aria-labelledby="projectPageTitle">
+<header class="project-page-heading"><div><span class="project-page-eyebrow">پروژه‌ها / جزئیات پروژه</span><h1 id="projectPageTitle">پروژه</h1></div><button type="button" onclick="ProjectPage.back()">بازگشت به پروژه‌ها ←</button></header>
+<div id="projectPageBody" aria-live="polite"></div>
+</section>
 <div class="footer-note">نوا • مدیریت زندگی و کار</div>
 </main>
 </div>
@@ -1927,7 +1931,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div aria-hidden="true" class="v11-inspector" id="v11Inspector">
 <div class="v11-inspector-head"><div><b id="v11InspectorTitle">جزئیات</b><small id="v11InspectorType">جزئیات مورد</small></div><button class="v11-inspector-close" onclick="closeV11Inspector()">×</button></div>
 <div class="v11-inspector-body" id="v11InspectorBody"><div class="v11-empty">یک رکورد را انتخاب کن.</div></div>
-<div class="v11-inspector-actions"><button class="v11-primary" id="v11InspectorEditBtn">ویرایش</button><button class="v11-secondary" onclick="closeV11Inspector()">بستن</button></div>
+<div class="v11-inspector-actions"><button class="v11-primary" id="v11InspectorEditBtn">ویرایش</button></div>
 </div>
 <div class="modal-bg hidden" id="genericModalBg">
 <form class="modal generic-modal" id="genericAddForm" onsubmit="event.preventDefault();saveGenericAdd()">
@@ -1998,10 +2002,9 @@ function syncSidebarNavigation(id){
   if(lastSidebarButton?.dataset.page===navId)active=lastSidebarButton;
   if(!active)return;
   for(let group=active.closest('.nav-group');group;group=group.parentElement.closest('.nav-group'))group.open=true;
-  if(!matchMedia('(max-width:900px)').matches&&document.querySelector('.app').classList.contains('sidebar-collapsed'))toggleSidebar(false);
   function reveal(){
-    const container=sidebar.getBoundingClientRect(),item=active.getBoundingClientRect();
-    if(item.top<container.top+12)sidebar.scrollTop+=item.top-container.top-12;
+    const container=sidebar.getBoundingClientRect(),item=active.getBoundingClientRect(),visibleTop=Math.max(container.top+12,sidebar.querySelector('.brand').getBoundingClientRect().bottom+8);
+    if(item.top<visibleTop)sidebar.scrollTop+=item.top-visibleTop;
     else if(item.bottom>container.bottom-12)sidebar.scrollTop+=item.bottom-container.bottom+12;
   }
   reveal();requestAnimationFrame(reveal);
@@ -2795,8 +2798,8 @@ function toggleSidebar(force){
   const app=document.querySelector('.app');
   const collapse=typeof force==='boolean'?force:!app.classList.contains('sidebar-collapsed');
   app.classList.toggle('sidebar-collapsed',collapse);
-  localStorage.setItem('nova.sidebarCollapsed',collapse?'1':'0');
-  const b=document.getElementById('sidebarToggle');if(b){b.textContent=collapse?'›':'‹';b.title=collapse?'باز کردن منو':'جمع کردن منو';b.setAttribute('aria-label',b.title);b.setAttribute('aria-expanded',String(!collapse));}
+  try{localStorage.setItem('nova.sidebarCollapsed',collapse?'1':'0');}catch{}
+  const b=document.getElementById('sidebarToggle');if(b){b.title=collapse?'باز کردن منو':'جمع کردن منو';b.setAttribute('aria-label',b.title);b.setAttribute('aria-expanded',String(!collapse));}
 }
 function toggleTheme(force){
   const dark=typeof force==='boolean'?force:!document.body.classList.contains('theme-dark');
@@ -3253,7 +3256,7 @@ function v115FaDayName(d){return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{w
 function v115DateText(d){return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{day:'numeric',month:'short'}).format(d)}
 function v115RangeText(a,b){if(V115_VIEW==='today')return `امروز • ${v115DateText(a)}`;if(V115_VIEW==='month')return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{month:'long',year:'numeric'}).format(a);return `${v115DateText(a)} تا ${v115DateText(b)}`}
 function v115FallbackData(){const now=new Date(),today=v115Iso(now),tom=v115Iso(v115AddDays(now,1));const tasks=(V111_PAGE?.items||V11_DATA?.tasks||[]);const events=(V11_DATA?.events||[]).map(e=>({...e,source_type:'event',all_day:false}));const due=tasks.filter(t=>t.status!=='done'&&t.due_date).map(t=>({id:'task-'+t.id,entity_id:t.id,source_type:'task',type:'deadline',title:t.title,start_at:`${t.due_date}T23:00:00`,end_at:`${t.due_date}T23:30:00`,all_day:true,project_id:t.project_id||null}));let demo=events.concat(due);if(!demo.length)demo=[{id:'demo1',source_type:'event',type:'meeting',title:'جلسه هماهنگی پروژه',start_at:`${today}T10:30:00`,end_at:`${today}T11:15:00`,all_day:false},{id:'demo2',source_type:'event',type:'focus',title:'بلوک کار عمیق',start_at:`${today}T14:00:00`,end_at:`${today}T15:30:00`,all_day:false},{id:'demo3',source_type:'task',type:'deadline',title:'تحویل خروجی مهم',start_at:`${tom}T23:00:00`,end_at:`${tom}T23:30:00`,all_day:true}];return {stage:'V11.5',entries:demo,summary:{today_count:demo.filter(e=>String(e.start_at).slice(0,10)===today).length,range_count:demo.length,meetings:demo.filter(e=>e.type==='meeting').length,deadlines:demo.filter(e=>v115TypeGroup(e)==='deadline').length,focus_blocks:demo.filter(e=>e.type==='focus').length,conflicts:[]},unscheduled:tasks.filter(t=>t.status!=='done'&&!t.due_date).slice(0,8),references:{projects:V11_DATA?.projects||[]}}}
-async function loadV115Schedule(force=false){const [a,b]=v115Range(),from=v115Iso(a),to=v115Iso(b);const root=document.getElementById('v115CalendarRoot');if(root)root.innerHTML='<div class="v115-loading">در حال هماهنگ‌سازی خط زمانی…</div>';try{V115_DATA=await apiFetch(`/api/v11.5/schedule?from=${from}&to=${to}`)}catch(e){V115_DATA=v115FallbackData()}v115HydrateProjects();renderV115();return V115_DATA}
+async function loadV115Schedule(force=false){const [a,b]=v115Range(),from=v115Iso(a),to=v115Iso(b);const root=document.getElementById('v115CalendarRoot');if(root&&!V115_DATA)root.innerHTML='<div class="v115-loading">در حال هماهنگ‌سازی خط زمانی…</div>';try{V115_DATA=await apiFetch(`/api/v11.5/schedule?from=${from}&to=${to}`)}catch(e){V115_DATA=v115FallbackData()}v115HydrateProjects();renderV115();return V115_DATA}
 function v115HydrateProjects(){const sel=document.getElementById('v115Project');if(!sel)return;const val=sel.value,rows=V115_DATA?.references?.projects||[];sel.innerHTML='<option value="">بدون پروژه</option>'+rows.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name||p.title||'پروژه')}</option>`).join('');sel.value=val}
 function v115FilteredEntries(){return (V115_DATA?.entries||[]).filter(v115Visible).sort((a,b)=>String(a.start_at).localeCompare(String(b.start_at)))}
 function v115EventHtml(e){const cls=v115TypeGroup(e);return `<div class="v115-event ${cls}" onclick="v115OpenEntry('${jsSafe(e.source_type||'event')}','${jsSafe(e.entity_id||e.id)}')"><i class="stripe"></i><div class="v115-event-time">${escapeHtml(v115Time(e))}</div><div class="v115-event-title"><b>${escapeHtml(e.title)}</b><small>${escapeHtml(e.project_name||e.area_name||e.note||'')}</small></div><span class="v115-event-type">${escapeHtml(v115TypeLabel(e.type))}</span></div>`}
@@ -3635,6 +3638,7 @@ function setMobileMenu(open){
  try{saved=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch{}
  const groups=[...document.querySelectorAll('.sidebar .nav-group')];
  groups.forEach(group=>{
+  const summary=group.querySelector('summary'),label=summary.querySelector('.nav-group-title')?.textContent.trim();if(label){summary.title=label;summary.setAttribute('aria-label',label);}
   group.open=saved[group.dataset.navGroup]===true||!!group.querySelector('.nav-item.active');
   group.addEventListener('toggle',()=>{
    try{localStorage.setItem(key,JSON.stringify(Object.fromEntries(groups.map(g=>[g.dataset.navGroup,g.open]))))}catch{}
@@ -3687,13 +3691,23 @@ function setMobileMenu(open){
 <script defer src="/assets/statistics.js"></script>
 <link rel="stylesheet" href="/assets/task-suggestions.css"/>
 <script defer src="/assets/task-suggestions.js?rev=people-tasks"></script>
+<link rel="stylesheet" href="/assets/people-contacts.css"/>
+<script defer src="/assets/people-contacts.js"></script>
 <link rel="stylesheet" href="/assets/project-team.css"/>
 <script defer src="/assets/project-team.js"></script>
 <link rel="stylesheet" href="/assets/project-network.css"/>
 <script defer src="/assets/project-network.js"></script>
 <link rel="stylesheet" href="/assets/relationships-network.css"/>
 <script defer src="/assets/relationships-network.js"></script>
+<link rel="stylesheet" href="/assets/project-page.css"/>
+<script defer src="/assets/project-page.js"></script>
 <link rel="stylesheet" href="/assets/mobile-layout.css"/>
+<link rel="stylesheet" href="/assets/window-close.css"/>
+<script defer src="/assets/window-close.js"></script>
+<link rel="stylesheet" href="/assets/coastal-theme.css"/>
+<link rel="stylesheet" href="/assets/sidebar-layout.css"/>
+<link rel="stylesheet" href="/assets/arrow-controls.css"/>
+<script defer src="/assets/arrow-controls.js"></script>
 <script defer src="/assets/ui-ready.js"></script>
 </body>
 </html>

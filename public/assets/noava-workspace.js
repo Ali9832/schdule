@@ -48,7 +48,7 @@
       const today=DateContext.today(),user=JSON.parse(localStorage.getItem('nova_user')||'null')?.id||'local-demo',seen='noava.overdue:'+user+':'+today;
       if(!manual&&reviewSeen(seen))return;
       const result=await apiFetch('/api/calendar/overdue');if(!result.entries.length){if(manual)showToast('کارهای عقب‌افتاده','مورد بازی در بازهٔ دو سال اخیر وجود ندارد.');return;}
-      if(!manual&&(document.querySelector('dialog[open]')||!document.getElementById('genericModalBg').classList.contains('hidden')||document.querySelector('#v11Inspector.open')||document.activeElement?.matches('input,textarea,select,[contenteditable=true]')))return;
+      if(!manual&&(document.querySelector('dialog[open]')||!document.getElementById('genericModalBg').classList.contains('hidden')||document.querySelector('#v11Inspector.open')||document.querySelector('#project-detail:not(.hidden)')||document.activeElement?.matches('input,textarea,select,[contenteditable=true]')))return;
       const dialog=node('dialog',null,'overdue-dialog');review=dialog;dialog.id='overdueReview';dialog.setAttribute('aria-label','مرور کارهای عقب‌افتاده');
       const heading=node('header',null,'overdue-heading'),title=node('h2','این برنامه‌ها از روزهای قبل باقی مانده‌اند');
       const dismiss=()=>{if(busy)return;markReviewSeen(seen);dialog.close();};

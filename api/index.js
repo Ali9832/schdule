@@ -1,3 +1,4 @@
+import {startupDiagnostic} from '../server/startup-errors.js'
 export function createVercelHandler(loadApp){
   let application
   return async function handler(request,response){
@@ -7,10 +8,11 @@ export function createVercelHandler(loadApp){
     const app=await application
     app.server.emit('request',request,response)
   }catch(error){
-    console.error('Application initialization failed:',error.message)
+    const diagnostic=startupDiagnostic(error)
+    console.error('Application initialization failed:',{code:diagnostic.code,message:error.message,cause_code:error.cause?.code})
     response.statusCode=503
     response.setHeader('Content-Type','application/json; charset=utf-8')
-    response.end(JSON.stringify({error:'اجرای سایت آماده نیست؛ تنظیمات اتصال پایگاه داده و کلید ورود را در ورسل بررسی کنید.'}))
+    response.end(JSON.stringify(diagnostic))
   }
   }
 }
