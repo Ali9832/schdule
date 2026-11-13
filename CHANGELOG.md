@@ -2,6 +2,17 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.11.0] - 2026-11-14
+
+Upgrade: **2.10.0 -> 2.11.0**. Clear person dossiers, unified financial commitments and simpler navigation. Existing stored records are preserved; local/test data is excluded.
+
+- Let the Item Bank search/filter toolbar scroll normally with the page on desktop and mobile instead of sticking to the viewport.
+- Use blue person headers/frames, teal information headings, purple project headings and amber commitment headings; keep each heading's fill and border identical with readable light/dark text.
+- Show every person in a separate stacked dossier with a strong neutral outer frame, a clear name header and explicit information/contact, projects/tasks and commitments sections. Keep all related records inside their person card, with existing actions, search, filtering and responsive light/dark display.
+- Combine existing commitments and debts in one full-width Financial Commitments list, preserving typed editing/settlement, installment details and commitment task/calendar links. Use one add form with payment/receipt or debt/installment type and a combined upcoming-due count; do not migrate or delete records.
+- Remove the Accounts/Liquidity card from Finance and let the monthly budget occupy its row; preserve stored accounts and their transaction associations.
+- Remove the Planning and Direction sidebar group, including Weekly Cycle/Plan and Goals entries, while preserving stored records and existing integrations.
+
 ## [2.10.0] - 2026-11-12
 
 Upgrade: **2.9.0 -> 2.10.0**. Project pages, shared contacts, coastal theme and stable calendars. Existing production records are preserved; local/test data is excluded.

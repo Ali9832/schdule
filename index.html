@@ -925,10 +925,6 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <button class="nav-item" data-page="finance"><span class="nav-icon">◈</span>مالی</button>
 
 </div></details>
-<details class="nav-group" data-nav-group="planning"><summary title="برنامه‌ریزی و جهت"><span class="nav-icon" aria-hidden="true">🎯</span><span class="nav-group-title">برنامه‌ریزی و جهت</span></summary><div class="nav-group-items">
-<button class="nav-item" data-page="weekly"><span class="nav-icon">▦</span>چرخه / برنامه هفتگی</button>
-<button class="nav-item" data-page="goals"><span class="nav-icon">🎯</span>هدف‌ها</button>
-</div></details>
 <details class="nav-group" data-nav-group="review"><summary title="مرور و سیستم"><span class="nav-icon" aria-hidden="true">⚙</span><span class="nav-group-title">مرور و سیستم</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="reports"><span class="nav-icon">▤</span>مرور و گزارش‌ها</button>
 <button class="nav-item" data-page="statistics"><span class="nav-icon">▥</span>آمار و روند</button>
@@ -1831,16 +1827,14 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><div class="eyebrow"><span class="dot"></span>مدیریت منابع شخصی</div><h1>مالی؛ <span>تصمیم و تعهد</span></h1><p>حساب‌ها، جریان نقدی، بودجه، بدهی و موعدهای مالی — بدون ساخت «امتیاز کلی مالی» مصنوعی.</p></div><div class="hero-actions"><button onclick="v1112Toggle('tx',true)">＋ تراکنش</button><button onclick="v1112Toggle('commit',true)">＋ تعهد مالی</button><button class="primary" onclick="v1112Toggle('budget',true)">＋ بودجه</button></div></div>
 <div class="v1112-shell">
 <div class="v1112-kpis" id="v1112Summary"></div>
-<div class="v1112-grid two">
-<section class="v1112-card"><div class="v1112-head"><div><small>نقدینگی</small><h3>حساب‌ها</h3></div><span class="v1112-pill" id="v1112AccountCount"></span></div><div class="v1112-list" id="v1112Accounts"></div></section>
+<div class="v1112-grid">
 <section class="v1112-card"><div class="v1112-head"><div><small>کنترل هزینه</small><h3>بودجه ماه</h3></div><button onclick="v1112Toggle('budget',true)">＋</button></div><div class="v1112-list" id="v1112Budgets"></div></section>
 </div>
 <div class="v1112-composer hidden" id="v1112BudgetComposer"><b>بودجه جدید</b><input id="v1112BudgetName" placeholder="عنوان / دسته؛ مثلا خوراک"/><input id="v1112BudgetLimit" placeholder="سقف بودجه (تومان)" type="text" inputmode="decimal" data-money-toman dir="ltr"/><input id="v1112BudgetNote" placeholder="یادداشت اختیاری"/><div><button onclick="v1112Toggle('budget',false)">انصراف</button><button class="primary" onclick="v1112SaveBudget()">ذخیره بودجه</button></div></div>
 <div class="v1112-composer hidden" id="v1112CommitComposer"><b>تعهد مالی جدید</b><input id="v1112CommitTitle" placeholder="عنوان تعهد"/><input id="v1112CommitAmount" placeholder="مبلغ (تومان)" type="text" inputmode="decimal" data-money-toman dir="ltr"/><select id="v1112CommitDirection"><option value="pay">پرداخت من</option><option value="receive">دریافت من</option></select><input id="v1112CommitDue" type="date"/><input id="v1112CommitCategory" placeholder="دسته"/><div><button onclick="v1112Toggle('commit',false)">انصراف</button><button class="primary" onclick="v1112SaveCommitment()">ثبت تعهد</button></div></div>
 <div class="v1112-composer hidden" id="v1112TxComposer"><b>تراکنش جدید</b><input id="v1112TxTitle" placeholder="شرح"/><input id="v1112TxAmount" placeholder="مبلغ (تومان)" type="text" inputmode="decimal" data-money-toman dir="ltr"/><select id="v1112TxType"><option value="expense">هزینه</option><option value="income">درآمد</option></select><input id="v1112TxCategory" placeholder="دسته"/><select id="v1112TxAccount"></select><input id="v1112TxDate" type="date"/><div><button onclick="v1112Toggle('tx',false)">انصراف</button><button class="primary" onclick="v1112SaveTx()">ثبت تراکنش</button></div></div>
-<div class="v1112-grid two">
+<div class="v1112-grid">
 <section class="v1112-card"><div class="v1112-head"><div><small>موعد و اقدام</small><h3>تعهدهای مالی</h3></div><span class="v1112-pill warn" id="v1112DueBadge"></span></div><div class="v1112-list" id="v1112Commitments"></div></section>
-<section class="v1112-card"><div class="v1112-head"><div><small>ساختار بدهی</small><h3>بدهی‌ها</h3></div></div><div class="v1112-list" id="v1112Debts"></div></section>
 </div>
 <section class="v1112-card"><div class="v1112-head"><div><small>جریان واقعی</small><h3>آخرین تراکنش‌ها</h3></div><button onclick="v1112Toggle('tx',true)">＋ ثبت</button></div><div class="v1112-table" id="v1112Transactions"></div></section>
 </div></section>
@@ -1866,7 +1860,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.10.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.11.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -3707,6 +3701,7 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/coastal-theme.css"/>
 <link rel="stylesheet" href="/assets/sidebar-layout.css"/>
 <link rel="stylesheet" href="/assets/arrow-controls.css"/>
+<link rel="stylesheet" href="/assets/relationships-directory.css"/>
 <script defer src="/assets/arrow-controls.js"></script>
 <script defer src="/assets/ui-ready.js"></script>
 </body>
