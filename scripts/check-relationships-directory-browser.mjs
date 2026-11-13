@@ -22,6 +22,14 @@ assert.equal(await ev('[...document.querySelectorAll(".rn-person")].every(c=>{co
 await ev('document.getElementById("v1110Search").value="NO_MATCH_7da5a88b";renderV1110People()');assert.equal(await ev('document.querySelectorAll(".rn-person").length'),0);assert.equal(await ev('!!document.querySelector("#v1110People>.rn-empty")'),true);
 await ev('RelationshipsNetwork.openPerson('+JSON.stringify(ids[0])+')');assert.equal(await ev('document.querySelectorAll(".rn-person").length'),ids.length);assert.equal(await ev('document.getElementById("v1110Search").value'),'');
 await ev('RelationshipsNetwork.load()');assert.equal(await ev('document.querySelectorAll(".rn-person").length'),ids.length);
+for(const key of ['info','projects','promises']){
+await ev(`document.querySelector('.rn-person [data-open-person-section="${key}"]').click()`);
+assert.equal(await ev(`document.querySelector('.rn-section-dialog[open]').dataset.section`),key);
+assert.equal(await ev(`document.querySelector('.rn-section-dialog[open]').closest('.rn-person').dataset.personId`),ids[0]);
+assert.equal(await ev(`document.querySelector('.rn-section-dialog[open] [data-person-section]').dataset.personSection`),key);
+await ev('RelationshipsNetwork.load()');assert.equal(await ev('!!document.querySelector(".rn-section-dialog[open]")'),true,'Section survives data refresh');
+await ev('document.querySelector(".rn-section-dialog[open] .window-close-button").click()');await until('!document.querySelector(".rn-section-dialog[open]")');
+}
 await ev('document.querySelector("#relationships .v1110-hero button").click()');assert.equal(await ev('document.getElementById("peopleCreatePanel").open'),true);await ev('document.querySelector("#peopleCreatePanel .v1110-form-actions button:last-child").click()');assert.equal(await ev('document.getElementById("peopleCreatePanel").open'),false);
 fs.mkdirSync('.local',{recursive:true});
 for(const dark of [false,true]){
@@ -33,9 +41,11 @@ await send('Emulation.setDeviceMetricsOverride',{width,height:1080,deviceScaleFa
 assert.equal(await ev('document.documentElement.scrollWidth<=innerWidth+1'),true,'Page overflow '+width+' '+dark);
 assert.equal(await ev('(()=>{const r=document.querySelector(".rn-person").getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1})()'),true,'Selected person fits '+width);
 assert.equal(await ev('document.querySelectorAll(".rn-person").length'),ids.length);
-assert.equal(await ev('(()=>{const cards=[...document.querySelectorAll(".rn-person")];return cards.every((c,i)=>!i||c.getBoundingClientRect().top>=cards[i-1].getBoundingClientRect().bottom+20)})()'),true,'Independent spaced cards '+width);
+assert.equal(await ev('(()=>{const cards=[...document.querySelectorAll(".rn-person")];return cards.every((c,i)=>!i||c.getBoundingClientRect().top>=cards[i-1].getBoundingClientRect().bottom+12)})()'),true,'Independent spaced rows '+width);
+assert.equal(await ev('[...document.querySelectorAll(".rn-person")].every(c=>{const h=c.querySelector(".rn-person-heading").getBoundingClientRect();return [...c.querySelectorAll(":scope>.rn-overview-cell")].length===3&&[...c.querySelectorAll(":scope>.rn-overview-cell")].every(n=>Math.abs(n.getBoundingClientRect().top-h.top)<1)})'),true,'All sections remain beside their person '+width);
+if(width<780){await ev('document.querySelector(".rn-person [data-open-person-section=promises]").click()');assert.equal(await ev('document.querySelector(".rn-section-dialog[open]").getBoundingClientRect().width<=innerWidth'),true);await ev('document.querySelector(".rn-section-dialog[open] .window-close-button").click()');}
 if(width===1440||width===390){const shot=await send('Page.captureScreenshot',{format:'png'});fs.writeFileSync(`.local/relationships-directory-${width}-${dark?'dark':'light'}.png`,Buffer.from(shot.data,'base64'));}
 }
 }
-assert.deepEqual(errors,[]);console.log('PASS stacked person dossiers, three visible sections, correct record ownership, search/empty state, direct links, add/cancel and five-width light/dark layouts.');
+assert.deepEqual(errors,[]);console.log('PASS horizontal people rows, three scoped section dialogs, dialog refresh/close, correct ownership, search and five-width light/dark layouts.');
 }finally{await ev(`document.body.classList.toggle('theme-dark',${wasDark});setMobileMenu(false)`).catch(()=>{});await send('Emulation.clearDeviceMetricsOverride');ws.close();}

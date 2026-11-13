@@ -6,6 +6,7 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
 Upgrade: **2.10.0 -> 2.11.0**. Clear person dossiers, unified financial commitments and simpler navigation. Existing stored records are preserved; local/test data is excluded.
 
+- Update without a version change: place each person's identity, contact information, projects/tasks and commitments side by side in a single row. Show desktop previews and open each full section through a scoped dialog; use compact section buttons on narrow screens and preserve all actions and record ownership.
 - Let the Item Bank search/filter toolbar scroll normally with the page on desktop and mobile instead of sticking to the viewport.
 - Use blue person headers/frames, teal information headings, purple project headings and amber commitment headings; keep each heading's fill and border identical with readable light/dark text.
 - Show every person in a separate stacked dossier with a strong neutral outer frame, a clear name header and explicit information/contact, projects/tasks and commitments sections. Keep all related records inside their person card, with existing actions, search, filtering and responsive light/dark display.
