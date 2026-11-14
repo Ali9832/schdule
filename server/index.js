@@ -2786,12 +2786,11 @@ function v1112Summary(finance = {}, selectedDate) {
   const income = monthTx.filter(x => x.type === 'income').reduce((a,b)=>a+v1112Num(b.amount),0)
   const expense = monthTx.filter(x => x.type === 'expense').reduce((a,b)=>a+v1112Num(b.amount),0)
   const liquid = f.accounts.filter(x => x.status !== 'closed').reduce((a,b)=>a+v1112Num(b.balance),0)
-  const debtOutstanding = f.debts.filter(x => !['done','closed','cancelled'].includes(x.status) && !x.paid_at && !x.settlement_id).reduce((a,b)=>a+v1112Num(b.amount),0)
   const budgetRows = f.budgets.filter(b => !b.period || b.period === month).map(b => {
     const spent = monthTx.filter(x => x.type === 'expense' && (!b.category || x.category === b.category)).reduce((a,t)=>a+v1112Num(t.amount),0)
     const limit = Math.max(0,v1112Num(b.limit_amount)); return {...b, spent_amount:spent, remaining_amount:limit-spent, usage_percent:limit?Math.round(spent/limit*100):0}
   })
-  return {month,income,expense,cash_flow:income-expense,liquid_balance:liquid,debt_outstanding:debtOutstanding,...obligationSummary(f,day),budgets:budgetRows}
+  return {month,income,expense,cash_flow:income-expense,liquid_balance:liquid,...obligationSummary(f,day),budgets:budgetRows}
 }
 async function v1112Payload(userId, selectedDate, allDates = false) {
   const day=planningDate(selectedDate), life=await getLifeData(userId), finance=v1112NormalizeFinance(life.finance), summary=v1112Summary(finance, day)

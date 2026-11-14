@@ -6,6 +6,8 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
 Upgrade: **2.10.0 -> 2.11.0**. Clear person dossiers, unified financial commitments and simpler navigation. Existing stored records are preserved; local/test data is excluded.
 
+- Include open outgoing commitments as well as debts in the outstanding payable amount; exclude receivables and settled/cancelled rows. Match the displayed sum to the currently visible obligation list and explain principal versus installment amounts.
+
 - Put open financial obligations first by due date (undated last), then cancelled entries, then green settled rows ordered by settlement time so newly paid items move to the bottom.
 - Align financial obligation counters with the combined commitment/debt list and selected-date basis, exclude settled/cancelled obligations, label monthly/global/day scopes explicitly and refresh Finance after financial mutations. Preserve all stored financial records.
 

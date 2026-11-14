@@ -138,10 +138,11 @@
         const month = (V1112_DATA.summary?.month || anchor.slice(0,7)).replace('-', '/').replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
         for(const i of [1,2])if(metrics[i])metrics[i].querySelector('em').textContent=`ماه میلادی ${month} • تراکنش تأییدشده`;
         if(metrics[3])metrics[3].querySelector('em').textContent=`درآمد منهای هزینهٔ ماه میلادی ${month}`;
-        if(metrics[5])metrics[5].querySelector('em').textContent='کل ماندهٔ بدهی‌های باز؛ مستقل از فیلتر روز';
+        const payable = active.filter(({row,kind})=>kind==='debts'||row.direction!=='receive').reduce((sum,{row})=>sum+(Number.isFinite(Number(row.amount))?Number(row.amount):0),0);
+        if(metrics[5]){metrics[5].querySelector('span').textContent='جمع بدهی‌های بازِ فهرست';metrics[5].querySelector('strong').textContent=money(payable);metrics[5].querySelector('em').textContent='بدهی / اقساط + تعهد پرداخت؛ بدون مطالبات';}
         let explanation = document.getElementById('financeScopeNote');
         if(!explanation){explanation=document.createElement('p');explanation.id='financeScopeNote';explanation.className='finance-scope-note';document.getElementById('v1112Summary').after(explanation);}
-        explanation.textContent=`تعهدهای باز از همین فهرست شمرده می‌شوند. درآمد، هزینه و جریان نقدی برای ماه میلادی ${month} هستند؛ نقدینگی و ماندهٔ بدهی، وضعیت فعلی کل حساب‌اند. ${scoped?'فیلتر روز برای فهرست‌ها فعال است.':'فهرست‌ها همهٔ تاریخ‌ها را نشان می‌دهند.'}`;
+        explanation.textContent=`تعداد تعهدهای باز و جمع بدهی‌ها از همین فهرست محاسبه می‌شوند؛ جمع بدهی شامل مبلغ بدهی/اقساط و تعهدهای «پرداخت من» است، نه دریافت‌ها و نه فقط مبلغ هر قسط. درآمد، هزینه و جریان نقدی برای ماه میلادی ${month} هستند؛ نقدینگی، ماندهٔ فعلی کل حساب‌هاست. ${scoped?'فیلتر روز برای فهرست‌ها فعال است.':'فهرست‌ها همهٔ تاریخ‌ها را نشان می‌دهند.'}`;
       } else root.querySelectorAll('.v1112-row').forEach((element, index) => element.insertAdjacentHTML('beforeend', button('edit', kind, rows[index].id, 'ویرایش')));
     }
   };
