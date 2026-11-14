@@ -1,9 +1,7 @@
 (() => {
   'use strict';
   const entries = {
-    areas: { page: 'projects', id: 'projectAreasTools', path: '/api/v11.7/control', apply(data) { V117_DATA=data; renderV117All(); } },
     resources: { page: 'academic', id: 'academicLearningTools', path: '/api/v11.8/learning', apply(data) { V118_DATA=data; v118FillRefs(); renderV118(); } },
-    health: { page: 'habits', id: 'habitHealthTools', path: '/api/v11.9/health-system', apply(data) { V119_DATA=data; renderV119(); } }
   };
   const active = () => document.querySelector('.page:not(.hidden)')?.id;
   async function load(entry, force=false) {
@@ -36,14 +34,14 @@
     panel.addEventListener('toggle',()=>{if(panel.open&&active()===entry.page)load(entry);});
   }
   function open(name) {
-    const entry=entries[name==='archive'?'resources':name==='appointments'?'health':name];if(!entry)return;
+    const entry=entries[name==='archive'?'resources':name];if(!entry)return;
     originalGoPage(entry.page);
     const panel=document.getElementById(entry.id);panel.open=true;
     load(entry);
     requestAnimationFrame(()=>panel.scrollIntoView({block:'start',behavior:'smooth'}));
   }
   const originalGoPage=window.goPage;
-  window.goPage=function(page){if(entries[page]||page==='archive'||page==='appointments')return open(page);return originalGoPage(page);};
+  window.goPage=function(page){if(entries[page]||page==='archive')return open(page);return originalGoPage(page);};
   const originalOpen=window.handleFunctionalPageOpen;
   window.handleFunctionalPageOpen=async function(page){await originalOpen?.(page);await refresh(page);};
   let timer;

@@ -2,6 +2,14 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## [2.11.1] - 2026-11-15
+
+Upgrade: **2.11.0 -> 2.11.1**. Site-wide Lateef typography and removal of retired health/area tools and their navigation. Stored records and calendar events are preserved.
+
+- Apply locally hosted Lateef regular/bold consistently across all pages, dialogs, forms, navigation and chart labels, with licensed fallback fonts retained.
+- Remove the area/responsibility management panel and its Workspace shortcut and Dashboard overview. Remove Health dashboard modules/search navigation and retired lazy-loader aliases together with the health/checkup panel; preserve database records and existing calendar entries.
+- Remove the entire Health Monitoring and Checkup panel from Routines, including its nested checkup forms and lazy loader entry; retain existing records and calendar events.
+
 ## [2.11.0] - 2026-11-14
 
 Upgrade: **2.10.0 -> 2.11.0**. Clear person dossiers, unified financial commitments and simpler navigation. Existing stored records are preserved; local/test data is excluded.

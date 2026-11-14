@@ -1017,7 +1017,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v117-dash-card"><span>هدف فعال</span><strong id="v117ActiveKpi">—</strong></div>
 <div class="v117-dash-card"><span>هدف در ریسک</span><strong id="v117RiskKpi">—</strong></div>
 <div class="v117-dash-card"><span>پروژه → هدف</span><strong id="v117CoverageKpi">—</strong></div>
-<div class="v117-dash-card"><span>حوزه نیازمند توجه</span><strong id="v117AreaKpi">—</strong></div>
+
 <button class="v117-open" onclick="goPage('goals')">کنترل اهداف ←</button>
 </div>
 <div class="planning-date-bar planning-date-placeholder" aria-hidden="true"></div>
@@ -1070,10 +1070,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="v101-project-card"><div class="v101-project-top"><span>پروژه فعال</span><b>—</b></div><h3>در حال بارگذاری پروژه‌ها…</h3><p>قدم بعدی: —</p><div class="progress"><i style="width:0%"></i></div></div>
 </div>
 </div>
-<details class="v101-areas-shell" id="v101AreasDetails">
-<summary><div><span class="v101-eyebrow">LIFE AREAS</span><b>حوزه‌های زندگی و مسئولیت</b><small>پیش‌فرض جمع‌شده؛ جزئیات فقط هنگام نیاز</small></div><span class="v101-summary-arrow">⌄</span></summary>
-<div class="v101-area-grid" id="v101Areas"></div>
-</details>
+
 <div class="v101-routine-shell">
 <div class="v101-section-head"><div><span class="v101-eyebrow">ROUTINES</span><h2>روتین‌ها و عادت‌ها</h2></div><button class="secondary" onclick="goPage('habits')">باز کردن ماتریس</button></div>
 <div class="v101-routine-grid"><div><span>امروز</span><strong id="v101HabitToday">—</strong><small>تکمیل روتین‌های امروز</small></div><div><span>عادت فعال</span><strong id="v101HabitCount">—</strong><small>در موتور روتین</small></div><div><span>نیازمند توجه</span><strong id="v101HabitAttention">—</strong><small>کم‌تکرار یا انجام‌نشده امروز</small></div><div class="v101-routine-action"><button onclick="goPage('habits')">◉ ثبت و مشاهده روتین‌ها</button></div></div>
@@ -1190,27 +1187,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </div>
 <div class="module-footer"><small>۵ مورد قابل مشاهده</small><button onclick="openGenericAdd('finance','ثبت مورد مالی')">＋ افزودن</button></div>
 </div>
-<div class="module-card mod-health" data-nova-group="life">
-<div class="module-card-top">
-<div class="module-head">
-<div class="module-icon">♥</div>
-<div class="module-head-actions">
-<button class="module-add" onclick="openGenericAdd('health','افزودن مورد سلامت')">＋</button>
-<span class="module-status status-mid">قابل بهبود</span>
-</div>
-</div>
-<div class="module-title-row"><h3>سلامت و انرژی</h3><div class="module-percent">۶۷٪</div></div>
-<div class="module-meta">خواب، ورزش، انرژی و مراقبت جسمی</div>
-<div class="module-progress"><i style="width:67%;background:#dc6979"></i></div>
-</div>
-<div class="module-scroll">
-<div class="module-list-item"><input checked="" type="checkbox"/><span class="item-name">پیاده‌روی روزانه</span><span class="mini-state mini-green">انجام</span></div>
-<div class="module-list-item"><input type="checkbox"/><span class="item-name">۷.۵ ساعت خواب</span><span class="mini-state mini-red">کمتر از هدف</span></div>
-<div class="module-list-item"><input checked="" type="checkbox"/><span class="item-name">مصرف آب کافی</span><span class="mini-state mini-green">خوب</span></div>
-<div class="module-list-item"><input type="checkbox"/><span class="item-name">تمرین کششی</span><span class="mini-state mini-yellow">باز</span></div>
-</div>
-<div class="module-footer"><small>انرژی امروز: ۷/۱۰</small><button onclick="openGenericAdd('health','افزودن مورد سلامت')">＋ افزودن</button></div>
-</div>
+
 <div class="module-card mod-habit" data-nova-group="life">
 <div class="module-card-top">
 <div class="module-head">
@@ -1563,60 +1540,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <table class="habit-matrix" id="habitMatrixTable"></table>
 </div>
 </div>
-<details class="integrated-tools " id="habitHealthTools"><summary>پایش سلامت و چکاپ</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
-
-<div class="v119-rule">ⓘ این بخش ابزار خودپایش و برنامه‌ریزی شخصی است؛ وضعیت‌ها فقط نسبت به هدف تعیین‌شدههای خودت نمایش داده می‌شوند و جایگزین ارزیابی پزشکی نیستند.</div>
-<div class="v119-summary" id="v119Summary"></div>
-<div class="v119-layout">
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>ثبت حال روزانه</h2><span>ثبت کوتاه؛ بدون نیاز به پر کردن همه فیلدها</span></div><input id="v119Date" style="border:1px solid #dce4e1;border-radius:8px;padding:6px;background:inherit;color:inherit;font:inherit;font-size:7px" type="date"/></div>
-<div class="v119-checkin">
-<label>خواب / ساعت<input id="v119Sleep" max="24" min="0" placeholder="7.5" step=".1" type="number"/></label>
-<label>انرژی / 10<input id="v119Energy" max="10" min="1" placeholder="7" type="number"/></label>
-<label>حرکت / دقیقه<input id="v119Move" min="0" placeholder="30" type="number"/></label>
-<label>حال عمومی / 10<input id="v119Mood" max="10" min="1" placeholder="7" type="number"/></label>
-<label>فشار ذهنی / 10<input id="v119Stress" max="10" min="1" placeholder="4" type="number"/></label>
-<label class="wide">یادداشت کوتاه<textarea id="v119Note" placeholder="اختیاری: چه چیزی روی انرژی امروز اثر گذاشت؟"></textarea></label>
-</div>
-<div class="v119-checkin-actions"><button class="v119-primary" onclick="v119SaveCheckin()">ذخیرهٔ ثبت روزانه</button><button class="v119-ghost" onclick="v119ClearCheckin()">پاک کردن فرم</button></div>
 </section>
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>تطبیق کار با انرژی</h2><span>انتخاب کار بر اساس سطح انرژی ثبت‌شده + زمان مناسب</span></div><span class="v119-energy-chip" id="v119EnergyState">بدون داده</span></div>
-<div class="v119-taskfit" id="v119TaskFit"></div>
-</section>
-</div>
-<div class="v119-metrics" id="v119MetricGrid"></div>
-<div class="v119-lower">
-<section class="v119-panel">
-<div class="v119-panel-head"><div><h2>روتین‌های سلامت</h2><span>روتین‌هایی برای مراقبت از سلامت و انرژی</span></div><button class="v119-btn v119-ghost" onclick="goPage('habits')">ماتریس روتین‌ها</button></div>
-<div class="v119-list" id="v119RoutineList"></div>
-<div class="v119-custom">
-<div class="v119-panel-head"><div><h2>شاخص سفارشی</h2><span>مثلاً زمان نور روز، ضربان استراحت یا هر معیار شخصی قابل‌اندازه‌گیری</span></div></div>
-<div class="v119-custom-grid">
-<label>نام شاخص<input id="v119CustomName" placeholder="نام شاخص"/></label>
-<label>واحد<input id="v119CustomUnit" placeholder="مثلاً دقیقه"/></label>
-<label>کمینه<input id="v119CustomMin" placeholder="کمینه" step="any" type="number"/></label>
-<label>بیشینه<input id="v119CustomMax" placeholder="بیشینه" step="any" type="number"/></label>
-<label>وضعیت مطلوب<select id="v119CustomDir"><option value="range">داخل بازه</option><option value="high">بیشتر بهتر</option><option value="low">کمتر بهتر</option></select></label>
-<button class="v119-btn v119-primary" onclick="v119AddMetric()">＋ افزودن</button>
-</div>
-</div>
-</section>
-
-</div>
-<details id="habitCheckupTools" class="habit-checkup-tools"><summary>چکاپ و قرارهای سلامت</summary><section class="v119-panel">
-<div class="v119-panel-head"><div><h2>قرارها و پیگیری‌های سلامت</h2><span>قرارهای ثبت‌شده در تقویم شما</span></div><button class="v119-btn v119-ghost" onclick="goPage('schedule')">بازکردن تقویم</button></div>
-<div class="v119-list" id="v119Appointments"></div>
-<div class="v119-form">
-<label class="wide">عنوان<input id="v119ApptTitle" placeholder="مثلاً چکاپ / فیزیوتراپی / آزمایش"/></label>
-<label>شروع<input id="v119ApptStart" type="datetime-local"/></label>
-<label>پایان<input id="v119ApptEnd" type="datetime-local"/></label>
-<label>پزشک / ارائه‌دهنده<input id="v119ApptProvider" placeholder="اختیاری"/></label>
-<label>محل<input id="v119ApptLocation" placeholder="اختیاری"/></label>
-<label class="wide">یادداشت<textarea id="v119ApptNote" placeholder="آمادگی، مدارک، سؤال‌ها..."></textarea></label>
-<div class="v119-form-actions"><button class="v119-btn v119-primary" onclick="v119AddAppointment()">＋ افزودن به تقویم</button></div>
-</div>
-</section></details></div></details></section>
 <!-- SPIRITUAL — V11.11 canonical روتین view -->
 <section class="page hidden v1111-page" id="spiritual">
 <div class="v1111-hero spiritual"><div><h1>روتین‌های معنوی</h1><small id="spiritualRecordDate"></small><p>روتین‌های معنوی، هدف هفتگی و یادداشت‌های خود را مدیریت کنید.</p></div><div class="v1111-hero-actions"><button class="v1111-primary" onclick="v1111ToggleSpiritualComposer(true)">＋ روتین معنوی</button><button class="v1111-secondary" onclick="goPage('habits')">ماتریس همه روتین‌ها</button></div></div>
@@ -1762,7 +1686,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 </section>
 <!-- V11 CANONICAL TASK WORKSPACE -->
 <section class="page hidden" id="workspace">
-<div class="hero"><div><h1>کارها و <span>نماهای لینک‌شده</span></h1><p>کارهای خود را به‌صورت فهرست، برد یا تقویم مدیریت کنید.</p></div><div class="hero-actions"><button class="secondary" onclick="IntegratedTools.open('areas')">مدیریت حوزه‌ها</button><button class="primary" onclick="openGenericAdd('daily','افزودن کار')">＋ کار</button><button class="secondary" onclick="goPage('daily')">جدول کارها</button></div></div>
+<div class="hero"><div><h1>کارها و <span>نماهای لینک‌شده</span></h1><p>کارهای خود را به‌صورت فهرست، برد یا تقویم مدیریت کنید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('daily','افزودن کار')">＋ کار</button><button class="secondary" onclick="goPage('daily')">جدول کارها</button></div></div>
 
 
 <div class="v11-toolbar"><div class="v11-view-switch"><button class="active" id="v11ListBtn" onclick="setV11TaskView('list')">☷ فهرست</button><button id="v11BoardBtn" onclick="setV11TaskView('board')">▦ نمای ستونی</button><button id="v11CalendarBtn" onclick="setV11TaskView('calendar')">▣ تقویم</button></div><div class="v11-filter-row"><input id="v11TaskSearch" oninput="debouncedV111Reload()" placeholder="جستجو در کار…"/><select id="v11TaskArea" onchange="reloadV111Tasks()"><option value="">همه حوزه‌ها</option></select><select id="v11TaskStatus" onchange="reloadV111Tasks()"><option value="">همه وضعیت‌ها</option><option value="todo">باز</option><option value="in_progress">در جریان</option><option value="done">انجام‌شده</option></select><select id="v11TaskContext" onchange="reloadV111Tasks()"><option value="">هر موقعیت انجام کار</option><option>کامپیوتر</option><option>تلفن</option><option>جلسه</option><option>بیرون</option><option>خانه</option><option>دانشگاه</option><option>فکر عمیق</option></select><select id="v11TaskEnergy" onchange="reloadV111Tasks()"><option value="">هر سطح انرژی</option><option value="high">بالا</option><option value="medium">متوسط</option><option value="low">پایین</option></select><select id="v11TaskMinutes" onchange="reloadV111Tasks()"><option value="">هر مدت</option><option value="15">≤ ۱۵ دقیقه</option><option value="30">≤ ۳۰ دقیقه</option><option value="60">≤ ۶۰ دقیقه</option><option value="120">≤ ۱۲۰ دقیقه</option></select><details class="saved-filter-menu" id="v114SavedViews"><summary>فیلترهای ذخیره‌شده</summary><div class="saved-filter-popover"><div id="v114SavedViewButtons" hidden></div><button type="button" class="saved-filter-save" onclick="saveCurrentV114View()">＋ ذخیرهٔ فیلترهای فعلی</button></div></details></div></div>
@@ -1843,12 +1767,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>چرخه <span>هفتگی</span></h1><p>موضوع هفته، ظرفیت انجام کارها و اولویت‌های این دوره را مشخص کنید.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('reports')">مرور سیستم</button><button class="primary" onclick="saveV113Cycle()">ذخیره چرخه</button></div></div>
 <div class="v113-cycle-shell" id="v113CycleRoot"></div>
 </section>
-<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>پروژه و مسئولیت</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>افراد، مسئولیت‌ها، مهلت‌ها و پیشرفت کارهای هر پروژه را یک‌جا ببینید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه')">＋ پروژه</button></div></div><div class="functional-grid" id="projectsPageBody"></div><details class="integrated-tools " id="projectAreasTools"><summary>دسته‌بندی حوزه‌ها و مسئولیت‌ها</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
-<div class="v117-hero-actions"><input id="v117NewArea" placeholder="نام حوزه جدید"/><button onclick="v117CreateArea()">＋ حوزه</button></div>
-
-<div class="v117-summary" id="v117AreaSummary"></div>
-<div class="v117-area-grid" id="v117AreasRoot"><div class="v117-empty">در حال بارگذاری حوزه‌ها…</div></div>
-</div></details></section>
+<section class="page hidden" id="projects"><div class="hero"><div><div class="eyebrow"><span class="dot"></span>پروژه و مسئولیت</div><h1>پروژه‌ها و <span>اولویت‌ها</span></h1><p>افراد، مسئولیت‌ها، مهلت‌ها و پیشرفت کارهای هر پروژه را یک‌جا ببینید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('project','افزودن پروژه')">＋ پروژه</button></div></div><div class="functional-grid" id="projectsPageBody"></div></section>
 <section class="page hidden" id="goals">
 <div class="v117-hero"><div><h1>اهداف / <span>هدف‌ها</span></h1><p>هدف باید نتیجه قابل مشاهده داشته باشد، معیار سنجش آن روشن باشد و به پروژه‌هایی که آن را جلو می‌برند متصل شود. این صفحه «درصد کلی زندگی» تولید نمی‌کند.</p></div><div class="v117-hero-actions"><button onclick="v117OpenOutcome()">＋ هدف جدید</button></div></div>
 <div class="v117-summary" id="v117OutcomeSummary"></div>
@@ -1860,7 +1779,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.11.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.11.1</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -2116,7 +2035,6 @@ const MODULE_MAP = {
   'mod-habit':    {type:'habit',     title:'عادت‌ها',              page:'habits'},
   'mod-spirit':   {type:'spiritual', title:'عادات معنوی',          page:'spiritual'},
   'mod-relig':    {type:'religious', title:'مناسبات مذهبی',        page:'religious'},
-  'mod-health':   {type:'health',    title:'سلامت و انرژی',        page:'health'},
   'mod-learn':    {type:'learning',  title:'یادگیری و مطالعه',     page:'resources'},
   'mod-rel':      {type:'relations', title:'روابط و خانواده',      page:'relationships'},
   'mod-project':  {type:'project',   title:'پروژه‌ها و اولویت‌ها', page:'projects'},
@@ -2762,7 +2680,6 @@ const COMMANDS=[
   {group:'ناوبری',icon:'⌛',title:'در انتظار / واگذارشده',sub:'وابستگی‌ها و کارهای منتظر پاسخ',run:()=>goPage('waiting')},
   {group:'ناوبری',icon:'☑',title:'مدیریت آیتم‌ها',sub:"فیلتر و مدیریت کار‌ها",run:()=>goPage('items')},
   {group:'ناوبری',icon:'◉',title:'پایش روتین روزانه',sub:'Habit Matrix و درصد روزانه',run:()=>goPage('habits')},
-  {group:'ناوبری',icon:'♥',title:'سلامت و انرژی',sub:"ثبت حال روزانه، شاخص‌ها، روتین و قرارهای سلامت",run:()=>goPage('health')},
   {group:'ناوبری',icon:'👥',title:'روابط و افراد',sub:"People، تعهدها، در انتظار پاسخ و پیگیری ارتباط",run:()=>goPage('relationships')},
   {group:'ناوبری',icon:'◇',title:'دانش و یادگیری',sub:"منبع مسیر یادگیری و یادگیری برای بعد",run:()=>goPage('resources')},
   {group:'ناوبری',icon:'✦',title:'عادات معنوی',sub:'پیگیری عادات معنوی',run:()=>goPage('spiritual')},
