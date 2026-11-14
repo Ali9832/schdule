@@ -6,6 +6,9 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
 Upgrade: **2.10.0 -> 2.11.0**. Clear person dossiers, unified financial commitments and simpler navigation. Existing stored records are preserved; local/test data is excluded.
 
+- Put open financial obligations first by due date (undated last), then cancelled entries, then green settled rows ordered by settlement time so newly paid items move to the bottom.
+- Align financial obligation counters with the combined commitment/debt list and selected-date basis, exclude settled/cancelled obligations, label monthly/global/day scopes explicitly and refresh Finance after financial mutations. Preserve all stored financial records.
+
 - Update without a version change: place each person's identity, contact information, projects/tasks and commitments side by side in a single row. Show desktop previews and open each full section through a scoped dialog; use compact section buttons on narrow screens and preserve all actions and record ownership.
 - Let the Item Bank search/filter toolbar scroll normally with the page on desktop and mobile instead of sticking to the viewport.
 - Use blue person headers/frames, teal information headings, purple project headings and amber commitment headings; keep each heading's fill and border identical with readable light/dark text.

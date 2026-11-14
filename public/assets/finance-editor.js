@@ -4,7 +4,7 @@
   const containers = { accounts: 'v1112Accounts', budgets: 'v1112Budgets', commitments: 'v1112Commitments', debts: 'v1112Debts', transactions: 'v1112Transactions' };
   const esc = value => v1112Esc(String(value ?? ''));
   const money = value => v1112Money(Number(value || 0));
-  const settled = row => ['done', 'closed'].includes(row.status) || !!row.paid_at;
+  const settled = row => ['done', 'closed'].includes(row.status) || !!row.paid_at || !!row.settlement_id;
   const button = (action, kind, id, label) => `<button type="button" data-finance-action="${action}" data-kind="${kind}" data-id="${esc(id || '')}">${label}</button>`;
   let dialog, busy = false;
   function field(key, label, value = '', type = 'text', extra = '') {
@@ -123,11 +123,25 @@
       const rows = kind === 'budgets' ? V1112_DATA?.summary?.budgets || [] : f[kind] || [];
       if (kind === 'commitments') {
         const combined = [...rows.map(row => ({ row, kind: 'commitments' })), ...(f.debts || []).map(row => ({ row, kind: 'debts' }))];
-        combined.sort((a, b) => String(a.row.due_date || a.row.next_due || '9999').localeCompare(String(b.row.due_date || b.row.next_due || '9999')));
-        root.innerHTML = combined.map(({row, kind}) => `<div class="v1112-row" data-obligation-kind="${kind}" data-obligation-id="${esc(row.id)}"><div><b>${esc(row.title)}</b><small>${money(row.amount)} • ${esc(kind === 'debts' ? 'بدهی / اقساط' + (row.creditor ? ' • ' + row.creditor : '') : row.direction === 'receive' ? 'دریافت' : 'پرداخت')} • ${esc(row.due_date || row.next_due || 'بدون موعد')}</small>${kind === 'debts' ? `<small>قسط: ${money(row.installment)}</small>` : ''}</div><div class="v1112-row-actions"><span class="v1112-state ${settled(row) ? 'good' : ''}">${settled(row) ? (row.direction === 'receive' ? 'دریافت شد' : 'پرداخت شد') : row.status === 'cancelled' ? 'لغوشده' : 'باز'}</span>${button('edit', kind, row.id, 'ویرایش')}${!settled(row) && row.status !== 'cancelled' ? button('pay', kind, row.id, row.direction === 'receive' ? 'دریافت شد' : 'پرداخت شد') : ''}${kind === 'commitments' && !settled(row) && row.status !== 'cancelled' ? button('task', kind, row.id, row.task_id ? 'کار متصل' : '＋ کار') + button('event', kind, row.id, row.event_id ? 'تقویم متصل' : 'تقویم') : ''}</div></div>`).join('') || '<div class="v1112-empty">هنوز تعهد مالی ثبت نشده است.</div>';
-        const today = v1112Today(), until = new Date(today + 'T12:00:00Z'); until.setUTCDate(until.getUTCDate() + 14);
-        const end = until.toISOString().slice(0, 10), count = combined.filter(({row}) => { const due = row.due_date || row.next_due; return !settled(row) && row.status !== 'cancelled' && due >= today && due <= end; }).length;
-        const badge = document.getElementById('v1112DueBadge'); if (badge) badge.textContent = `${v1112Fa(count)} موعد نزدیک`;
+        const rank = row => settled(row) ? 2 : row.status === 'cancelled' ? 1 : 0;
+        combined.sort((a, b) => rank(a.row)-rank(b.row) || (settled(a.row)
+          ? String(a.row.paid_at || a.row.paid_date || '').localeCompare(String(b.row.paid_at || b.row.paid_date || ''))
+          : String(a.row.due_date || a.row.next_due || '9999').localeCompare(String(b.row.due_date || b.row.next_due || '9999'))));
+        root.innerHTML = combined.map(({row, kind}) => `<div class="v1112-row${settled(row) ? ' is-settled' : ''}" data-obligation-kind="${kind}" data-obligation-id="${esc(row.id)}"><div><b>${esc(row.title)}</b><small>${money(row.amount)} • ${esc(kind === 'debts' ? 'بدهی / اقساط' + (row.creditor ? ' • ' + row.creditor : '') : row.direction === 'receive' ? 'دریافت' : 'پرداخت')} • ${esc(row.due_date || row.next_due || 'بدون موعد')}</small>${kind === 'debts' ? `<small>قسط: ${money(row.installment)}</small>` : ''}</div><div class="v1112-row-actions"><span class="v1112-state ${settled(row) ? 'good' : ''}">${settled(row) ? (row.direction === 'receive' ? 'دریافت شد' : 'پرداخت شد') : row.status === 'cancelled' ? 'لغوشده' : 'باز'}</span>${button('edit', kind, row.id, 'ویرایش')}${!settled(row) && row.status !== 'cancelled' ? button('pay', kind, row.id, row.direction === 'receive' ? 'دریافت شد' : 'پرداخت شد') : ''}${kind === 'commitments' && !settled(row) && row.status !== 'cancelled' ? button('task', kind, row.id, row.task_id ? 'کار متصل' : '＋ کار') + button('event', kind, row.id, row.event_id ? 'تقویم متصل' : 'تقویم') : ''}</div></div>`).join('') || '<div class="v1112-empty">هنوز تعهد مالی ثبت نشده است.</div>';
+        const anchor = V1112_DATA.date || window.DateContext?.date || v1112Today(), until = new Date(anchor + 'T12:00:00Z'); until.setUTCDate(until.getUTCDate() + 14);
+        const active = combined.filter(({row}) => !settled(row) && !row.settlement_id && row.status !== 'cancelled');
+        const end = until.toISOString().slice(0, 10), count = active.filter(({row}) => { const due = row.due_date || row.next_due; return due >= anchor && due <= end; }).length;
+        const badge = document.getElementById('v1112DueBadge'); if (badge) badge.textContent = `${v1112Fa(active.length)} باز از ${v1112Fa(combined.length)} مورد • ${v1112Fa(count)} موعد نزدیک`;
+        const metrics = document.querySelectorAll('#v1112Summary>.v1112-kpi');
+        const scoped = !!window.DateContext?.scoped('finance'), scope = scoped ? 'فهرست روز انتخابی؛ شامل موارد بدون موعد' : 'تمام موارد فهرست، بدون تسویه‌شده‌ها';
+        if(metrics[4]){metrics[4].querySelector('span').textContent='تعهد بازِ فهرست';metrics[4].querySelector('strong').textContent=v1112Fa(active.length);metrics[4].querySelector('em').textContent=`${v1112Fa(count)} مورد تا ۱۴ روز از تاریخ مبنا`;metrics[4].title=scope;}
+        const month = (V1112_DATA.summary?.month || anchor.slice(0,7)).replace('-', '/').replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+        for(const i of [1,2])if(metrics[i])metrics[i].querySelector('em').textContent=`ماه میلادی ${month} • تراکنش تأییدشده`;
+        if(metrics[3])metrics[3].querySelector('em').textContent=`درآمد منهای هزینهٔ ماه میلادی ${month}`;
+        if(metrics[5])metrics[5].querySelector('em').textContent='کل ماندهٔ بدهی‌های باز؛ مستقل از فیلتر روز';
+        let explanation = document.getElementById('financeScopeNote');
+        if(!explanation){explanation=document.createElement('p');explanation.id='financeScopeNote';explanation.className='finance-scope-note';document.getElementById('v1112Summary').after(explanation);}
+        explanation.textContent=`تعهدهای باز از همین فهرست شمرده می‌شوند. درآمد، هزینه و جریان نقدی برای ماه میلادی ${month} هستند؛ نقدینگی و ماندهٔ بدهی، وضعیت فعلی کل حساب‌اند. ${scoped?'فیلتر روز برای فهرست‌ها فعال است.':'فهرست‌ها همهٔ تاریخ‌ها را نشان می‌دهند.'}`;
       } else root.querySelectorAll('.v1112-row').forEach((element, index) => element.insertAdjacentHTML('beforeend', button('edit', kind, rows[index].id, 'ویرایش')));
     }
   };

@@ -112,6 +112,11 @@
       V1112_DATA = data; v1112Render();
     } catch (error) { if (request === financeRequest) showToast('دریافت مالی انجام نشد', error.message); }
   };
+  let financeTimer;
+  window.addEventListener('nova:data-changed', event => {
+    if(currentPage()!=='finance'||!/^\/api\/(?:finance(?:\/|-editor\/)|v11\.12\/)/.test(event.detail?.path||''))return;
+    clearTimeout(financeTimer);financeTimer=setTimeout(()=>window.v1112Load(),180);
+  });
   const openPage = window.handleFunctionalPageOpen;
   window.handleFunctionalPageOpen = async function (page) {
     prepare(page); bars();
