@@ -28,7 +28,7 @@ export function planCarryForward(items, records, storedCalendar, target) {
     if (old.recurrence) {
       if (!validDate(occurrence) || !validDate(start) || !occurrences(start, old.recurrence, occurrence, occurrence).length) throw bad('یکی از نوبت‌های انتخاب‌شده دیگر در مجموعه نیست؛ فهرست را تازه کنید.')
       const exception = old.exceptions?.[occurrence] || {}, date = exception.moved_to || occurrence
-      if (exception.done || exception.skipped) throw bad('یکی از نوبت‌ها انجام یا حذف شده است؛ فهرست را تازه کنید.')
+      if (exception.done || exception.skipped || old.results?.[occurrence]?.date === date) throw bad('یکی از نوبت‌ها انجام یا حذف شده است؛ فهرست را تازه کنید.')
       if (exception.moved_to === target) { unchanged.push(result); continue }
       const end = String(current.end_at || current.start_at || current.due_date || '').slice(0, 10), duration = source === 'event' ? difference(end, start) : 0
       if (date >= target || shiftDays(date, duration) >= target) throw bad('یکی از نوبت‌ها هنوز عقب‌افتاده نیست؛ فهرست را تازه کنید.')
@@ -36,7 +36,7 @@ export function planCarryForward(items, records, storedCalendar, target) {
       patches[key].exceptions[occurrence] = { ...exception, moved_to: target }
     } else {
       if (occurrence) throw bad('برای آیتم بدون تکرار، نوبت جداگانه انتخاب نکنید.')
-      if (!validDate(start) || (source === 'event' && old.done) || current.status === 'done') throw bad('یکی از آیتم‌ها دیگر عقب‌افتاده نیست؛ فهرست را تازه کنید.')
+      if (!validDate(start) || old.results?.[start]?.date === start || (source === 'event' && old.done) || current.status === 'done') throw bad('یکی از آیتم‌ها دیگر عقب‌افتاده نیست؛ فهرست را تازه کنید.')
       if (start === target) { unchanged.push(result); continue }
       if (start > target) throw bad('یکی از آیتم‌ها برای آینده برنامه‌ریزی شده است؛ فهرست را تازه کنید.')
       if (source === 'event') {

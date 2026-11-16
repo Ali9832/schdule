@@ -3,6 +3,9 @@
 - Work on the current NOAVA application on main. Never replace it with the legacy NOVA ZIP.
 - Keep requested edits local until the user explicitly asks to push. Do not create a release commit, tag, push or deploy before that request.
 - While editing locally, retain the last published version and record pending changes under Unreleased in CHANGELOG.md. When the user asks to push, choose and increment the release version using MAJOR.MINOR.PATCH (Semantic Versioning): patch for compatible fixes, minor for compatible features, major for breaking changes.
+- The user's latest standing instruction requires standard versioning for every production update, superseding earlier requests to reuse the published version. Never publish changed application code under an already released version.
+- Choose the highest required change level across the whole release: PATCH for compatible bug fixes and presentation-only changes, MINOR for new compatible functionality, MAJOR for incompatible public API/data-contract changes or removal of supported functionality without a compatible replacement. Reset lower version components when incrementing MINOR or MAJOR; do not choose versions by the number of edited files.
+- Treat published versions and tags as immutable. Keep their existing commits intact; document subsequent corrections under a new version. Use SemVer prerelease suffixes only for explicitly requested preview releases.
 - Keep package.json, both root version fields in package-lock.json, the visible app-version label in index.html, and cache names in sw.js and public/sw.js synchronized.
 - API version is read from package.json. Keep existing versioned API route names compatible; do not rename API paths as part of a release bump.
 - Move the Unreleased changes and outstanding work under the new version when preparing the requested release.

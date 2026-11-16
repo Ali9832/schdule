@@ -14,7 +14,7 @@ const fail=message=>{const error=new Error(message);error.statusCode=400;throw e
 const structuredNotes=value=>{if(String(value||'').startsWith('NOVA_'))return true;try{return !!JSON.parse(String(value||''))?.v115}catch{return false}}
 export function registerCalendar(app,deps){
   const {canonical,life,saveLife,createTask,updateTask,createProject,updateProject,createEvent,updateEvent,deleteEvent,createOutcome,updateOutcome}=deps
-  const schema={type:'object',additionalProperties:false,properties:{...calendarExtraSchema,title:{type:'string',minLength:1,maxLength:200},kind:{type:'string',enum:calendarKinds},date:{type:'string'},end_date:{type:'string'},start_time:{type:'string'},end_time:{type:'string'},all_day:{type:'boolean'},done:{type:'boolean'},description:{type:'string',maxLength:4000},color:{type:'string',pattern:'^#[a-fA-F0-9]{6}$'},priority:{type:'string',enum:['low','medium','high']}}}
+  const schema={type:'object',additionalProperties:false,properties:{...calendarExtraSchema,not_done:{type:'boolean'},title:{type:'string',minLength:1,maxLength:200},kind:{type:'string',enum:calendarKinds},date:{type:'string'},end_date:{type:'string'},start_time:{type:'string'},end_time:{type:'string'},all_day:{type:'boolean'},done:{type:'boolean'},description:{type:'string',maxLength:4000},color:{type:'string',pattern:'^#[a-fA-F0-9]{6}$'},priority:{type:'string',enum:['low','medium','high']}}}
   async function state(userId){return normalizeCalendarState((await life(userId)).execution?.calendar)}
   async function saveState(userId,key,patch){const current=await life(userId),calendar=normalizeCalendarState(current.execution?.calendar);if(patch===null)delete calendar[key];else calendar[key]={...(calendar[key]||{}),...patch};await saveLife(userId,{...current,execution:{...current.execution,calendar}})}
   async function find(userId,source,id){const data=await canonical(userId);const entity=({task:data.tasks,event:data.events,project:data.projects,outcome:data.outcomes}[source]||[]).find(item=>item.id===id);if(!entity){const error=new Error('آیتم پیدا نشد.');error.statusCode=404;throw error}return entity}
@@ -39,10 +39,15 @@ export function registerCalendar(app,deps){
     return {from,to,entries}
   }
   app.get('/api/calendar',async request=>list(request.user.id,request.query?.from,request.query?.to))
+  app.get('/api/calendar/item/:source/:id',async request=>{
+    const {source,id}=request.params,current=await find(request.user.id,source,id),meta=(await state(request.user.id))[source+':'+id]||{};
+    const date=String(current.start_at||current.due_date||today()).slice(0,10),end=String(current.end_at||current.start_at||current.due_date||date).slice(0,10);
+    return {source,id,key:source+':'+id,title:current.title||current.name,kind:meta.kind||(source==='task'?'task':source==='project'?'project':source==='outcome'?'goal':(calendarKinds.includes(current.type)?current.type:'personal')),date,end_date:end,series_date:date,series_end_date:end,series_due_date:meta.due_date||null,all_day:meta.all_day??source!=='event',start_time:source==='event'?String(current.start_at).slice(11,16):meta.start_time||'09:00',end_time:source==='event'?String(current.end_at||current.start_at).slice(11,16):meta.end_time||'10:00',description:source==='event'?(structuredNotes(current.notes)?'':current.notes||''):current.description||current.note||'',project_id:current.project_id||null,parent_task_id:current.parent_task_id||null,color:meta.color||'',done:source==='event'?meta.done===true:current.status==='done',...normalizeCalendarExtras(meta),priority:current.priority||meta.priority||'medium'};
+  })
   app.get('/api/calendar/reminders',async request=>{
     const now=Date.now(),today=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(now)
     const result=await list(request.user.id,shiftDays(today,-7),shiftDays(today,8),true)
-    return {reminders:result.entries.filter(entry=>!entry.done).flatMap(entry=>reminderTimes(entry).filter(reminder=>Date.parse(reminder.at)>=now-3600000&&Date.parse(reminder.at)<=now+86400000).map(reminder=>({...reminder,title:entry.title,date:entry.date,source:entry.source,id:entry.id}))).sort((a,b)=>a.at.localeCompare(b.at)).slice(0,100)}
+    return {reminders:result.entries.filter(entry=>!entry.done&&!entry.not_done).flatMap(entry=>reminderTimes(entry).filter(reminder=>Date.parse(reminder.at)>=now-3600000&&Date.parse(reminder.at)<=now+86400000).map(reminder=>({...reminder,title:entry.title,date:entry.date,source:entry.source,id:entry.id}))).sort((a,b)=>a.at.localeCompare(b.at)).slice(0,100)}
   })
   function validate(body,current=null){
     validateExtras(body,body.date||String(current?.start_at||current?.due_date||'').slice(0,10),fail)
@@ -57,6 +62,7 @@ export function registerCalendar(app,deps){
   schema.properties.parent_task_id={type:['string','null'],maxLength:100}
   app.post('/api/calendar',{schema:{body:{...schema,required:['title','date','kind']}}},async(request,reply)=>{
     const body=request.body,userId=request.user.id;validate(body);const kind=body.kind;let entity,source;
+    if(body.not_done!==undefined)fail('نتیجه را پس از ایجاد برنامه ثبت کنید.');
     await validateLinks(userId,body);
     if(['task','homework'].includes(kind)){source='task';entity=await createTask(userId,{title:body.title.trim(),description:body.description||'',due_date:body.date,priority:body.priority||'medium',status:body.done?'done':'todo',project_id:body.project_id||null,parent_task_id:body.parent_task_id||null,category:kind==='homework'?'تکالیف':'شخصی'})}
     else if(kind==='project'){source='project';entity=await createProject(userId,{name:body.title.trim(),description:body.description||'',due_date:body.date,status:body.done?'done':'in_progress'})}
@@ -67,11 +73,25 @@ export function registerCalendar(app,deps){
   })
   app.patch('/api/calendar/:source/:id',{schema:{body:schema}},async request=>{
     const {source,id}=request.params,userId=request.user.id,current=await find(userId,source,id),body=request.body,metadata=await state(userId),key=source+':'+id,old=metadata[key]||{},previousStatus=current.status;validate(body,current)
+    const startDate=String(current.start_at||current.due_date||'').slice(0,10),resultDate=body.occurrence_date||startDate;
+    const results={...old.results};
+    if(body.not_done!==undefined){
+      if(Object.keys(body).some(k=>!['not_done','occurrence_date'].includes(k)))fail('نتیجهٔ انجام‌نشدن را جدا از ویرایش مشخصات ثبت کنید.');
+      if(!validDate(resultDate)||!!old.recurrence!==!!body.occurrence_date||old.recurrence&&!occurrences(startDate,old.recurrence,resultDate,resultDate).length)fail('نوبت معتبر انتخاب کنید.');
+      const actual=old.exceptions?.[resultDate]?.moved_to||resultDate;
+      if(old.exceptions?.[resultDate]?.skipped)fail('این نوبت حذف شده است.');
+      if(body.not_done){
+        if(actual>today())fail('برای برنامهٔ آینده نتیجهٔ انجام‌نشدن ثبت نکنید.');
+        if(old.exceptions?.[resultDate]?.done||!old.recurrence&&(old.done||current.status==='done'))fail('این مورد انجام شده است؛ ابتدا وضعیت انجام را اصلاح کنید.');
+        results[resultDate]||={status:'not_done',date:actual,recorded_at:new Date().toISOString()};
+      }else delete results[resultDate];
+      await saveState(userId,key,{results});return {ok:true,not_done:body.not_done};
+    }
     if(body.occurrence_date){
       const start=String(current.start_at||current.due_date||'').slice(0,10)
       if(!old.recurrence||!occurrences(start,old.recurrence,body.occurrence_date,body.occurrence_date).length)fail('این نوبت در مجموعه وجود ندارد.')
       if(Object.keys(body).some(key=>!['occurrence_date','done'].includes(key)))fail('ویرایش مشخصات از طریق مجموعه انجام می‌شود.')
-      await saveState(userId,key,{exceptions:{...old.exceptions,[body.occurrence_date]:{...old.exceptions?.[body.occurrence_date],done:body.done===true}}});return {ok:true}
+      delete results[resultDate];await saveState(userId,key,{results,exceptions:{...old.exceptions,[body.occurrence_date]:{...old.exceptions?.[body.occurrence_date],done:body.done===true}}});return {ok:true}
     }
     await validateLinks(userId,body);
     const patch={};if(body.project_id!==undefined&&['task','event'].includes(source))patch.project_id=body.project_id||null;if(body.title!==undefined)patch[source==='project'?'name':'title']=body.title.trim();if(body.description!==undefined)patch[source==='event'?'notes':source==='outcome'?'note':'description']=body.description;
@@ -93,7 +113,7 @@ export function registerCalendar(app,deps){
     }
     const change={kind:source==='task'?'task':source==='project'?'project':source==='outcome'?'goal':calendarKinds.includes(current.type)?current.type:'personal',all_day:source!=='event',...old};for(const key of ['kind','done','all_day','start_time','end_time','color','priority','due_date','due_time','reminders','recurrence','course_id'])if(body[key]!==undefined)change[key]=body[key];if(body.done===true&&previousStatus!=='done')change.previous_status=previousStatus||'';
     if(body.recurrence!==undefined&&JSON.stringify(normalizeCalendarExtras(body).recurrence)!==JSON.stringify(old.recurrence)||body.date!==undefined&&body.date!==String(current.start_at||current.due_date||'').slice(0,10))change.exceptions={};
-    await saveState(userId,key,change);return {ok:true}
+    if(body.done!==undefined){delete results[resultDate];change.results=results;}await saveState(userId,key,change);return {ok:true}
   })
   async function validateLinks(userId,body){
     if(body.project_id)await find(userId,'project',body.project_id);
@@ -102,17 +122,17 @@ export function registerCalendar(app,deps){
   const today=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Tehran',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   app.get('/api/calendar/overdue',async request=>{
     const to=shiftDays(today(),-1),from=shiftDays(to,-729),result=await list(request.user.id,from,to);
-    return {from,to,entries:result.entries.filter(item=>!item.done&&item.end_date<today())};
+    return {from,to,entries:result.entries.filter(item=>!item.done&&!item.not_done&&item.end_date<today())};
   });
   app.post('/api/calendar/:source/:id/carry-forward',async request=>{
     const userId=request.user.id,{source,id}=request.params,current=await find(userId,source,id),metadata=await state(userId),key=source+':'+id,old=metadata[key]||{},occurrence=request.body?.occurrence_date,start=String(current.start_at||current.due_date||'').slice(0,10),target=today();
     if(old.recurrence){
       if(!validDate(occurrence)||!occurrences(start,old.recurrence,occurrence,occurrence).length)fail('نوبت معتبر انتخاب کنید.');
       const exception=old.exceptions?.[occurrence]||{};
-      if((exception.moved_to||occurrence)>=target||exception.done||exception.skipped)fail('این نوبت عقب‌افتاده نیست.');
+      if((exception.moved_to||occurrence)>=target||exception.done||exception.skipped||old.results?.[occurrence]?.date===(exception.moved_to||occurrence))fail('این نوبت عقب‌افتاده نیست.');
       await saveState(userId,key,{exceptions:{...old.exceptions,[occurrence]:{...exception,moved_to:target}}});
     }else{
-      if(!validDate(start)||start>=target||old.done||current.status==='done')fail('این آیتم عقب‌افتاده نیست.');
+      if(!validDate(start)||start>=target||old.done||old.results?.[start]?.date===start||current.status==='done')fail('این آیتم عقب‌افتاده نیست.');
       if(source==='event'){
         const duration=Math.round((Date.parse(String(current.end_at||current.start_at).slice(0,10))-Date.parse(start))/86400000);
         if(shiftDays(start,duration)>=target)fail('برنامه هنوز پایان نیافته است.');

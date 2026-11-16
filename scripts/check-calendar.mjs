@@ -125,6 +125,20 @@ try{
   assert.ok((await request('GET','/api/calendar/overdue')).entries.some(row=>row.id===late.id));
   await request('POST',`/api/calendar/task/${late.id}/carry-forward`,{});assert.equal(user('one').tasks.find(row=>row.id===late.id).due_date,carryDate);
   console.log('PASS academic course/project links, quiz, user isolation, overdue review and per-occurrence carry-forward without shifting the series')
+  const missed=await request('POST','/api/calendar',{title:'Missed series',kind:'class',date:yesterday,recurrence:{frequency:'weekly',count:3}},201);
+  await request('PATCH',`/api/calendar/event/${missed.id}`,{not_done:true,occurrence_date:yesterday});
+  const stored=user('one').execution.calendar['event:'+missed.id].results[yesterday];assert.equal(stored.status,'not_done');assert.equal(stored.date,yesterday);assert.ok(stored.recorded_at);
+  await request('PATCH',`/api/calendar/event/${missed.id}`,{not_done:true,occurrence_date:yesterday});assert.equal(user('one').execution.calendar['event:'+missed.id].results[yesterday].recorded_at,stored.recorded_at,'Retry is idempotent');
+  assert.equal((await request('GET',`/api/calendar?from=${yesterday}&to=${nextWeek}`)).entries.filter(row=>row.id===missed.id&&row.not_done).length,1,'Only one occurrence is missed');
+  assert.equal((await request('GET','/api/calendar/overdue')).entries.some(row=>row.id===missed.id),false);
+  await request('POST',`/api/calendar/event/${missed.id}/carry-forward`,{occurrence_date:yesterday},400);
+  await request('PATCH',`/api/calendar/event/${missed.id}`,{not_done:true,occurrence_date:yesterday},404,{'test-user':'two'});
+  await request('GET',`/api/calendar/item/event/${missed.id}`,undefined,404,{'test-user':'two'});
+  assert.equal((await request('GET',`/api/calendar/item/event/${missed.id}`)).title,'Missed series');
+  await request('PATCH',`/api/calendar/event/${missed.id}`,{not_done:true,occurrence_date:nextWeek},400);
+  await request('PATCH',`/api/calendar/event/${missed.id}`,{done:true,occurrence_date:yesterday});assert.equal(user('one').execution.calendar['event:'+missed.id].results[yesterday],undefined);
+  const missedTask=await request('POST','/api/calendar',{title:'Missed task',kind:'task',date:yesterday},201);await request('PATCH',`/api/calendar/task/${missedTask.id}`,{not_done:true});assert.equal(user('one').tasks.find(t=>t.id===missedTask.id).status,'todo','Missed scheduled execution does not complete or delete the task');await request('POST',`/api/calendar/task/${missedTask.id}/carry-forward`,{},400);await request('PATCH',`/api/calendar/task/${missedTask.id}`,{not_done:false});assert.ok((await request('GET','/api/calendar/overdue')).entries.some(t=>t.id===missedTask.id));
+  console.log('PASS missed occurrence persistence, retries, recurrence isolation, correction, future/ownership validation and direct item lookup');
   console.log('PASS recurrence, Persian month/year boundaries, per-occurrence state, deadlines, priority, reminder times, private image/audio attachments and size/type validation')
   console.log('PASS calendar validation, multi-source CRUD, completion/undo, moving, safe unscheduling, metadata persistence, user isolation and structured-note preservation')
 }finally{await app.close()}

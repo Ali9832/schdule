@@ -100,6 +100,7 @@
       }catch(failure){if(valid())error.textContent=failure.message||'ذخیره انجام نشد. دوباره تلاش کنید.'}finally{save.disabled=cancel.disabled=false}
     };
   };
+  window.editV11Record=async function(type,id){await openV11Inspector(type,id);if(type==='project')return document.querySelector('#projectPageBody [data-edit-project-details]')?.click();if(V11_INSPECTOR?.type===type&&V11_INSPECTOR?.id===id&&!document.getElementById('v11InspectorEditBtn').disabled)document.getElementById('v11InspectorEditBtn').click();};
   hideInspector();
   for(const name of ['openGenericAdd','baseEditTask','baseEditModule','openModal','openCommandPalette','v116OpenNew','v116Edit','v117OpenOutcome','v118OpenComposer']){
     const open=window[name];if(typeof open!=='function')continue;

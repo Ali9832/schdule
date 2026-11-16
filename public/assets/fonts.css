@@ -1,7 +1,6 @@
 /* Vazirmatn v33.003, SIL Open Font License; see /fonts/OFL-Vazirmatn.txt. */
-/* Lateef, SIL Open Font License; see /fonts/OFL-Lateef.txt. Hosted locally. */
-@font-face{font-family:Lateef;src:url('/fonts/lateef-regular.woff') format('woff');size-adjust:140%;font-weight:400;font-style:normal;font-display:swap}
-@font-face{font-family:Lateef;src:url('/fonts/lateef-bold.woff') format('woff');size-adjust:140%;font-weight:700;font-style:normal;font-display:swap}
+/* B Titr Bold, locally hosted; source and copyright: /fonts/B-Titr-SOURCE.txt. */
+@font-face{font-family:'B Titr';src:url('/fonts/b-titr-bold.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
 @font-face{font-family:Vazirmatn;src:url('/fonts/vazirmatn-v33.003-variable.woff2') format('woff2');font-weight:100 900;font-style:normal;font-display:swap}
-:root{--app-font:Lateef,Vazirmatn,Tahoma,sans-serif}
+:root{--app-font:'B Titr',Vazirmatn,Tahoma,sans-serif}
 html,body,body *{font-family:var(--app-font)!important}

@@ -1,0 +1,8 @@
+B Titr Bold (Borna Titr Bold)
+Copyright (c) 2000 Borna Rayaneh. Parsa 2001 / Borna Rayaneh trademarks.
+Original font version: 2.01 - Build 1379.
+
+Web font archive source:
+https://github.com/artbijan/Web-Font/blob/master/BTitrBold.woff2
+Downloaded unchanged for this personal planner. This font is not covered by
+the SIL Open Font Licenses of the separate Lateef and Vazirmatn files.

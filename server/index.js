@@ -19,7 +19,7 @@ import { normalizeFinanceAmounts } from './finance-units.js'
 import { planningDate, tehranToday, tasksForDay } from './planning-date.js'
 import { registerProjectWorkspace } from './project-workspace.js'
 import { registerReading } from './reading.js'
-import { registerStatistics, completionMetadata } from './statistics.js'
+import { registerStatistics, completionMetadata,calendarStatisticRecords } from './statistics.js'
 import { registerTaskSimilarity } from './task-similarity.js'
 import { registerProjectTeam } from './project-team.js'
 import { memoryProjectTeamStore, postgresProjectTeamStore } from './project-team-store.js'
@@ -2933,8 +2933,8 @@ registerReading(app, {
 })
 
 registerStatistics(app,{load:async userId=>{
-  const [canonical,reading]=await Promise.all([getV11Canonical(userId),readReading(userId)])
-  return {...canonical,reading}
+  const [canonical,reading,life]=await Promise.all([getV11Canonical(userId),readReading(userId),getLifeData(userId)])
+  return {...canonical,reading,calendar_records:calendarStatisticRecords(canonical,normalizeCalendarState(life.execution?.calendar))}
 }})
 
 if (!process.env.VERCEL) {

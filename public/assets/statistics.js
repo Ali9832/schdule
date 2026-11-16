@@ -1,6 +1,6 @@
 (() => {
   'use strict';
-  const root=document.getElementById('statisticsBody'), types={tasks:'کارها',projects:'پروژه‌ها',routines:'روتین‌ها',reading:'کتاب‌خوانی',resources:'منابع یادگیری',goals:'هدف‌ها',meetings:'جلسات'};
+  const root=document.getElementById('statisticsBody'), types={tasks:'کارها',projects:'پروژه‌ها',routines:'روتین‌ها',reading:'کتاب‌خوانی',resources:'منابع یادگیری',goals:'هدف‌ها',meetings:'جلسات',calendar:'برنامه‌های تقویم'};
   let report=null,generation=0,initialized=false,shown=80,timer,filterMode='all';
   const chosen=new Set(),selected=new Set();
   const n=(tag,text,cls)=>{const el=document.createElement(tag);if(text!=null)el.textContent=text;if(cls)el.className=cls;return el;};
@@ -67,7 +67,7 @@
     finally{if(request===generation)output.setAttribute('aria-busy','false');}
   }
   function metric(container,title,value,hint){const card=n('article',null,'stats-metric');card.append(n('span',title),n('strong',value));if(hint)card.append(n('small',hint));container.append(card);}
-  function buckets(rows){const size=Math.max(1,Math.ceil(rows.length/30)),result=[];for(let i=0;i<rows.length;i+=size){const batch=rows.slice(i,i+size),sum={date:batch[0].date,end:batch.at(-1).date};for(const key of ['created','completed','routine_checks','reading_minutes','meeting_count'])sum[key]=batch.reduce((v,r)=>v+Number(r[key]||0),0);result.push(sum);}return result;}
+  function buckets(rows){const size=Math.max(1,Math.ceil(rows.length/30)),result=[];for(let i=0;i<rows.length;i+=size){const batch=rows.slice(i,i+size),sum={date:batch[0].date,end:batch.at(-1).date};for(const key of ['created','completed','routine_checks','reading_minutes','meeting_count','not_done'])sum[key]=batch.reduce((v,r)=>v+Number(r[key]||0),0);result.push(sum);}return result;}
   const svgNode=(tag,attrs={},text)=>{const el=document.createElementNS('http://www.w3.org/2000/svg',tag);for(const [key,value]of Object.entries(attrs))el.setAttribute(key,value);if(text!=null)el.textContent=text;return el;};
   function chart(title,rows,series,unit,hint){
     const card=n('section',null,'stats-chart');card.append(n('h2',title));if(hint)card.append(n('p',hint,'stats-muted'));
@@ -88,9 +88,33 @@
     const card=n('section',null,'stats-chart');card.append(n('h2',title));if(hint)card.append(n('p',hint,'stats-muted'));
     const max=Math.max(1,...rows.map(r=>r.value));for(const row of rows){const item=n('div',null,'stats-bar-row');const label=n('div',null,'stats-bar-label');label.append(n('span',row.title),n('strong',num(row.value)+(row.unit?' '+row.unit:'')));const track=n('div',null,'stats-bar-track'),fill=n('i');fill.style.width=row.value/max*100+'%';fill.style.background=row.color||'#148c80';track.append(fill);item.append(label,track);card.append(item);}if(!rows.length)card.append(n('p','موردی انتخاب نشده است.'));return card;
   }
+  const taskStates={on_time:'انجام به‌موقع',late:'انجام با تأخیر',done_no_due:'انجام‌شده بدون موعد',unknown:'انجام‌شده؛ زمان پایان نامشخص',not_done:'انجام نشدِ ثبت‌شده',overdue:'عقب‌افتاده و باز',open:'باز / در جریان',paused:'متوقف / بایگانی‌شده'};
+  const taskColors={on_time:'#148c80',late:'#c26932',not_done:'#b8405e',overdue:'#b87924',open:'#4885d3',paused:'#87919c',unknown:'#9870b7',done_no_due:'#53a79b'};
+  function taskPerformance(metrics,grid){
+    const p=report.task_performance,s=p.summary;
+    metric(metrics,'تحویل به‌موقع کارها',s.on_time_percent===null?'—':num(s.on_time_percent)+'٪',`${num(s.on_time)} به‌موقع و ${num(s.late)} با تأخیر؛ از کارهای تمام‌شده با موعد در بازه`);
+    metric(metrics,'از ایجاد تا پایان کار',s.average_cycle_days===null?'—':num(s.average_cycle_days)+' روز',`میانگین روز تقویمی؛ ${num(s.cycle_samples)} پایان در بازه با تاریخ معتبر`);
+    metric(metrics,'کار دارای «انجام نشد»',num(s.not_done_tasks),`${num(s.not_done_occurrences)} نوبت ثبت‌شده در بازه؛ ممکن است کار بعداً انجام شده باشد`);
+    grid.append(bars('نتیجهٔ کارهای مرتبط با بازه',Object.entries(taskStates).map(([key,title])=>({title,value:p.states[key],color:taskColors[key]})),'کارهایی که ایجاد، موعد، پایان یا ثبت انجام‌نشدنشان در بازه است؛ هر کار یک وضعیت فعلی دارد.'));
+    const size=Math.max(1,Math.ceil(p.daily.length/30)),rows=[];
+    for(let i=0;i<p.daily.length;i+=size){const batch=p.daily.slice(i,i+size),row={date:batch[0].date,end:batch.at(-1).date};for(const key of ['on_time','late','not_done','overdue','open','paused','unknown','cycle_total','cycle_count'])row[key]=batch.reduce((n,d)=>n+d[key],0);row.cycle_days=row.cycle_count?row.cycle_total/row.cycle_count:null;rows.push(row);}
+    grid.append(chart('نتیجهٔ کارها بر اساس موعد',rows,['on_time','late','not_done','overdue','open','paused','unknown'].map(key=>({key,title:taskStates[key],color:taskColors[key]})),'کار','هر نقطه مربوط به موعد کارهاست و نتیجهٔ فعلی آن‌ها را نشان می‌دهد؛ تصویر تاریخی وضعیت در آن روز نیست.'));
+    grid.append(chart('روند مدت ایجاد تا پایان',rows.filter(r=>r.cycle_count),[{key:'cycle_days',title:'میانگین روز تا پایان',color:'#9870b7'}],'روز','بر اساس روز پایان؛ فاصلهٔ تاریخ ایجاد تا پایان، زمان کارکرد واقعی نیست. روزهای بدون پایان معتبر نمایش داده نمی‌شوند.'));
+    const panel=n('section',null,'stats-chart stats-task-details');panel.append(n('h2','جزئیات روند کارها'),n('p','موعد کار انجام‌شده، موعدِ ثبت‌شده در لحظهٔ پایان است. تأخیر و مدت‌ها بر حسب روز تقویمی‌اند.','stats-muted'));
+    const controls=n('div',null,'stats-task-controls'),filter=n('select'),search=n('input'),count=n('p'),holder=n('div',null,'stats-task-table');filter.setAttribute('aria-label','وضعیت کار در گزارش');search.type='search';search.placeholder='جستجوی نام کار…';search.setAttribute('aria-label','جستجوی کار در گزارش');
+    for(const [value,title]of [['','همهٔ وضعیت‌ها'],...Object.entries(taskStates)]){const option=n('option',title);option.value=value;filter.append(option);}
+    controls.append(filter,search);let limit=50;const more=button('نمایش کارهای بیشتر',()=>{limit+=50;draw();});
+    function draw(){
+      const q=search.value.trim().toLocaleLowerCase(),items=p.rows.filter(r=>(!filter.value||r.state===filter.value)&&String(r.title||'').toLocaleLowerCase().includes(q));count.textContent=`${num(items.length)} کار · نمایش ${num(Math.min(limit,items.length))} مورد`;holder.replaceChildren();
+      const table=n('table'),head=n('thead'),tr=n('tr');for(const title of ['کار و وضعیت','ایجاد','موعد','پایان','ایجاد تا پایان','تأخیر','انجام نشد در بازه'])tr.append(n('th',title));head.append(tr);table.append(head);const body=n('tbody');
+      for(const row of items.slice(0,limit)){const tr=n('tr'),title=n('td'),edit=button(row.title||'بدون عنوان',()=>editV11Record('task',row.id)),badge=n('small',taskStates[row.state]);badge.style.color=taskColors[row.state];title.append(edit,badge);tr.append(title);for(const date of [row.created,row.due,row.completed])tr.append(n('td',date?faDateLabel(date):'—'));for(const value of [row.cycle_days,row.delay_days])tr.append(n('td',value===null?'—':num(value)+' روز'));tr.append(n('td',num(row.not_done_count)));body.append(tr);}
+      table.append(body);holder.append(table);if(!items.length)holder.append(n('p','کاری با این انتخاب وجود ندارد.','stats-muted'));more.hidden=items.length<=limit;
+    }
+    filter.onchange=search.oninput=()=>{limit=50;draw();};panel.append(controls,count,holder,more);output.append(panel);draw();
+  }
   function render(){
     const s=report.summary;output.replaceChildren();const metrics=n('div',null,'stats-metrics');output.append(metrics);
-    metric(metrics,chosen.size?'رکوردهای انتخابی موجود':'رکوردهای موجود در ۷ بخش',num(s.total),'بانک پایه در این عدد نیست');metric(metrics,'ایجادشده در بازه',num(s.created),'از میان رکوردهای موجود');
+    metric(metrics,chosen.size?'رکوردهای انتخابی موجود':'رکوردهای موجود در بخش‌ها',num(s.total),'بانک پایه در این عدد نیست');metric(metrics,'ایجادشده در بازه',num(s.created),'از میان رکوردهای موجود');
     if(!chosen.size){output.append(n('p','برای نمایش نمودار، بخش موردنظر را در بالا انتخاب کن. می‌توانی چند بخش یا چند رکورد مشخص را با هم بررسی کنی.','stats-empty'));return;}
     const timed=chosen.has('tasks')||chosen.has('projects');
     if(timed){metric(metrics,'تکمیل با تاریخ پایان معتبر',num(s.completed),'کارها و پروژه‌ها در بازه');metric(metrics,'عقب‌افتادهٔ فعلی',num(s.overdue),'موعد گذشته و هنوز باز');metric(metrics,'سرعت تکمیل در هفته',num(s.completed_per_week),`بازهٔ قبلی: ${num(s.previous_per_week)} در هفته`);}
@@ -106,9 +130,11 @@
       grid.append(bars('عملکرد نسبت به موعد',Object.entries(scheduleLabels).map(([key,title])=>({title,value:report.schedule[key],color:['late','overdue'].includes(key)?'#c6616b':'#4885d3'})),'فقط کارها و پروژه‌هایی که موعدشان در بازه است. برای پایان‌های جدید، موعدِ لحظهٔ پایان حفظ می‌شود.'));
       const delta=s.completed-s.previous_completed;output.append(n('p',`تکمیل در این بازه: ${num(s.completed)}؛ بازهٔ قبلی با همین طول: ${num(s.previous_completed)}. ${delta>0?'افزایش '+num(delta):delta<0?'کاهش '+num(-delta):'بدون تغییر'} رکورد دارای زمان پایان معتبر.`,'stats-comparison'));
     }
+    if(chosen.has('tasks'))taskPerformance(metrics,grid);
     if(chosen.has('routines')){grid.append(chart('روند انجام روتین‌ها',daily,[{key:'routine_checks',title:'دفعات ثبت انجام',color:'#9870b7'}],'بار','ثبت‌های واقعی؛ نداشتن ثبت در یک روز لزوماً نقض هدف هفتگی نیست.'));grid.append(bars('انجام هر روتین در بازه',report.routines.map(r=>({title:r.title+` · هدف فعلی ${num(r.target_weekly)} بار در هفته`,value:r.checks,unit:'بار',color:'#9870b7'})),'هدف فعلی، سابقهٔ هدف در روزهای گذشته محسوب نمی‌شود.'));}
     if(chosen.has('reading')){grid.append(chart('روند زمان مطالعه',daily,[{key:'reading_minutes',title:'مطالعهٔ ثبت‌شده',color:'#d18b35'}],'دقیقه'));grid.append(bars('زمان مطالعهٔ هر کتاب',report.reading.map(r=>({title:r.title+` · هدف فعلی روزانه ${num(r.daily_minutes)} دقیقه`,value:r.minutes,unit:'دقیقه',color:'#d18b35'})),'زمان فعالِ ذخیره‌نشدهٔ زمان‌سنج در این جمع نیست.'));}
     if(chosen.has('meetings'))grid.append(chart('جلسات زمان‌بندی‌شده',daily,[{key:'meeting_count',title:'جلسه در این روز / بازه',color:'#6a83ab'}],'جلسه','وجود جلسه در تقویم، تأیید برگزارشدن آن نیست.'));
+    if(chosen.has('calendar')){metric(metrics,'انجام نشدِ ثبت‌شده',num(s.not_done),'نوبت‌هایی که صریحاً انجام‌نشدنشان ثبت شده');grid.append(chart('برنامه‌های انجام‌نشده',daily,[{key:'not_done',title:'انجام نشد',color:'#b45e48'}],'نوبت','تاریخ نمودار، روز برنامه است؛ نه روز ثبت نتیجه. هر نوبت تکرارشونده جداگانه حساب می‌شود.'));const details=n('details',null,'stats-notes');details.append(n('summary','جزئیات انجام‌نشده‌ها'));for(const result of report.not_done_results||[]){const row=n('p');row.append(n('span',result.title+' · '+labelDate(result.date)+' '),button('ویرایش برنامه',()=>UnifiedCalendar.openEdit(result.source,result.entity_id)));details.append(row);}output.append(details);output.append(n('p','«برنامه‌های تقویم» نمای برنامه‌ریزی همان رکوردهاست؛ اگر همراه کارها یا پروژه‌ها انتخاب شود، جمع بخش‌ها تعداد یکتای موجودیت‌ها نیست.','stats-muted'));}
     const notes=n('details',null,'stats-notes');notes.append(n('summary','معنای آمار و محدودیت تاریخچه'));for(const note of report.notes)notes.append(n('p',note));output.append(notes);
   }
   const open=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await open?.(page);if(page==='statistics')await load();};

@@ -2,6 +2,18 @@
 
 Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
+## Unreleased
+
+## [2.12.0] - 2026-11-16
+
+Upgrade: **2.11.1 -> 2.12.0**. Compatible task outcome tracking, direct item editing and task performance reports.
+
+- Apply locally hosted B Titr across all pages, dialogs, controls and chart labels, retaining Vazirmatn as a fallback.
+
+- Add task outcome trends by deadline, on-time delivery percentage, creation-to-completion duration trends, and searchable/filterable per-task results with missed-attempt history. Calculate from stored dates only and respect selected records.
+- Add explicit Not Done results for overdue scheduled executions, persisted per recurring occurrence and included in selectable calendar statistics by planned date. Retain records, suppress resolved review/reminder entries and allow correction.
+- Open only the selected item's edit form from calendar edit buttons, timeline entries and academic calendar items, with owner-scoped direct lookup and explicit series-edit messaging for recurring programs.
+
 ## [2.11.1] - 2026-11-15
 
 Upgrade: **2.11.0 -> 2.11.1**. Site-wide Lateef typography and removal of retired health/area tools and their navigation. Stored records and calendar events are preserved.

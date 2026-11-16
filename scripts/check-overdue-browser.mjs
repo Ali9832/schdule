@@ -12,7 +12,7 @@ async function until(expression){for(let i=0;i<100;i++){if(await ev(expression))
 async function click(x,y){for(const type of ['mousePressed','mouseReleased'])await send('Input.dispatchMouseEvent',{type,x,y,button:'left',clickCount:1})}
 async function open(){await ev('NoavaWorkspace.overdue(true)');await until('!!document.querySelector("#overdueReview[open]")')}
 try{
- await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Network.setBypassServiceWorker',{bypass:true});await send('Page.navigate',{url:base});await pause(400);await until('!!window.NoavaWorkspace && !!V112_DASH')
+ await send('Page.bringToFront');await send('Runtime.enable');await send('Page.enable');await send('Network.enable');await send('Network.setCacheDisabled',{cacheDisabled:true});await send('Network.setBypassServiceWorker',{bypass:true});await send('Page.navigate',{url:base});await pause(400);await until('!!window.NoavaWorkspace && !!V112_DASH')
  await ev(`AppOverlays.closeAll();window.__overdueApi=apiFetch;window.__overdueWrites=0;window.apiFetch=async(path,options)=>{if(options?.method&&options.method!=='GET'){window.__overdueWrites++;throw Error('No writes allowed in dismissal audit');}if(path==='/api/calendar/overdue')return {entries:Array.from({length:100},(_,i)=>({key:'task:audit-'+i,id:'audit-'+i,source:'task',date:'2026-10-22',title:'Overdue audit '+i}))};return window.__overdueApi(path,options)}`)
  for(const viewport of [{width:1280,height:800,mobile:false},{width:390,height:844,mobile:true},{width:640,height:420,mobile:true}]){
   await send('Emulation.setDeviceMetricsOverride',{...viewport,deviceScaleFactor:1});await open()
