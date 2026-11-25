@@ -1,4 +1,4 @@
-const CACHE='noava-v2.12.0';
+const CACHE='noava-v2.13.0';
 const SHELL=['/','/index.html','/manifest.webmanifest'];
 self.addEventListener('notificationclick',event=>{
  if(!event.notification.data?.reading)return;

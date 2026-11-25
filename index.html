@@ -913,13 +913,14 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <details class="nav-group" data-nav-group="routines"><summary title="روتین‌ها"><span class="nav-icon" aria-hidden="true">◉</span><span class="nav-group-title">روتین‌ها</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="habits"><span class="nav-icon">◉</span>همهٔ روتین‌ها<span class="nav-badge" id="habitNavBadge">—</span></button>
 <button class="nav-item" data-page="spiritual"><span class="nav-icon">✦</span>نمای معنوی<span class="nav-badge" id="spiritualNavBadge">—</span></button>
+<button class="nav-item" data-page="reading"><span class="nav-icon">▤</span>نمای کتاب‌خوانی</button>
+<button class="nav-item" data-page="sports"><span class="nav-icon">◇</span>نمای ورزش</button>
 </div></details>
 </div></details>
 </div></details>
 <details class="nav-group" data-nav-group="areas"><summary title="سیستم و حوزه‌ها"><span class="nav-icon" aria-hidden="true">◫</span><span class="nav-group-title">سیستم و حوزه‌ها</span></summary><div class="nav-group-items">
 <button class="nav-item" data-page="items"><span class="nav-icon">☑</span>بانک آیتم‌ها</button>
 <button class="nav-item" data-page="academic"><span class="nav-icon">🎓</span>تحصیل / یادگیری</button>
-<button class="nav-item" data-page="reading"><span class="nav-icon">▤</span>کتاب‌خوانی</button>
 
 <button class="nav-item" data-page="relationships"><span class="nav-icon">👥</span>روابط / افراد</button>
 <button class="nav-item" data-page="finance"><span class="nav-icon">◈</span>مالی</button>
@@ -956,6 +957,10 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 
 
 </div>
+<div class="header-clock" aria-label="تاریخ و ساعت جاری به وقت تهران">
+<div class="header-clock-line"><span id="headerClockWeekday"></span><time id="headerClockTime" dir="ltr"></time></div>
+<time id="headerClockDate"></time>
+</div>
 </div>
 <div class="today-strip" id="todayStrip" hidden aria-hidden="true">
 <div class="today-main"><i class="pulse"></i><div><b id="todayDateLabel">امروز</b><span id="todaySubLabel">در حال آماده‌سازی نمای روز...</span></div></div>
@@ -969,7 +974,8 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 
 </header>
 <!-- DASHBOARD -->
-<section class="page hidden" id="reading" aria-label="کتاب‌خوانی"><div id="readingBody"></div></section>
+<section class="page hidden" id="reading" aria-label="کتاب‌خوانی"><div id="readingBody"></div><div class="hero routine-category-heading"><div><h2>روتین‌های کتاب‌خوانی</h2><p>عادت‌های مطالعه را کنار کتاب‌ها و زمان مطالعه پیگیری کنید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('habit','افزودن روتین کتاب‌خوانی','reading')">＋ روتین کتاب‌خوانی</button></div></div></section>
+<section class="page hidden" id="sports" aria-label="نمای ورزش"><div class="hero"><div><h1>روتین‌های <span>ورزشی</span></h1><p>برنامه‌های ورزش و فعالیت بدنی را ثبت و روندشان را بررسی کنید.</p></div><div class="hero-actions"><button class="primary" onclick="openGenericAdd('habit','افزودن روتین ورزشی','exercise')">＋ روتین ورزشی</button></div></div></section>
 <section class="page hidden" id="statistics" aria-label="آمار و روند"><div id="statisticsBody"></div></section>
 <section class="page" id="calendar"><div id="unifiedCalendar"></div></section>
 <section class="page hidden" id="academic"><div id="academicBody"></div><details class="integrated-tools " id="academicLearningTools"><summary>منابع و برنامه‌های یادگیری</summary><div class="integrated-status" role="status" aria-live="polite"></div><div class="integrated-content">
@@ -1779,7 +1785,7 @@ body.theme-dark #novaControlCenterGrid .module-card{background:#171c2d!important
 <div class="hero"><div><h1>مرور و <span>بازنگری</span></h1><p>مرور روزانه، هفتگی، ماهانه و فصلی برای پاک‌سازی سیستم و انتخاب تعهدهای دوره بعد.</p></div><div class="hero-actions"><button class="secondary" onclick="goPage('weekly')">چرخه هفتگی</button><button class="primary" onclick="saveV113Review()">ثبت مرور</button></div></div>
 <div class="v113-review-shell" id="v113ReviewRoot"></div>
 </section>
-<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.12.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
+<section class="page hidden" id="settings"><div class="hero"><div><h1>تنظیمات و <span>شخصی‌سازی</span></h1><p>قواعد توجه، پیش‌فرض تصمیم‌یار و میزان نمایش بخش‌های داشبورد را خودت کنترل کن.</p></div></div><section class="appearance-settings noava-panel" aria-label="ظاهر و نسخهٔ سایت"><div><strong>ظاهر سایت</strong><p>تغییر حالت روشن و تاریک</p></div><button class="icon-btn theme-toggle" id="themeToggle" onclick="toggleTheme()" title="حالت تاریک">◐</button><div class="settings-version">نسخهٔ برنامه <small id="app-version" dir="ltr">v2.13.0</small></div></section><div class="functional-grid" id="settingsPageBody"></div><div class="v114-settings" id="v114SettingsRoot" style="margin-top:16px"></div></section>
 <aside aria-hidden="true" class="v117-composer" id="v117Composer">
 <div class="v117-composer-head"><div><span>ویرایش هدف</span><h2 id="v117ComposerTitle">هدف جدید</h2></div><button onclick="v117CloseOutcome()">×</button></div>
 <div class="v117-form">
@@ -1935,6 +1941,7 @@ function goPage(id){
 
   if(id==='calendar')document.getElementById('crumb').textContent='نمای کلی';
   if(id==='reading')document.getElementById('crumb').textContent='کتاب‌خوانی';
+  if(id==='sports')document.getElementById('crumb').textContent='نمای ورزش';
   if(id==='statistics')document.getElementById('crumb').textContent='آمار و روند';
   if(typeof handleFunctionalPageOpen==='function') handleFunctionalPageOpen(id);
 }
@@ -2444,7 +2451,19 @@ async function baseToggleTask(id,done){await apiFetch(`/api/tasks/${encodeURICom
 async function baseDeleteTask(id){if(!confirm('این آیتم حذف شود؟'))return;await apiFetch(`/api/tasks/${encodeURIComponent(id)}`,{method:'DELETE'});await refreshAll()}
 function baseEditTask(id){const t=BASE_TASKS.find(x=>x.id===id);if(!t)return;BASE_EDIT={kind:'task',id};currentAddType='item';document.getElementById('genericModalTitle').textContent='ویرایش آیتم';document.getElementById('genericModalType').textContent=t.category||"کار";document.getElementById('genericTitleInput').value=t.title;document.getElementById('genericNotes').value=t.description||'';document.getElementById('genericModalBg').classList.remove('hidden')}
 async function baseToggleModule(type,id,done){const m=moduleData(type);const it=m?.items?.find(x=>x.id===id);if(it?._task)return baseToggleTask(id,done);if(it?._habit){const date=BASE_DATA?.stats?.today||todayIso();await apiFetch(`/api/habits/${encodeURIComponent(id)}/toggle`,{method:'POST',body:JSON.stringify({date})});return refreshAll()}if(it?._project){await apiFetch(`/api/projects/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({status:done?'done':'in_progress'})});return refreshAll()}if(it?._finance)return;await apiFetch(`/api/modules/${encodeURIComponent(type)}/items/${encodeURIComponent(id)}`,{method:'PATCH',body:JSON.stringify({done,state:done?'انجام':'باز'})});await refreshAll()}
-function baseEditModule(type,id,title){const m=moduleData(type);const it=m?.items?.find(x=>x.id===id);if(it?._task)return baseEditTask(id);if(it?._habit){BASE_EDIT={kind:'habit',id};currentAddType='habit'}else if(it?._project){BASE_EDIT={kind:'project',id};currentAddType='project'}else{BASE_EDIT={kind:'module',type,id};currentAddType=type}document.getElementById('genericModalTitle').textContent='ویرایش مورد';document.getElementById('genericModalType').textContent=`بخش: ${addTypeNames[type]||type}`;document.getElementById('genericTitleInput').value=title||'';document.getElementById('genericNotes').value='';document.getElementById('genericModalBg').classList.remove('hidden')}
+async function baseEditModule(type,id,title){
+  const m=moduleData(type),it=m?.items?.find(x=>x.id===id);let description='';
+  if(it?._task)return baseEditTask(id);
+  if(type==='habit'||it?._habit){
+    // The matrix loads canonical routines independently of the legacy dashboard cache.
+    // Resolve the actual record before editing so an absent cache cannot route it to modules.
+    let habit,habits;try{habits=await apiFetch('/api/habits');habit=habits.find(row=>row.id===id);}catch(error){showToast('روتین باز نشد',error.message);return;}
+    if(!habit){showToast('روتین پیدا نشد','فهرست روتین‌ها را به‌روز کنید.');return;}
+    window.RoutineCategories?.prepare(habit,habits);
+    BASE_EDIT={kind:'habit',id};currentAddType='habit';title=habit.title;description=habit.description||'';
+  }else if(it?._project){BASE_EDIT={kind:'project',id};currentAddType='project'}else{BASE_EDIT={kind:'module',type,id};currentAddType=type}
+  document.getElementById('genericModalTitle').textContent=type==='habit'?'ویرایش روتین':'ویرایش مورد';document.getElementById('genericModalType').textContent=`بخش: ${addTypeNames[type]||type}`;document.getElementById('genericTitleInput').value=title||'';document.getElementById('genericNotes').value=description;document.getElementById('genericModalBg').classList.remove('hidden');
+}
 window.editModuleItem=function(type,nameElement){const row=nameElement.closest('.module-list-item');if(row?.dataset.id)baseEditModule(type,row.dataset.id,nameElement.textContent.trim())}
 
 // Habit matrix, inspired by the supplied tracker but using the base project's habit backend.
@@ -2498,10 +2517,22 @@ async function loadHabitMatrix(){
 }
 window.loadHabitMonthFromApi=loadHabitMatrix;
 function habitColumnGroup(data){const days=Number(data.days)||31;document.querySelector('.habit-combined-scroll')?.style.setProperty('--habit-days',String(days));return '<colgroup><col class="habit-col-name">'+Array.from({length:days},()=>'<col class="habit-col-day">').join('')+'<col class="habit-col-goal"><col class="habit-col-percent"><col class="habit-col-count"><col class="habit-col-edit"></colgroup>'}
-function renderHabitDailySuccessBase(data){const root=document.getElementById('habitDailyChart');if(!root)return;let h='<table class="habit-daily-align">'+habitColumnGroup(data)+'<tbody><tr>';h+='<td class="habit-name-spacer"><div class="habit-daily-note">نمودار هر ستون دقیقاً بالای ستون همان روز در ماتریس قرار می‌گیرد.</div></td>';for(let i=0;i<(data.dailyPercent||[]).length;i++){const p=Number(data.dailyPercent[i]||0);h+=`<td class="day-cell" title="روز ${toFaNum(i+1)}: ${toFaNum(p)}٪"><div class="habit-day-bar-wrap"><div class="habit-day-bar ${p?'':'zero'}" style="height:${Math.max(2,p)}%;background:${pColor(p)}"><b>${toFaNum(p)}٪</b></div></div></td>`}h+='<td class="summary-space"></td><td class="summary-space"></td><td class="count-space"></td><td class="count-space"></td></tr><tr>';h+='<td class="habit-name-spacer label-cell">عادت / روتین</td>';for(let d=1;d<=data.days;d++)h+=`<td class="label-cell">${toFaNum(d)}</td>`;h+='<td class="summary-space label-cell">هدف</td><td class="summary-space label-cell">درصد</td><td class="count-space label-cell">تعداد</td><td class="count-space label-cell">ویرایش</td></tr></tbody></table>';root.innerHTML=h}
+function renderHabitDailySuccessBase(data){const root=document.getElementById('habitDailyChart');if(!root)return;let h='<table class="habit-daily-align">'+habitColumnGroup(data)+'<tbody><tr>';h+='<td class="habit-name-spacer"><div class="habit-daily-note">نمودار هر ستون دقیقاً بالای ستون همان روز در ماتریس قرار می‌گیرد.</div></td>';for(let i=0;i<(data.dailyPercent||[]).length;i++){const p=Number(data.dailyPercent[i]||0);h+=`<td class="day-cell" title="روز ${toFaNum(i+1)}: ${toFaNum(p)}٪"><div class="habit-day-bar-wrap"><div class="habit-day-bar ${p?'':'zero'}" style="height:${Math.max(2,p)}%;background:${pColor(p)}"><b>${toFaNum(p)}٪</b></div></div></td>`}h+='<td class="summary-space"></td><td class="summary-space"></td><td class="count-space"></td><td class="count-space"></td></tr><tr>';h+='<td class="habit-name-spacer label-cell">عادت / روتین</td>';for(let d=1;d<=data.days;d++)h+=`<td class="label-cell">${toFaNum(d)}</td>`;h+='<td class="summary-space label-cell">هدف</td><td class="summary-space label-cell">درصد</td><td class="count-space label-cell">تعداد</td><td class="count-space label-cell">ویرایش</td></tr></tbody></table>';root.innerHTML=h;markHabitTodayBase(data)}
 function syncHabitScrollsBase(){/* V9.3: نمودار و ماتریس یک اسکرول مشترک دارند */}
+function markHabitTodayBase(data){
+  const tables=[document.querySelector('#habitDailyChart .habit-daily-align'),document.getElementById('habitMatrixTable')].filter(Boolean);
+  for(const table of tables)for(const cell of table.querySelectorAll('.habit-today')){cell.classList.remove('habit-today');cell.removeAttribute('aria-current');}
+  if(!data)return;
+  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US-u-ca-persian',{timeZone:'Asia/Tehran',year:'numeric',month:'numeric',day:'numeric'}).formatToParts(new Date(todayIso()+'T12:00:00Z')).map(part=>[part.type,Number(part.value)]));
+  const day=Number(data.year)===parts.year&&Number(data.month)===parts.month?parts.day:null;
+  if(!day)return;
+  const mark=cell=>{if(cell){cell.classList.add('habit-today');cell.setAttribute('aria-current','date');}};
+  document.querySelectorAll('#habitDailyChart .habit-daily-align tr,#habitMatrixTable tbody tr').forEach(row=>mark(row.children[day]));
+  mark(document.querySelector('#habitMatrixTable thead tr:last-child')?.children[day-1]);
+}
+window.addEventListener('nova:clock-day',()=>markHabitTodayBase(BASE_HABIT_MATRIX));
 function weekSegmentsBase(days){const out=[];for(let s=1,w=1;s<=days;s+=7,w++)out.push({week:w,count:Math.min(7,days-s+1)});return out}
-function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h=habitColumnGroup(data)+'<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td class="habit-day-toggle-cell"><label class="habit-day-toggle"><input class="habit-check" type="checkbox" aria-label="${escAttr(row.title)}، روز ${toFaNum(i+1)}، ماه ${toFaNum(data.month)} سال ${toFaNum(data.year)}" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></label></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h}
+function renderHabitMatrixBase(data){const table=document.getElementById('habitMatrixTable');if(!table)return;const weeks=weekSegmentsBase(data.days);let h=habitColumnGroup(data)+'<thead><tr class="week-row"><th class="habit-name" rowspan="2">عادت / روتین</th>';weeks.forEach(w=>h+=`<th colspan="${w.count}">هفته ${toFaNum(w.week)}</th>`);h+='<th class="summary-col" rowspan="2">هدف</th><th class="summary-col" rowspan="2">درصد موفقیت</th><th class="count-col" rowspan="2">تعداد</th><th class="count-col" rowspan="2">ویرایش</th></tr><tr>';for(let d=1;d<=data.days;d++)h+=`<th>${toFaNum(d)}</th>`;h+='</tr></thead><tbody>';for(const row of data.rows||[]){h+=`<tr><td class="habit-name"><div>${escapeHtml(row.title)}</div></td>`;row.days.forEach((done,i)=>h+=`<td class="habit-day-toggle-cell"><label class="habit-day-toggle"><input class="habit-check" type="checkbox" aria-label="${escAttr(row.title)}، روز ${toFaNum(i+1)}، ماه ${toFaNum(data.month)} سال ${toFaNum(data.year)}" ${done?'checked':''} onchange="baseToggleHabitDay('${jsSafe(row.id)}',${i+1},this.checked)"></label></td>`);h+=`<td>${toFaNum(row.goal)}</td><td><div class="habit-row-percent">${toFaNum(row.percent)}٪</div><div class="habit-row-progress"><i style="width:${row.percent}%;background:${pColor(row.percent)}"></i></div></td><td>${toFaNum(row.doneCount)} / ${toFaNum(row.goal)}</td><td><button class="habit-edit-mini" onclick="baseEditModule('habit','${jsSafe(row.id)}','${jsSafe(row.title)}')">✎</button></td></tr>`}h+='</tbody>';table.innerHTML=h;markHabitTodayBase(data)}
 async function baseToggleHabitDay(id,day,done){
   const m=Number(document.getElementById('habitMonthSelect').value),y=Number(document.getElementById('habitYearSelect').value);
   const data=BASE_HABIT_MATRIX;
@@ -2566,7 +2597,7 @@ function renderNamedModulePage(type){const m=moduleData(type);if(!m)return;const
 const baseClose=closeGenericAdd;
 window.openGenericAdd=function(type='general',title='افزودن مورد'){currentAddType=type;BASE_EDIT=null;document.getElementById('genericModalTitle').textContent=title;document.getElementById('genericModalType').textContent='بخش: '+(addTypeNames[type]||'عمومی');document.getElementById('genericTitleInput').value='';document.getElementById('genericNotes').value='';const amountWrap=document.getElementById('genericAmountWrap');if(amountWrap)amountWrap.classList.toggle('hidden',type!=='finance');document.getElementById('genericModalBg').classList.remove('hidden')}
 window.closeGenericAdd=function(){BASE_EDIT=null;baseClose()}
-window.saveGenericAdd=async function(){const title=document.getElementById('genericTitleInput').value.trim();if(!title)return alert('عنوان را وارد کنید.');const note=document.getElementById('genericNotes').value.trim();const priority=document.getElementById('genericPriority').value==='P0'?'high':document.getElementById('genericPriority').value==='P1'?'high':'medium';try{if(BASE_EDIT){if(BASE_EDIT.kind==='task')await apiFetch(`/api/tasks/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,description:note})});else if(BASE_EDIT.kind==='habit')await apiFetch(`/api/habits/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,description:note})});else if(BASE_EDIT.kind==='project')await apiFetch(`/api/projects/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({name:title,description:note})});else await apiFetch(`/api/modules/${BASE_EDIT.type}/items/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,note})})}else if(['item','general','daily'].includes(currentAddType)){await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,description:note,priority,status:'todo',due_date:currentAddType==='daily'?todayIso():null,category:'شخصی'})})}else if(currentAddType==='habit'){await apiFetch('/api/habits',{method:'POST',body:JSON.stringify({title,description:note,target_weekly:7,color:'#7165f3',status:'active'})})}else if(currentAddType==='project'){await apiFetch('/api/projects',{method:'POST',body:JSON.stringify({name:title,description:note,status:'in_progress',color:'#7165f3',icon:'✦'})})}else if(currentAddType==='finance'){const amount=NoavaMoney.parse(document.getElementById('genericAmount').value);if(amount<=0)return alert('مبلغ را وارد کنید.');await apiFetch('/api/finance/transactions',{method:'POST',body:JSON.stringify({type:'expense',amount,description:title,category:'عمومی',date:todayIso(),status:'confirmed'})})}else{await apiFetch(`/api/modules/${currentAddType}/items`,{method:'POST',body:JSON.stringify({title,note,priority,state:'باز'})})}baseClose();BASE_EDIT=null;showToast('ذخیره شد',title);await refreshAll()}catch(e){alert(e.message)}}
+window.saveGenericAdd=async function(){const title=document.getElementById('genericTitleInput').value.trim();if(!title)return alert('عنوان را وارد کنید.');const note=document.getElementById('genericNotes').value.trim();const priority=document.getElementById('genericPriority').value==='P0'?'high':document.getElementById('genericPriority').value==='P1'?'high':'medium';try{if(BASE_EDIT){if(BASE_EDIT.kind==='task')await apiFetch(`/api/tasks/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,description:note})});else if(BASE_EDIT.kind==='habit')await apiFetch(`/api/habits/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,description:note,routine_type:document.getElementById('genericCategory').value||'general'})});else if(BASE_EDIT.kind==='project')await apiFetch(`/api/projects/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({name:title,description:note})});else await apiFetch(`/api/modules/${BASE_EDIT.type}/items/${BASE_EDIT.id}`,{method:'PATCH',body:JSON.stringify({title,note})})}else if(['item','general','daily'].includes(currentAddType)){await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,description:note,priority,status:'todo',due_date:currentAddType==='daily'?todayIso():null,category:'شخصی'})})}else if(currentAddType==='habit'){await apiFetch('/api/habits',{method:'POST',body:JSON.stringify({title,description:note,routine_type:document.getElementById('genericCategory').value||'general',target_weekly:7,color:'#7165f3',status:'active'})})}else if(currentAddType==='project'){await apiFetch('/api/projects',{method:'POST',body:JSON.stringify({name:title,description:note,status:'in_progress',color:'#7165f3',icon:'✦'})})}else if(currentAddType==='finance'){const amount=NoavaMoney.parse(document.getElementById('genericAmount').value);if(amount<=0)return alert('مبلغ را وارد کنید.');await apiFetch('/api/finance/transactions',{method:'POST',body:JSON.stringify({type:'expense',amount,description:title,category:'عمومی',date:todayIso(),status:'confirmed'})})}else{await apiFetch(`/api/modules/${currentAddType}/items`,{method:'POST',body:JSON.stringify({title,note,priority,state:'باز'})})}baseClose();BASE_EDIT=null;showToast('ذخیره شد',title);await refreshAll()}catch(e){alert(e.message)}}
 window.openModal=function(){openGenericAdd('item','افزودن آیتم')};window.quickAdd=async function(){const input=document.getElementById('qaTitle');const title=input?.value.trim();if(!title)return;await apiFetch('/api/tasks',{method:'POST',body:JSON.stringify({title,status:'todo',priority:'medium',category:'شخصی'})});input.value='';await refreshAll()};window.addHabit=function(){openGenericAdd('habit','افزودن عادت')}
 
 // Module title detail navigation should use the live backend content.
@@ -3592,6 +3623,9 @@ function setMobileMenu(open){
 <script defer src="/assets/project-workspace.js?v=2.7.0&rev=project-network"></script>
 <script defer src="/assets/academic.js?v=2.3.0&rev=project-links"></script>
 <script defer src="/assets/noava-workspace.js?v=2.1.2&rev=clock-draft"></script>
+<script defer src="/assets/routine-categories.js"></script>
+<script defer src="/assets/habit-periods.js"></script>
+<script defer src="/assets/habit-views.js"></script>
 <script defer src="/assets/keyboard-submit.js?v=2.1.1"></script>
 <link rel="stylesheet" href="/assets/integrated-tools.css"/>
 <script defer src="/assets/integrated-tools.js?rev=compact-health"></script>
@@ -3621,5 +3655,6 @@ function setMobileMenu(open){
 <link rel="stylesheet" href="/assets/relationships-directory.css"/>
 <script defer src="/assets/arrow-controls.js"></script>
 <script defer src="/assets/ui-ready.js"></script>
+<script defer src="/assets/header-clock.js"></script>
 </body>
 </html>

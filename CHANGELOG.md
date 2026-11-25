@@ -4,6 +4,19 @@ Version format follows Semantic Versioning: MAJOR.MINOR.PATCH.
 
 ## Unreleased
 
+## [2.13.0] - 2026-11-25
+
+Upgrade: **2.12.0 -> 2.13.0**. Compatible routine period/category views, a shared Tehran clock and selected-only overdue batch review. Existing database records and reading history are preserved.
+
+- Add select-all/clear-all and selected-only Done, Not Done and Delete actions to overdue review, with indeterminate selection, counts, ordered per-occurrence writes, single delete confirmation, progress and per-item failure retention.
+- Show a compact, responsive top-left Tehran clock with Persian date, weekday and live 24-hour time, separate from the selected planning date.
+- Move book reading under Routine navigation, add category-filtered Reading and Exercise routine views with all five period modes, and expose both types in routine forms with category-specific creation defaults and draft scopes. Preserve reading books, sessions, timers and reminders.
+- Use real routine categories (General, Spiritual and discovered custom types) in routine create/edit forms, persist category changes across canonical views, and hide the unrelated task-status field only in routine forms.
+- Visually group routine columns by day, week and Persian season, with continuous period borders, month dividers, labeled group headings and preserved green current-day highlighting.
+- Add daily, Saturday-based weekly, Persian monthly, seasonal and yearly routine views with period navigation, real log totals, current-day highlighting, month drill-down, ISO-day check-in and remembered view preference.
+- Highlight today's routine chart/matrix column with green edges and a distinct day heading, using the actual Tehran date and updating on midnight rollover; leave other months unmarked.
+- Fix routine matrix editing when the legacy dashboard cache is absent or stale: resolve the canonical routine, preserve its description and save through the habits API instead of the generic modules API.
+
 ## [2.12.0] - 2026-11-16
 
 Upgrade: **2.11.1 -> 2.12.0**. Compatible task outcome tracking, direct item editing and task performance reports.

@@ -10,7 +10,7 @@
   }
   function syncAccount(){try{account ||= JSON.parse(localStorage.getItem('nova_user')||'null');}catch{}if(!account)return;const name=account.display_name||'حساب من';document.querySelector('.profile-details strong').textContent=name;for(const avatar of document.querySelectorAll('.profile .avatar,.top-actions .avatar')){avatar.textContent=[...name][0]||'م';avatar.title=name;}}
   const openPage=window.handleFunctionalPageOpen;window.handleFunctionalPageOpen=async function(page){await openPage?.(page);if(page==='profile')await profile();};
-  function bindGeneric(){const root=document.getElementById('genericModalBg');if(root.classList.contains('hidden'))return;const key=typeof BASE_EDIT!=='undefined'&&BASE_EDIT?`generic:${BASE_EDIT.kind}:${BASE_EDIT.type||''}:${BASE_EDIT.id}`:`generic:new:${currentAddType}:${DateContext.date}`;NoavaDrafts.bind(root,key);NoavaMoney.enhance(root);}
+  function bindGeneric(){const root=document.getElementById('genericModalBg');if(root.classList.contains('hidden'))return;const category=document.getElementById('genericCategory').value,categoryScope=currentAddType==='habit'&&category!=='general'?':'+category:'';const key=typeof BASE_EDIT!=='undefined'&&BASE_EDIT?`generic:${BASE_EDIT.kind}:${BASE_EDIT.type||''}:${BASE_EDIT.id}`:`generic:new:${currentAddType}:${DateContext.date}${categoryScope}`;NoavaDrafts.bind(root,key);NoavaMoney.enhance(root);}
   for(const name of ['openGenericAdd','baseEditTask','baseEditModule']){const original=window[name];window[name]=function(...args){const result=original.apply(this,args);if(result?.then)return result.then(value=>{bindGeneric();return value;});bindGeneric();return result;};}
   const saveGeneric=window.saveGenericAdd;let savingGeneric=false;
   window.saveGenericAdd=async function(...args){
@@ -54,16 +54,51 @@
       const dismiss=()=>{if(busy)return;markReviewSeen(seen);dialog.close();};
       const close=button('×',dismiss);close.className='overdue-close';close.setAttribute('aria-label','بستن مرور عقب‌افتاده‌ها');heading.append(title,close);
       dialog.append(heading,node('p','برای هر مورد «انجام شد» یا «انجام نشد» را ثبت کنید؛ انجام‌نشدن در آمار باقی می‌ماند. فقط موارد انتخاب‌شده با تأیید شما به امروز منتقل می‌شوند. بازهٔ بررسی: دو سال اخیر.'));
-      const list=node('div',null,'overdue-list'),error=node('p','','record-edit-error');list.setAttribute('aria-label','برنامه‌های عقب‌افتاده');list.tabIndex=0;error.setAttribute('role','alert');const selected=new Map();let busy=false;
+      const list=node('div',null,'overdue-list'),error=node('p','','record-edit-error');list.setAttribute('aria-label','برنامه‌های عقب‌افتاده');list.tabIndex=0;error.setAttribute('role','alert');const selected=new Map(),rows=new Map();let busy=false;
       const controls=()=>[...dialog.querySelectorAll('button,input')];
-      async function action(row,item,type){if(busy)return;if(type==='delete'&&!confirm('این مورد حذف شود؟'))return;busy=true;controls().forEach(n=>n.disabled=true);error.textContent='';try{
+      const bulk=node('section',null,'overdue-bulk');bulk.setAttribute('aria-label','عملیات گروهی روی موارد انتخاب‌شده');
+      const selectAllLabel=node('label',null,'overdue-select-all'),selectAll=node('input');selectAll.type='checkbox';selectAll.id='overdueSelectAll';selectAllLabel.append(selectAll,node('span','انتخاب همه'));
+      const bulkCount=node('span',null,'overdue-bulk-count'),progress=node('span',null,'overdue-bulk-progress');bulkCount.setAttribute('role','status');progress.setAttribute('role','status');
+      const bulkDone=button('✓ انجام شد',()=>batchAction('done')),bulkMissed=button('انجام نشد',()=>batchAction('not_done')),bulkDelete=button('حذف',()=>batchAction('delete'));
+      for(const [type,control]of [['done',bulkDone],['not_done',bulkMissed],['delete',bulkDelete]]){control.dataset.overdueBulk=type;control.setAttribute('aria-label',control.textContent+'؛ موارد انتخاب‌شده');}
+      bulk.append(selectAllLabel,bulkDone,bulkMissed,bulkDelete,bulkCount,progress);dialog.append(bulk);
+      function syncSelection(){
+        selectAll.checked=rows.size>0&&selected.size===rows.size;selectAll.indeterminate=selected.size>0&&selected.size<rows.size;
+        bulkCount.textContent=`${toFaNum(selected.size)} انتخاب‌شده از ${toFaNum(rows.size)} مورد`;
+        for(const control of [bulkDone,bulkMissed,bulkDelete,move])control.disabled=busy||!selected.size;
+        selectAll.disabled=busy||!rows.size;
+      }
+      selectAll.onchange=()=>{if(busy)return;selected.clear();for(const [key,{row,item}]of rows){row.querySelector('input[type=checkbox]').checked=selectAll.checked;if(selectAll.checked)selected.set(key,item);}syncSelection();};
+      function setBusy(value){busy=value;controls().forEach(n=>n.disabled=value);if(value)dialog.setAttribute('aria-busy','true');else dialog.removeAttribute('aria-busy');syncSelection();}
+      function removeItem(item){selected.delete(item.key);rows.get(item.key)?.row.remove();rows.delete(item.key);}
+      function finishReview(){if(!rows.size){markReviewSeen(seen);dialog.close();}}
+      async function writeItem(item,type){
         const endpoint=`/api/calendar/${item.source}/${encodeURIComponent(item.id)}`;
         if(type==='done'||type==='not_done')await apiFetch(endpoint,{method:'PATCH',body:JSON.stringify({...(type==='done'?{done:true}:{not_done:true}),...(item.occurrence_date?{occurrence_date:item.occurrence_date}:{})})});
         else if(item.source==='task'&&!item.occurrence_date)await apiFetch('/api/tasks/'+encodeURIComponent(item.id),{method:'DELETE'});
         else await apiFetch(endpoint+(item.occurrence_date?'?occurrence_date='+item.occurrence_date:''),{method:'DELETE'});
-        selected.delete(item.key);row.remove();window.NovaFastUI?.scheduleVisibleRefresh();if(type==='not_done')showToast('انجام نشد ثبت شد','نتیجهٔ این نوبت در آمار برنامه‌های تقویم ثبت شد.');if(!list.children.length){markReviewSeen(seen);dialog.close();}
-      }catch(failure){error.textContent=failure.message;}finally{busy=false;controls().forEach(n=>n.disabled=false);}}
-      for(const item of result.entries){const row=node('article',null,'overdue-row'),label=node('label'),choose=node('input');choose.type='checkbox';choose.checked=true;choose.setAttribute('aria-label','انتقال به امروز: '+item.title);selected.set(item.key,item);choose.onchange=()=>choose.checked?selected.set(item.key,item):selected.delete(item.key);const caption=node('span',item.title);caption.append(node('small',faDateLabel(item.date)));label.append(choose,caption);const missed=button('انجام نشد',()=>action(row,item,'not_done'));missed.dataset.overdueAction='not_done';row.append(label,button('✓ انجام شد',()=>action(row,item,'done')),missed,button('حذف',()=>action(row,item,'delete')));list.append(row);}
+      }
+      async function action(row,item,type){if(busy)return;if(type==='delete'&&!confirm('این مورد حذف شود؟'))return;setBusy(true);error.textContent='';progress.textContent='';try{
+        await writeItem(item,type);removeItem(item);window.NovaFastUI?.scheduleVisibleRefresh();if(type==='not_done')showToast('انجام نشد ثبت شد','نتیجهٔ این نوبت در آمار برنامه‌های تقویم ثبت شد.');finishReview();
+      }catch(failure){error.textContent=failure.message;}finally{setBusy(false);}}
+      async function batchAction(type){
+        if(busy||!selected.size)return;const items=[...selected.values()];
+        if(type==='delete'&&!confirm(`${toFaNum(items.length)} مورد انتخاب‌شده حذف شود؟ موارد بدون تیک تغییر نمی‌کنند.`))return;
+        setBusy(true);error.textContent='';const failures=[];let succeeded=0;
+        try{
+          // Keep writes ordered: separate recurring occurrences may share one stored series.
+          for(let i=0;i<items.length;i++){
+            progress.textContent=`در حال بررسی ${toFaNum(i+1)} از ${toFaNum(items.length)} مورد…`;
+            try{await writeItem(items[i],type);removeItem(items[i]);succeeded++;}
+            catch(failure){failures.push({title:items[i].title,message:failure.message});}
+            syncSelection();
+          }
+          progress.textContent=`${toFaNum(succeeded)} مورد اعمال شد${failures.length?' · '+toFaNum(failures.length)+' مورد ناموفق':''}.`;
+          if(failures.length)error.textContent='موارد ناموفق در فهرست و در حالت انتخاب‌شده باقی ماندند: '+failures.slice(0,3).map(f=>f.title+': '+f.message).join('؛ ');
+          if(succeeded){window.NovaFastUI?.scheduleVisibleRefresh();showToast('عملیات گروهی ثبت شد',progress.textContent);}finishReview();
+        }finally{setBusy(false);}
+      }
+      for(const item of result.entries){const row=node('article',null,'overdue-row'),label=node('label'),choose=node('input');choose.type='checkbox';choose.checked=true;choose.setAttribute('aria-label','انتخاب برای عملیات گروهی یا انتقال به امروز: '+item.title);selected.set(item.key,item);rows.set(item.key,{row,item});choose.onchange=()=>{if(busy)return;if(choose.checked)selected.set(item.key,item);else selected.delete(item.key);syncSelection();};const caption=node('span',item.title);caption.append(node('small',faDateLabel(item.date)));label.append(choose,caption);const missed=button('انجام نشد',()=>action(row,item,'not_done'));missed.dataset.overdueAction='not_done';row.append(label,button('✓ انجام شد',()=>action(row,item,'done')),missed,button('حذف',()=>action(row,item,'delete')));list.append(row);}
       const move=button('تأیید و انتقال انتخاب‌شده‌ها به امروز',async()=>{
         if(busy||!selected.size)return;busy=true;const label=move.textContent,items=[...selected.values()].map(item=>({source:item.source,id:item.id,occurrence_date:item.occurrence_date||null}));
         controls().forEach(n=>n.disabled=true);dialog.setAttribute('aria-busy','true');move.textContent=`در حال انتقال گروهی ${toFaNum(items.length)} مورد…`;error.textContent='';
@@ -71,10 +106,10 @@
           const result=await apiFetch('/api/calendar/carry-forward',{method:'POST',body:JSON.stringify({items})});
           selected.clear();markReviewSeen(seen);dialog.close();showToast('برنامه به‌روز شد',`${toFaNum(result.moved_count+result.unchanged_count)} مورد برای ${faDateLabel(result.date)} تنظیم شد.`);NovaFastUI.scheduleVisibleRefresh();
         }catch(failure){error.textContent='انتقال گروهی تأیید نشد؛ برای تلاش دوباره موارد انتخاب‌شده حفظ شدند. '+failure.message;}
-        finally{busy=false;dialog.removeAttribute('aria-busy');move.textContent=label;controls().forEach(n=>n.disabled=false);}
+        finally{move.textContent=label;setBusy(false);}
       });
       [...list.children].forEach((row,i)=>row.dataset.key=result.entries[i].key);
-      const later=button('بعداً بررسی می‌کنم',dismiss),footer=node('footer',null,'overdue-footer');footer.append(move,later);dialog.append(list,error,footer);
+      const later=button('بعداً بررسی می‌کنم',dismiss),footer=node('footer',null,'overdue-footer');footer.append(move,later);dialog.append(list,error,footer);syncSelection();
       dialog.addEventListener('cancel',event=>{event.preventDefault();dismiss();});dialog.addEventListener('close',()=>{dialog.remove();if(review===dialog)review=null;});
       let outside=false;const onBackdrop=event=>{const r=dialog.getBoundingClientRect();return event.target===dialog&&(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom);};
       dialog.addEventListener('pointerdown',event=>{outside=onBackdrop(event);});dialog.addEventListener('click',event=>{if(outside&&onBackdrop(event))dismiss();outside=false;});
